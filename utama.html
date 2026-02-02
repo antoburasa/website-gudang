@@ -1,149 +1,85 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Gudang PT. SMS - Final</title>
+    <title>PT SMS - Versi Stabil</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @media print {
-            .no-print { display: none !important; }
-            .print-only { display: block !important; }
-            body { background: white; padding: 0; }
-        }
-    </style>
 </head>
-<body class="bg-gray-100 p-4">
-
+<body class="bg-slate-100 p-4">
     <div class="max-w-md mx-auto space-y-4">
-        <div class="bg-blue-900 text-white p-4 rounded shadow-md text-center font-bold no-print">
+        <div class="bg-blue-900 text-white p-4 rounded-lg text-center font-bold uppercase shadow-lg">
             PT. SAMUDRA MANDIRI SENTOSA
         </div>
 
-        <div class="bg-white p-5 rounded-lg shadow-lg border-t-4 border-blue-500 no-print">
-            <div class="mb-4">
-                <label class="block text-[10px] font-black text-gray-500 mb-1 uppercase">Nama Barang</label>
-                <input type="text" id="namaBrg" class="w-full p-2 border rounded border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none uppercase">
+        <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-blue-600">
+            <input type="text" id="n" placeholder="NAMA BARANG" class="w-full p-3 border rounded mb-3 uppercase">
+            <input type="number" id="j" placeholder="JUMLAH" class="w-full p-3 border rounded mb-4">
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="aksi('masuk')" class="bg-emerald-600 text-white p-3 rounded font-bold">MASUK</button>
+                <button onclick="aksi('keluar')" class="bg-rose-600 text-white p-3 rounded font-bold">KELUAR</button>
             </div>
-            <div class="mb-4">
-                <label class="block text-[10px] font-black text-gray-500 mb-1 uppercase">Jumlah Unit</label>
-                <input type="number" id="jmlBrg" class="w-full p-2 border rounded border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none">
-            </div>
-            
-            <div class="grid grid-cols-2 gap-2">
-                <button onclick="prosesSimpan('masuk')" class="bg-green-600 hover:bg-green-700 text-white p-3 rounded-lg font-bold uppercase text-xs transition-all">Simpan Masuk</button>
-                <button onclick="prosesSimpan('keluar')" class="bg-red-600 hover:bg-red-700 text-white p-3 rounded-lg font-bold uppercase text-xs transition-all">Kurangi Stok</button>
-            </div>
+            <button onclick="window.print()" class="w-full mt-4 bg-gray-700 text-white p-2 rounded text-xs uppercase">Cetak Laporan</button>
         </div>
 
-        <button onclick="window.print()" class="w-full bg-slate-800 text-white p-3 rounded-lg font-bold uppercase text-[10px] no-print flex items-center justify-center gap-2">
-            🖨️ CETAK LAPORAN (PDF)
-        </button>
-
-        <div id="printArea" class="bg-white rounded-lg shadow-md p-4">
-            <div class="hidden print-only text-center mb-6 border-b-2 border-black pb-4">
-                <h1 class="text-xl font-bold uppercase">Laporan Inventaris Gudang</h1>
-                <p class="text-sm font-bold">PT. SAMUDRA MANDIRI SENTOSA</p>
-                <p id="tglCetak" class="text-[10px] mt-2 italic text-gray-500"></p>
-            </div>
-
-            <h3 class="text-xs font-bold mb-3 text-blue-800 uppercase border-b pb-1">📦 Daftar Stok Barang</h3>
-            <table class="w-full text-sm border-collapse mb-6">
-                <thead>
-                    <tr class="bg-gray-100 text-[10px] border-b">
-                        <th class="p-2 text-left">NAMA BARANG</th>
-                        <th class="p-2 text-right">STOK</th>
-                    </tr>
-                </thead>
-                <tbody id="tbStok" class="divide-y text-slate-700"></tbody>
-            </table>
-
-            <h3 class="text-xs font-bold mb-3 text-blue-800 uppercase border-b pb-1">🕒 Riwayat Transaksi</h3>
-            <table class="w-full text-[9px] border-collapse">
-                <thead>
-                    <tr class="bg-gray-100 border-b">
-                        <th class="p-2 text-left uppercase">Waktu</th>
-                        <th class="p-2 text-center uppercase">Aksi</th>
-                        <th class="p-2 text-left uppercase">Barang</th>
-                        <th class="p-2 text-right uppercase">Qty</th>
-                    </tr>
-                </thead>
-                <tbody id="tbLog" class="divide-y"></tbody>
-            </table>
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="bg-gray-800 text-white p-2 text-xs font-bold uppercase">Stok Barang</div>
+            <table class="w-full text-sm"><tbody id="st" class="divide-y"></tbody></table>
         </div>
 
-        <button onclick="hapusSemuaLog()" class="w-full text-[9px] text-gray-400 mt-4 no-print underline opacity-50 hover:opacity-100 transition">Hapus Semua Catatan Transaksi</button>
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="bg-blue-600 text-white p-2 text-xs font-bold uppercase">Riwayat</div>
+            <table class="w-full text-[10px]"><tbody id="lt" class="divide-y"></tbody></table>
+        </div>
     </div>
 
     <script>
-        const config = {
+        const cfg = {
             apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
             authDomain: "gudang-sms-4c81c.firebaseapp.com",
             databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
             projectId: "gudang-sms-4c81c",
             storageBucket: "gudang-sms-4c81c.firebasestorage.app",
-            messagingSenderId: "598362736106",
             appId: "1:598362736106:web:c8e2732d6ac7613931de93"
         };
-        firebase.initializeApp(config);
-        const db = firebase.database();
+        firebase.initializeApp(cfg);
+        const d = firebase.database();
 
-        // FUNGSI UTAMA (GANTI NAMA AGAR TIDAK BENTROK)
-        function prosesSimpan(tipe) {
-            const nama = document.getElementById('namaBrg').value.trim().toLowerCase();
-            const jml = parseInt(document.getElementById('jmlBrg').value);
-            const waktu = new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+        function aksi(t) {
+            const nama = document.getElementById('n').value.trim().toLowerCase();
+            const jml = parseInt(document.getElementById('j').value);
+            if(!nama || !jml) return alert("Isi data!");
 
-            if (!nama || isNaN(jml)) {
-                return alert("Mohon isi Nama Barang dan Jumlah!");
-            }
+            const rs = d.ref('stok/' + nama);
+            const rl = d.ref('riwayat').push();
 
-            const refStok = db.ref('stok/' + nama);
-            const refLog = db.ref('riwayat').push();
+            rs.once('value').then(s => {
+                let v = s.exists() ? parseInt(s.val().stok) : 0;
+                let b = (t === 'masuk') ? (v + jml) : (v - jml);
+                if(b < 0) return alert("Stok tipis!");
 
-            refStok.once('value').then(s => {
-                let lama = s.exists() ? parseInt(s.val().stok) : 0;
-                let baru = (tipe === 'masuk') ? (lama + jml) : (lama - jml);
-                
-                if (baru < 0) {
-                    return alert("Gagal: Stok '" + nama + "' tidak cukup untuk dikurangi!");
-                }
-
-                // Jalankan Update
-                return Promise.all([
-                    refStok.update({ nama: nama, stok: baru }),
-                    refLog.set({ waktu, tipe, nama, qty: (tipe === 'masuk' ? '+' : '-') + jml })
-                ]);
-            }).then(() => {
-                alert("Data " + nama.toUpperCase() + " berhasil di-update!");
-                document.getElementById('namaBrg').value = ''; 
-                document.getElementById('jmlBrg').value = '';
-            }).catch(err => {
-                alert("Koneksi Error: " + err.message);
+                rs.update({ nama: nama, stok: b });
+                rl.set({ t: new Date().toLocaleString('id-ID'), tipe: t, n: nama, q: (t==='masuk'?'+':'-')+jml });
+                alert("Berhasil!");
+                document.getElementById('n').value = ''; document.getElementById('j').value = '';
             });
         }
 
-        function hapusSemuaLog() {
-            if(confirm("Hapus semua riwayat transaksi? Data stok barang tidak akan hilang.")) {
-                db.ref('riwayat').remove();
-            }
-        }
-
-        // Tampilkan Stok (Real-time)
-        db.ref('stok').on('value', snap => {
-            let h = "";
-            snap.forEach(c => {
-                const v = c.val();
-                h += <tr><td class="p-2 capitalize font-bold">${v.nama}</td><td class="p-2 text-right font-black text-blue-600">${v.stok}</td></tr>;
+        d.ref('stok').on('value', sn => {
+            let h = ""; sn.forEach(c => {
+                h += <tr><td class="p-3 capitalize font-bold">${c.val().nama}</td><td class="p-3 text-right text-blue-600 font-bold">${c.val().stok}</td></tr>;
             });
-            document.getElementById('tbStok').innerHTML = h || '<tr><td colspan="2" class="p-4 text-center text-gray-300">Kosong</td></tr>';
+            document.getElementById('st').innerHTML = h;
         });
 
-        // Tampilkan Riwayat (Real-time)
-        db.ref('riwayat').on('value', snap => {
-            let h = ""; let arr = [];
-            snap.forEach(c => arr.push(c.val()));
-            arr.reverse().slice(0, 15).forEach(v => {
-                const col = v.tipe === 'masuk' ? 'text-green-600' : 'text-red-600';
+        d.ref('riwayat').on('value', sn => {
+            let h = ""; let a = []; sn.forEach(c => a.push(c.val()));
+            a.reverse().slice(0, 10).forEach(v => {
+                h += <tr><td class="p-2 text-gray-400">${v.t}</td><td class="p-2 uppercase font-bold text-center">${v.tipe}</td><td class="p-2 capitalize">${v.n}</td><td class="p-2 text-right font-bold">${v.q}</td></tr>;
+            });
+            document.getElementById('lt').innerHTML = h;
+        });
+    </script>
+</body>
+</html>
