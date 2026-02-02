@@ -14,8 +14,11 @@
         
         <div class="space-y-3 mb-6">
             <input type="text" id="namaBarang" placeholder="Nama Barang" class="w-full p-2 border rounded">
-            <input type="number" id="jumlahStok" placeholder="Jumlah Masuk" class="w-full p-2 border rounded">
-            <button onclick="simpanMasuk()" class="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700">Simpan Masuk</button>
+            <input type="number" id="jumlahInput" placeholder="Jumlah (Angka)" class="w-full p-2 border rounded">
+            <div class="flex gap-2">
+                <button onclick="updateStok('masuk')" class="flex-1 bg-blue-600 text-white p-2 rounded font-bold">MASUK (+)</button>
+                <button onclick="updateStok('keluar')" class="flex-1 bg-red-600 text-white p-2 rounded font-bold">KELUAR (-)</button>
+            </div>
         </div>
 
         <table class="w-full border-collapse border border-gray-300">
@@ -25,13 +28,12 @@
                     <th class="border p-2 text-center">Stok</th>
                 </tr>
             </thead>
-            <tbody id="tabelBody">
-                </tbody>
+            <tbody id="tabelBody"></tbody>
         </table>
     </div>
 
     <script>
-      // Konfigurasi dari foto nomor 39 Anda
+      // Konfigurasi dari proyek gudang-sms-4c81c Anda
       const firebaseConfig = {
         apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
         authDomain: "gudang-sms-4c81c.firebaseapp.com",
@@ -45,27 +47,36 @@
       firebase.initializeApp(firebaseConfig);
       const db = firebase.database();
 
-      // Fungsi Simpan ke Firebase
-      function simpanMasuk() {
-        const nama = document.getElementById('namaBarang').value;
-        const jumlah = document.getElementById('jumlahStok').value;
+      // Fungsi Update Stok (Bisa Tambah atau Kurang)
+      function updateStok(tipe) {
+        const nama = document.getElementById('namaBarang').value.toLowerCase();
+        const jumlah = parseInt(document.getElementById('jumlahInput').value);
 
         if (nama && jumlah) {
           const ref = db.ref('stok/' + nama);
           ref.once('value').then((snap) => {
             let stokLama = snap.exists() ? parseInt(snap.val().stok) : 0;
+            let stokBaru = (tipe === 'masuk') ? (stokLama + jumlah) : (stokLama - jumlah);
+            
+            // Stok tidak boleh minus
+            if (stokBaru < 0) {
+                alert("Stok tidak mencukupi untuk pengeluaran!");
+                return;
+            }
+
             ref.set({
               nama: nama,
-              stok: stokLama + parseInt(jumlah)
+              stok: stokBaru,
+              lastUpdate: new Date().toLocaleString()
             }).then(() => {
-              alert("Stok " + nama + " berhasil diperbarui!");
-              document.getElementById('jumlahStok').value = "";
+              alert("Data " + nama + " berhasil diperbarui!");
+              document.getElementById('jumlahInput').value = "";
             });
           });
         }
       }
 
-      // Menampilkan Data Real-time (Sinkron HP & Laptop)
+      // Tampilkan Data Real-time ke Tabel
       db.ref('stok').on('value', (snapshot) => {
         const data = snapshot.val();
         const tbody = document.getElementById('tabelBody');
@@ -73,8 +84,8 @@
         for (let key in data) {
           tbody.innerHTML += `
             <tr>
-              <td class="border p-2">${data[key].nama}</td>
-              <td class="border p-2 text-center font-bold text-blue-600">${data[key].stok}</td>
+              <td class="border p-2 capitalize">${data[key].nama}</td>
+              <td class="border p-2 text-center font-bold text-blue-700">${data[key].stok}</td>
             </tr>`;
         }
       });
