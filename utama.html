@@ -3,41 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PT SMS - Gudang Aktif</title>
+    <title>PT SMS - Inventory System</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-100 p-4 font-sans">
-    <div class="max-w-md mx-auto space-y-4">
-        <div class="bg-blue-900 text-white p-4 rounded-lg text-center font-bold shadow uppercase">PT. SAMUDRA MANDIRI SENTOSA</div>
+<body class="bg-slate-100 font-sans">
 
-        <div class="bg-white p-5 rounded-xl shadow border-t-4 border-blue-600">
-            <input type="text" id="n" placeholder="NAMA BARANG" class="w-full p-3 border rounded mb-3 uppercase outline-none focus:ring-2 focus:ring-blue-400">
-            <input type="number" id="j" placeholder="JUMLAH" class="w-full p-3 border rounded mb-4 outline-none focus:ring-2 focus:ring-blue-400">
-            <div class="grid grid-cols-2 gap-2">
-                <button onclick="save('masuk')" class="bg-green-600 text-white p-3 rounded-lg font-bold active:bg-green-800">SIMPAN</button>
-                <button onclick="save('keluar')" class="bg-red-600 text-white p-3 rounded-lg font-bold active:bg-red-800">KELUAR</button>
+    <div class="bg-blue-900 text-white p-6 shadow-md text-center no-print">
+        <h1 class="text-2xl font-bold uppercase">PT. SAMUDRA MANDIRI SENTOSA</h1>
+        <p class="text-[10px] tracking-widest opacity-70">INVENTORY MANAGEMENT SYSTEM</p>
+    </div>
+
+    <div class="max-w-6xl mx-auto p-4 space-y-6">
+        
+        <div class="grid grid-cols-3 gap-4 no-print">
+            <div class="bg-white p-4 rounded-xl shadow border-b-4 border-blue-400 text-center">
+                <p class="text-[10px] font-bold text-gray-400 uppercase">Jenis</p>
+                <h2 id="sJenis" class="text-2xl font-black text-blue-600">0</h2>
             </div>
-            <button onclick="window.print()" class="w-full mt-4 bg-gray-800 text-white p-2 rounded text-[10px] uppercase font-bold">Cetak Laporan (PDF)</button>
+            <div class="bg-white p-4 rounded-xl shadow border-b-4 border-emerald-400 text-center">
+                <p class="text-[10px] font-bold text-gray-400 uppercase">Total Stok</p>
+                <h2 id="sTotal" class="text-2xl font-black text-emerald-600">0</h2>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow border-b-4 border-orange-400 text-center">
+                <p class="text-[10px] font-bold text-gray-400 uppercase">Limit</p>
+                <h2 id="sLimit" class="text-2xl font-black text-orange-600">0</h2>
+            </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow overflow-hidden">
-            <div class="bg-gray-800 text-white p-2 text-[10px] font-bold uppercase">Stok Saat Ini</div>
-            <table class="w-full text-sm"><tbody id="st" class="divide-y divide-gray-100"></tbody></table>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 no-print">
+            <div class="bg-white p-5 rounded-xl shadow border">
+                <h3 class="text-emerald-700 font-bold mb-4 text-sm uppercase flex items-center gap-2">📥 Barang Masuk</h3>
+                <div class="space-y-3">
+                    <input type="text" id="nPrs" placeholder="No. PRS" class="w-full p-2 border rounded bg-slate-50 text-sm outline-none">
+                    <input type="text" id="namaIn" placeholder="Nama Barang" class="w-full p-2 border rounded uppercase font-bold outline-none focus:ring-2 focus:ring-emerald-400">
+                    <div class="flex gap-2">
+                        <input type="number" id="jmlIn" placeholder="Jumlah" class="w-1/2 p-2 border rounded font-bold">
+                        <input type="text" id="satIn" placeholder="Satuan (Pcs/Box)" class="w-1/2 p-2 border rounded bg-slate-50">
+                    </div>
+                    <button onclick="proses('masuk')" class="w-full bg-emerald-600 text-white py-3 rounded-lg font-bold shadow-md hover:bg-emerald-700 active:scale-95 transition-all uppercase text-xs">Simpan Masuk</button>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-xl shadow border">
+                <h3 class="text-rose-700 font-bold mb-4 text-sm uppercase flex items-center gap-2">📤 Barang Keluar</h3>
+                <div class="space-y-3">
+                    <input type="text" id="namaOut" placeholder="Cari Barang..." class="w-full p-2 border rounded uppercase outline-none focus:ring-2 focus:ring-rose-400">
+                    <input type="number" id="jmlOut" placeholder="Jumlah Keluar" class="w-full p-2 border rounded font-bold">
+                    <div class="h-[44px]"></div> <button onclick="proses('keluar')" class="w-full bg-rose-600 text-white py-3 rounded-lg font-bold shadow-md hover:bg-rose-700 active:scale-95 transition-all uppercase text-xs">Kurangi Stok</button>
+                </div>
+            </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow overflow-hidden">
-            <div class="bg-blue-600 text-white p-2 text-[10px] font-bold uppercase flex justify-between">
-                <span>Catatan Transaksi</span>
-                <button onclick="d.ref('riwayat').remove()" class="text-[8px] underline">HAPUS LOG</button>
+        <div class="bg-white rounded-xl shadow overflow-hidden border">
+            <div class="bg-slate-800 text-white p-3 text-[10px] font-bold uppercase tracking-widest flex justify-between items-center">
+                <span>📦 Daftar Stok Barang</span>
+                <button onclick="window.print()" class="bg-slate-600 px-3 py-1 rounded hover:bg-slate-500 no-print">Cetak Laporan</button>
             </div>
-            <table class="w-full text-[10px]"><tbody id="lt" class="divide-y divide-gray-100"></tbody></table>
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-slate-50 border-b text-[10px] text-gray-400">
+                        <th class="p-3 text-left">NAMA BARANG</th>
+                        <th class="p-3 text-center">STOK</th>
+                        <th class="p-3 text-right">SATUAN</th>
+                    </tr>
+                </thead>
+                <tbody id="tbStok" class="divide-y"></tbody>
+            </table>
+        </div>
+
+        <div class="bg-white rounded-xl shadow overflow-hidden border">
+            <div class="bg-blue-600 text-white p-3 text-[10px] font-bold uppercase flex justify-between items-center">
+                <span>🕒 Riwayat Transaksi</span>
+                <button onclick="if(confirm('Hapus log?')) db.ref('riwayat').remove()" class="text-[8px] underline no-print opacity-50">Hapus Riwayat</button>
+            </div>
+            <table class="w-full text-[10px]">
+                <tbody id="tbLog" class="divide-y"></tbody>
+            </table>
         </div>
     </div>
 
     <script>
-        const cfg = {
+        // Konfigurasi ini harus tepat
+        const config = {
             apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
             authDomain: "gudang-sms-4c81c.firebaseapp.com",
             databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -45,52 +94,67 @@
             storageBucket: "gudang-sms-4c81c.firebasestorage.app",
             appId: "1:598362736106:web:c8e2732d6ac7613931de93"
         };
-        firebase.initializeApp(cfg);
-        const d = firebase.database();
+        firebase.initializeApp(config);
+        const db = firebase.database();
 
-        function save(mode) {
-            const nama = document.getElementById('n').value.trim().toLowerCase();
-            const jml = parseInt(document.getElementById('j').value);
-            if (!nama || isNaN(jml)) return alert("Isi data dengan benar!");
+        function proses(mode) {
+            const nama = document.getElementById(mode==='masuk'?'namaIn':'namaOut').value.trim().toLowerCase();
+            const jml = parseInt(document.getElementById(mode==='masuk'?'jmlIn':'jmlOut').value);
+            const sat = document.getElementById('satIn').value || "Pcs";
+            const prs = document.getElementById('nPrs').value || "-";
+            const tgl = new Date().toLocaleString('id-ID');
 
-            const rs = d.ref('stok/' + nama);
-            const rl = d.ref('riwayat').push();
+            if (!nama || isNaN(jml)) return alert("Isi Nama & Jumlah!");
 
-            rs.once('value').then(s => {
-                let v = s.exists() ? parseInt(s.val().stok) : 0;
-                let b = (mode === 'masuk') ? (v + jml) : (v - jml);
-                if (b < 0) return alert("Stok tidak cukup!");
+            const refS = db.ref('stok/' + nama);
+            const refL = db.ref('riwayat').push();
 
-                // Update database
-                return rs.update({ nama: nama, stok: b }).then(() => {
-                    return rl.set({ 
-                        w: new Date().toLocaleString('id-ID'), 
-                        m: mode, 
-                        n: nama, 
-                        q: (mode === 'masuk' ? '+' : '-') + jml 
-                    });
-                });
-            }).then(() => {
-                alert("Data Berhasil Disimpan!");
-                document.getElementById('n').value = ''; 
-                document.getElementById('j').value = '';
-            }).catch(e => alert("Gagal Simpan: Periksa Koneksi/Rules Firebase"));
+            refS.once('value').then(s => {
+                let current = s.exists() ? parseInt(s.val().stok) : 0;
+                let baru = (mode === 'masuk') ? (current + jml) : (current - jml);
+                if (baru < 0) return alert("Stok tidak cukup!");
+
+                refS.update({ nama: nama, stok: baru, satuan: sat, prs: prs });
+                refL.set({ t: tgl, m: mode, n: nama, q: (mode==='masuk'?'+':'-')+jml, p: prs });
+
+                alert("Berhasil!");
+                document.getElementById('namaIn').value=''; document.getElementById('jmlIn').value='';
+                document.getElementById('namaOut').value=''; document.getElementById('jmlOut').value='';
+            });
         }
 
-        d.ref('stok').on('value', sn => {
-            let h = ""; sn.forEach(c => {
-                h += <tr><td class="p-3 capitalize font-bold">${c.val().nama}</td><td class="p-3 text-right text-blue-600 font-black">${c.val().stok}</td></tr>;
+        // Sinkronisasi Stok & Statistik
+        db.ref('stok').on('value', snap => {
+            let h = "", tj = 0, ts = 0, tl = 0;
+            snap.forEach(c => {
+                const v = c.val();
+                tj++; ts += v.stok; if(v.stok < 5) tl++;
+                h += `<tr class="hover:bg-slate-50">
+                    <td class="p-3 capitalize font-bold text-slate-700">${v.nama}</td>
+                    <td class="p-3 text-center font-black text-blue-600">${v.stok}</td>
+                    <td class="p-3 text-right text-gray-400 text-xs">${v.satuan || 'Pcs'}</td>
+                </tr>`;
             });
-            document.getElementById('st').innerHTML = h;
+            document.getElementById('tbStok').innerHTML = h || '<tr><td colspan="3" class="p-8 text-center text-gray-300 italic">Belum ada data...</td></tr>';
+            document.getElementById('sJenis').innerText = tj;
+            document.getElementById('sTotal').innerText = ts;
+            document.getElementById('sLimit').innerText = tl;
         });
 
-        d.ref('riwayat').on('value', sn => {
-            let h = ""; let a = []; sn.forEach(c => a.push(c.val()));
-            a.reverse().slice(0, 10).forEach(v => {
-                const c = v.m === 'masuk' ? 'text-green-600' : 'text-red-600';
-                h += <tr><td class="p-2 text-gray-400 text-[8px]">${v.w}</td><td class="p-2 font-bold uppercase ${c}">${v.m}</td><td class="p-2 capitalize">${v.n}</td><td class="p-2 text-right font-bold">${v.q}</td></tr>;
+        // Sinkronisasi Riwayat
+        db.ref('riwayat').on('value', snap => {
+            let h = ""; let list = [];
+            snap.forEach(c => list.push(c.val()));
+            list.reverse().slice(0, 10).forEach(v => {
+                const col = v.m === 'masuk' ? 'text-green-600' : 'text-red-600';
+                h += `<tr>
+                    <td class="p-2 text-gray-400 text-[8px]">${v.t}</td>
+                    <td class="p-2 font-bold uppercase ${col} text-center text-[8px]">${v.m}</td>
+                    <td class="p-2 capitalize font-medium text-slate-700">${v.n}</td>
+                    <td class="p-2 text-right font-black">${v.q}</td>
+                </tr>`;
             });
-            document.getElementById('lt').innerHTML = h;
+            document.getElementById('tbLog').innerHTML = h;
         });
     </script>
 </body>
