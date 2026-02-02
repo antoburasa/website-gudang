@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,39 +8,27 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 p-4">
-    <div class="max-w-md mx-auto space-y-4">
-        <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-blue-600">
-            <h1 class="text-xl font-bold text-center text-gray-800 uppercase">PT. SAMUDRA MANDIRI SENTOSA</h1>
-            <p class="text-xs text-center text-gray-500 mb-4 font-bold">SISTEM GUDANG REAL-TIME</p>
-            
-            <div class="space-y-3">
-                <input type="text" id="namaBarang" placeholder="Ketik Nama Barang..." class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <input type="number" id="jumlahInput" placeholder="Jumlah (Angka)" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <div class="flex gap-2">
-                    <button onclick="prosesStok('masuk')" class="flex-1 bg-green-600 text-white py-3 rounded-lg font-bold shadow-sm active:scale-95">MASUK (+)</button>
-                    <button onclick="prosesStok('keluar')" class="flex-1 bg-red-600 text-white py-3 rounded-lg font-bold shadow-sm active:scale-95">KELUAR (-)</button>
-                </div>
+<body class="bg-gray-200 p-4">
+    <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-lg">
+        <h1 class="text-center font-bold text-blue-700 mb-4">PT. SAMUDRA MANDIRI SENTOSA</h1>
+        
+        <div class="space-y-3 mb-6">
+            <input type="text" id="nama" placeholder="Nama Barang" class="w-full p-2 border rounded">
+            <input type="number" id="jumlah" placeholder="Jumlah" class="w-full p-2 border rounded">
+            <div class="flex gap-2">
+                <button onclick="aksi('masuk')" class="flex-1 bg-green-600 text-white py-2 rounded font-bold">MASUK (+)</button>
+                <button onclick="aksi('keluar')" class="flex-1 bg-red-600 text-white py-2 rounded font-bold">KELUAR (-)</button>
             </div>
         </div>
 
-        <div class="bg-white p-4 rounded-xl shadow-md">
-            <h2 class="font-bold text-gray-700 mb-2 border-b pb-1">📦 Stok Saat Ini</h2>
-            <table class="w-full text-sm">
-                <tbody id="tabelBody" class="divide-y"></tbody>
-            </table>
-        </div>
+        <h2 class="font-bold border-b mb-2">📦 Stok Sekarang</h2>
+        <div id="tabelStok" class="text-sm mb-6"></div>
 
-        <div class="bg-white p-4 rounded-xl shadow-md">
-            <h2 class="font-bold text-gray-700 mb-2 border-b pb-1">🕒 Riwayat Transaksi</h2>
-            <table class="w-full text-[10px]">
-                <tbody id="tabelRiwayat" class="divide-y text-gray-500"></tbody>
-            </table>
-        </div>
+        <h2 class="font-bold border-b mb-2">🕒 Riwayat</h2>
+        <div id="tabelRiwayat" class="text-[10px] text-gray-500"></div>
     </div>
 
     <script>
-        // Konfigurasi Firebase dari Foto 39
         const firebaseConfig = {
             apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
             authDomain: "gudang-sms-4c81c.firebaseapp.com",
@@ -51,82 +39,50 @@
             appId: "1:598362736106:web:c8e2732d6ac7613931de93"
         };
 
-        // Inisialisasi
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // FUNGSI UTAMA
-        function prosesStok(tipe) {
-            const nama = document.getElementById('namaBarang').value.trim().toLowerCase();
-            const jumlah = parseInt(document.getElementById('jumlahInput').value);
-            const waktuSkg = new Date().toLocaleString('id-ID');
+        function aksi(tipe) {
+            const n = document.getElementById('nama').value.trim().toLowerCase();
+            const j = parseInt(document.getElementById('jumlah').value);
+            const w = new Date().toLocaleString('id-ID');
 
-            if (!nama || isNaN(jumlah)) {
-                alert("Mohon isi Nama Barang dan Jumlah Angka!");
-                return;
-            }
+            if(!n || isNaN(j)) return alert("Isi data dulu!");
 
-            const refStok = db.ref('stok/' + nama);
-            const refRiwayat = db.ref('riwayat').push();
+            const sRef = db.ref('stok/' + n);
+            const rRef = db.ref('riwayat').push();
 
-            refStok.once('value').then((snap) => {
-                let stokLama = 0;
-                if (snap.exists()) {
-                    stokLama = parseInt(snap.val().stok) || 0;
-                }
+            sRef.once('value').then(s => {
+                let lama = s.exists() ? parseInt(s.val().stok) : 0;
+                let baru = (tipe === 'masuk') ? (lama + j) : (lama - j);
 
-                let stokBaru = (tipe === 'masuk') ? (stokLama + jumlah) : (stokLama - jumlah);
+                if(baru < 0) return alert("Stok kurang!");
 
-                if (stokBaru < 0) {
-                    alert("Stok tidak mencukupi untuk pengeluaran!");
-                    return;
-                }
+                sRef.update({ nama: n, stok: baru, update: w });
+                rRef.set({ nama: n, jumlah: (tipe==='masuk'?'+':'-')+j, waktu: w, tipe: tipe });
 
-                // Simpan ke Database
-                refStok.update({
-                    nama: nama,
-                    stok: stokBaru,
-                    last_update: waktuSkg
-                });
-
-                refRiwayat.set({
-                    nama: nama,
-                    jumlah: (tipe === 'masuk' ? '+' : '-') + jumlah,
-                    waktu: waktuSkg,
-                    tipe: tipe
-                });
-
-                // Reset Form
-                document.getElementById('namaBarang').value = "";
-                document.getElementById('jumlahInput').value = "";
-                alert("Berhasil mencatat barang " + tipe + "!");
-                
-            }).catch((error) => {
-                alert("Terjadi kesalahan: " + error.message);
-            });
+                document.getElementById('nama').value = "";
+                document.getElementById('jumlah').value = "";
+                alert("Berhasil!");
+            }).catch(e => alert("Error: " + e.message));
         }
 
-        // TAMPILAN TABEL STOK (Otomatis)
-        db.ref('stok').on('value', (snap) => {
-            const data = snap.val();
-            let html = "";
-            for (let k in data) {
-                html += <tr><td class="py-2 capitalize font-medium">${data[k].nama}</td><td class="text-right font-bold text-blue-600">${data[k].stok} pcs</td></tr>;
-            }
-            document.getElementById('tabelBody').innerHTML = html;
+        db.ref('stok').on('value', s => {
+            let h = "";
+            s.forEach(c => {
+                h += <div class="flex justify-between border-b py-1"><span class="capitalize">${c.val().nama}</span><b>${c.val().stok} pcs</b></div>;
+            });
+            document.getElementById('tabelStok').innerHTML = h;
         });
 
-        // TAMPILAN TABEL RIWAYAT (Otomatis)
-        db.ref('riwayat').limitToLast(8).on('value', (snap) => {
-            const data = snap.val();
-            let html = "";
-            const keys = Object.keys(data || {}).reverse();
-            keys.forEach(k => {
-                const item = data[k];
-                const warna = item.tipe === 'masuk' ? 'text-green-600' : 'text-red-600';
-                html += <tr><td class="py-1">${item.waktu}</td><td class="text-right capitalize ${warna}">${item.nama} (${item.jumlah})</td></tr>;
+        db.ref('riwayat').limitToLast(5).on('value', s => {
+            let h = "";
+            let data = [];
+            s.forEach(c => { data.push(c.val()); });
+            data.reverse().forEach(i => {
+                h += <div class="border-b py-1">${i.waktu} - <span class="${i.tipe=='masuk'?'text-green-600':'text-red-600'}">${i.nama} (${i.jumlah})</span></div>;
             });
-            document.getElementById('tabelRiwayat').innerHTML = html;
+            document.getElementById('tabelRiwayat').innerHTML = h;
         });
     </script>
 </body>
