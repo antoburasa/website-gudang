@@ -3,92 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Gudang PT. SMS</title>
+    <title>Gudang SMS v2</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 font-sans text-gray-800">
-
-    <div class="bg-white shadow-sm p-4 mb-6">
-        <h1 class="text-2xl font-bold text-center text-blue-900">PT. SAMUDRA MANDIRI SENTOSA</h1>
-        <p class="text-center text-gray-500 text-xs uppercase tracking-widest">Inventory Dashboard Professional</p>
+<body class="bg-slate-100 font-sans">
+    <div class="bg-blue-900 text-white p-4 text-center shadow-lg">
+        <h1 class="text-xl font-bold">PT. SAMUDRA MANDIRI SENTOSA</h1>
+        <p class="text-[10px] opacity-70 uppercase tracking-widest">Inventory System Real-time</p>
     </div>
 
-    <div class="max-w-6xl mx-auto px-4 pb-10">
-        
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <div class="bg-blue-600 text-white p-6 rounded-xl shadow-lg">
-                <p class="text-xs opacity-80 uppercase font-bold">Total Jenis Barang</p>
-                <h2 id="cardTotalJenis" class="text-5xl font-bold mt-2">0</h2>
+    <div class="max-w-5xl mx-auto p-4 space-y-6">
+        <div class="grid grid-cols-3 gap-3">
+            <div class="bg-white p-4 rounded-lg shadow border-b-4 border-blue-500 text-center">
+                <p class="text-[10px] text-gray-400 uppercase font-bold">Jenis</p>
+                <p id="cardTotalJenis" class="text-2xl font-black text-blue-600">0</p>
             </div>
-            <div class="bg-emerald-600 text-white p-6 rounded-xl shadow-lg">
-                <p class="text-xs opacity-80 uppercase font-bold">Total Stok Fisik</p>
-                <h2 id="cardTotalStok" class="text-5xl font-bold mt-2">0</h2>
+            <div class="bg-white p-4 rounded-lg shadow border-b-4 border-emerald-500 text-center">
+                <p class="text-[10px] text-gray-400 uppercase font-bold">Stok</p>
+                <p id="cardTotalStok" class="text-2xl font-black text-emerald-600">0</p>
             </div>
-            <div class="bg-amber-500 text-white p-6 rounded-xl shadow-lg">
-                <p class="text-xs opacity-80 uppercase font-bold">Perlu Order (< 5)</p>
-                <h2 id="cardPerluOrder" class="text-5xl font-bold mt-2">0</h2>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-emerald-500">
-                <h3 class="font-bold mb-4 text-emerald-700 uppercase">📥 Masuk Barang</h3>
-                <div class="space-y-3">
-                    <input type="text" id="prsNo" placeholder="No. PRS" class="w-full p-2 border rounded bg-gray-50">
-                    <input type="text" id="namaMasuk" placeholder="Nama Barang" class="w-full p-2 border rounded">
-                    <div class="flex gap-2">
-                        <input type="number" id="jmlMasuk" placeholder="Jml" class="w-2/3 p-2 border rounded font-bold">
-                        <input type="text" id="satuanMasuk" placeholder="Satuan" class="w-1/3 p-2 border rounded bg-gray-50">
-                    </div>
-                    <button onclick="proses('masuk')" class="w-full bg-emerald-600 text-white py-3 rounded-lg font-bold hover:bg-emerald-700 shadow-md transition">SIMPAN MASUK</button>
-                </div>
-            </div>
-
-            <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-rose-500">
-                <h3 class="font-bold mb-4 text-rose-700 uppercase">📤 Keluar Barang</h3>
-                <div class="space-y-3">
-                    <input type="text" id="namaKeluar" placeholder="Nama Barang" class="w-full p-2 border rounded">
-                    <input type="number" id="jmlKeluar" placeholder="Jumlah Keluar" class="w-full p-2 border rounded font-bold">
-                    <button onclick="proses('keluar')" class="w-full bg-rose-600 text-white py-3 rounded-lg font-bold hover:bg-rose-700 shadow-md transition">KURANGI STOK</button>
-                </div>
+            <div class="bg-white p-4 rounded-lg shadow border-b-4 border-orange-500 text-center">
+                <p class="text-[10px] text-gray-400 uppercase font-bold">Limit</p>
+                <p id="cardPerluOrder" class="text-2xl font-black text-orange-600">0</p>
             </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-md overflow-hidden mb-8">
-            <div class="bg-slate-800 text-white p-4 font-bold flex justify-between">
-                <span>📦 STOK SAAT INI</span>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-emerald-100">
+                <h2 class="font-bold text-emerald-700 text-sm mb-3">📥 TAMBAH STOK</h2>
+                <input type="text" id="prsNo" placeholder="No. PRS" class="w-full p-2 mb-2 border rounded bg-gray-50">
+                <input type="text" id="namaMasuk" placeholder="Nama Barang" class="w-full p-2 mb-2 border rounded">
+                <div class="flex gap-2 mb-3">
+                    <input type="number" id="jmlMasuk" placeholder="Jumlah" class="w-1/2 p-2 border rounded font-bold">
+                    <input type="text" id="satuanMasuk" placeholder="Pcs/Box" class="w-1/2 p-2 border rounded bg-gray-50">
+                </div>
+                <button onclick="proses('masuk')" class="w-full bg-emerald-600 text-white py-3 rounded-lg font-bold shadow-lg shadow-emerald-200">SIMPAN MASUK</button>
+            </div>
+
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-rose-100">
+                <h2 class="font-bold text-rose-700 text-sm mb-3">📤 KURANGI STOK</h2>
+                <input type="text" id="namaKeluar" placeholder="Nama Barang" class="w-full p-2 mb-2 border rounded">
+                <input type="number" id="jmlKeluar" placeholder="Jumlah Keluar" class="w-full p-2 mb-3 border rounded font-bold">
+                <button onclick="proses('keluar')" class="w-full bg-rose-600 text-white py-3 rounded-lg font-bold shadow-lg shadow-rose-200">KURANGI STOK</button>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="bg-gray-800 text-white p-3 font-bold text-xs">📦 DAFTAR STOK</div>
+            <table class="w-full text-left text-sm"><tbody id="tabelStok" class="divide-y"></tbody></table>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden border-2 border-blue-50">
+            <div class="bg-blue-600 text-white p-3 font-bold text-xs flex justify-between">
+                <span>🕒 RIWAYAT TRANSAKSI</span>
+                <span class="opacity-50 text-[8px]">LIMIT 10 DATA</span>
             </div>
             <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-slate-100 text-gray-600 uppercase text-xs">
-                        <tr>
-                            <th class="p-4">PRS</th>
-                            <th class="p-4">BARANG</th>
-                            <th class="p-4 text-center">STOK</th>
-                            <th class="p-4">SATUAN</th>
-                        </tr>
+                <table class="w-full text-[10px] text-left">
+                    <thead class="bg-gray-50 border-b">
+                        <tr><th class="p-2">#</th><th class="p-2">WAKTU</th><th class="p-2">AKSI</th><th class="p-2">BARANG</th><th class="p-2 text-right">JML</th></tr>
                     </thead>
-                    <tbody id="tabelStok" class="divide-y"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-md overflow-hidden border-2 border-blue-100">
-            <div class="bg-blue-900 text-white p-4 font-bold">🕒 RIWAYAT TRANSAKSI TERBARU</div>
-            <div class="p-4 overflow-x-auto">
-                <table class="w-full text-left text-xs uppercase tracking-tighter">
-                    <thead class="text-gray-400 border-b">
-                        <tr>
-                            <th class="pb-2">WAKTU</th>
-                            <th class="pb-2">AKSI</th>
-                            <th class="pb-2">NAMA BARANG</th>
-                            <th class="pb-2">JUMLAH</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabelRiwayat" class="divide-y font-medium text-gray-600">
-                        </tbody>
+                    <tbody id="tabelRiwayat" class="divide-y"></tbody>
                 </table>
             </div>
         </div>
@@ -112,37 +89,32 @@
             const jml = parseInt(document.getElementById(tipe === 'masuk' ? 'jmlMasuk' : 'jmlKeluar').value);
             const prs = document.getElementById('prsNo').value || "-";
             const satuan = document.getElementById('satuanMasuk').value || "Pcs";
-            const waktu = new Date().toLocaleString('id-ID');
+            const waktu = new Date().toLocaleTimeString('id-ID');
 
-            if (!nama || isNaN(jml)) return alert("Data tidak lengkap!");
+            if (!nama || isNaN(jml)) return alert("Isi nama dan jumlah!");
 
             const refStok = db.ref('stok/' + nama);
-            const refLog = db.ref('riwayat').push(); // Ini membuat ID unik agar riwayat tidak menimpa
+            const refLog = db.ref('riwayat').push();
 
             refStok.once('value').then(s => {
                 let lama = s.exists() ? parseInt(s.val().stok) : 0;
                 let baru = (tipe === 'masuk') ? (lama + jml) : (lama - jml);
-                if (baru < 0) return alert("Stok kurang!");
+                if (baru < 0) return alert("Stok tidak cukup!");
 
-                // Update Stok
                 refStok.update({ prs, nama, stok: baru, satuan });
-                
-                // Simpan Riwayat Baru
                 refLog.set({ waktu, tipe, nama, jml: (tipe === 'masuk' ? '+' : '-') + jml });
 
-                alert("Data diperbarui!");
-                // Bersihkan Input
+                alert("Berhasil!");
                 document.getElementById('namaMasuk').value = ""; document.getElementById('jmlMasuk').value = "";
                 document.getElementById('namaKeluar').value = ""; document.getElementById('jmlKeluar').value = "";
             });
         }
 
-        // Tampilkan Stok & Statistik
         db.ref('stok').on('value', snap => {
             let h = "", tJ = 0, tS = 0, pO = 0;
             snap.forEach(c => {
                 const v = c.val(); tJ++; tS += v.stok; if(v.stok < 5) pO++;
-                h += <tr><td class="p-4 text-gray-400 font-mono">${v.prs}</td><td class="p-4 font-bold capitalize">${v.nama}</td><td class="p-4 text-center font-bold text-blue-600">${v.stok}</td><td class="p-4 text-gray-400">${v.satuan}</td></tr>;
+                h += <tr><td class="p-3 font-bold capitalize">${v.nama}</td><td class="p-3 text-right text-blue-600 font-bold">${v.stok} ${v.satuan}</td></tr>;
             });
             document.getElementById('tabelStok').innerHTML = h;
             document.getElementById('cardTotalJenis').innerText = tJ;
@@ -150,14 +122,12 @@
             document.getElementById('cardPerluOrder').innerText = pO;
         });
 
-        // Tampilkan Riwayat (Perbaikan Utama di Sini)
         db.ref('riwayat').on('value', snap => {
-            let h = "";
-            let data = [];
+            let h = "", i = 1, data = [];
             snap.forEach(c => data.push(c.val()));
             data.reverse().slice(0, 10).forEach(v => {
-                const c = v.tipe === 'masuk' ? 'text-emerald-600' : 'text-rose-600';
-                h += <tr class="border-b"><td class="py-3 text-gray-400">${v.waktu}</td><td class="py-3 font-bold ${c}">${v.tipe}</td><td class="py-3 capitalize">${v.nama}</td><td class="py-3 font-bold text-gray-700">${v.jml}</td></tr>;
+                const color = v.tipe === 'masuk' ? 'text-emerald-600' : 'text-rose-600';
+                h += <tr><td class="p-2 text-gray-300">${i++}</td><td class="p-2 text-gray-400">${v.waktu}</td><td class="p-2 font-bold ${color}">${v.tipe.toUpperCase()}</td><td class="p-2 capitalize">${v.nama}</td><td class="p-2 text-right font-bold">${v.jml}</td></tr>;
             });
             document.getElementById('tabelRiwayat').innerHTML = h;
         });
