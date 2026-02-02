@@ -1,60 +1,83 @@
-<script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Gudang PT. SMS</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-5">
+    <div class="max-w-md mx-auto bg-white p-6 rounded-lg shadow-lg">
+        <h1 class="text-xl font-bold mb-4 text-center">Gudang PT. SAMUDRA MANDIRI SENTOSA</h1>
+        
+        <div class="space-y-3 mb-6">
+            <input type="text" id="namaBarang" placeholder="Nama Barang" class="w-full p-2 border rounded">
+            <input type="number" id="jumlahStok" placeholder="Jumlah Masuk" class="w-full p-2 border rounded">
+            <button onclick="simpanMasuk()" class="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700">Simpan Masuk</button>
+        </div>
 
-<script>
-  // Data Konfigurasi dari Foto 39 kamu
-  const firebaseConfig = {
-    apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
-    authDomain: "gudang-sms-4c81c.firebaseapp.com",
-    databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "gudang-sms-4c81c",
-    storageBucket: "gudang-sms-4c81c.firebasestorage.app",
-    messagingSenderId: "598362736106",
-    appId: "1:598362736106:web:c8e2732d6ac7613931de93"
-  };
+        <table class="w-full border-collapse border border-gray-300">
+            <thead>
+                <tr class="bg-gray-200">
+                    <th class="border p-2 text-left">Nama Barang</th>
+                    <th class="border p-2 text-center">Stok</th>
+                </tr>
+            </thead>
+            <tbody id="tabelBody">
+                </tbody>
+        </table>
+    </div>
 
-  // Inisialisasi Firebase
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+    <script>
+      // Konfigurasi dari foto nomor 39 Anda
+      const firebaseConfig = {
+        apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
+        authDomain: "gudang-sms-4c81c.firebaseapp.com",
+        databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "gudang-sms-4c81c",
+        storageBucket: "gudang-sms-4c81c.firebasestorage.app",
+        messagingSenderId: "598362736106",
+        appId: "1:598362736106:web:c8e2732d6ac7613931de93"
+      };
 
-  // Fungsi untuk Simpan Barang Masuk
-  function simpanMasuk() {
-    const nama = document.querySelector('input[placeholder="Cari Nama Barang"]').value;
-    const jumlah = document.querySelector('input[type="number"]').value;
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.database();
 
-    if (nama && jumlah) {
-      const ref = db.ref('stok/' + nama);
-      ref.once('value').then((snap) => {
-        let stokLama = snap.exists() ? parseInt(snap.val().stok) : 0;
-        ref.set({
-          nama: nama,
-          stok: stokLama + parseInt(jumlah),
-          waktu: new Date().toLocaleString()
-        }).then(() => {
-          alert("Stok " + nama + " berhasil ditambah!");
-        });
-      });
-    } else {
-      alert("Mohon isi nama barang dan jumlah!");
-    }
-  }
+      // Fungsi Simpan ke Firebase
+      function simpanMasuk() {
+        const nama = document.getElementById('namaBarang').value;
+        const jumlah = document.getElementById('jumlahStok').value;
 
-  // Fungsi untuk Menampilkan Data secara Real-time ke Tabel
-  db.ref('stok').on('value', (snapshot) => {
-    const data = snapshot.val();
-    const tabelBody = document.querySelector('table tbody'); // Perbaikan 'tbody' agar data muncul
-    
-    if (tabelBody) {
-      tabelBody.innerHTML = "";
-      for (let key in data) {
-        tabelBody.innerHTML += `
-          <tr>
-            <td>-</td>
-            <td>${data[key].nama}</td>
-            <td>${data[key].stok}</td>
-            <td>pcs</td>
-          </tr>`;
+        if (nama && jumlah) {
+          const ref = db.ref('stok/' + nama);
+          ref.once('value').then((snap) => {
+            let stokLama = snap.exists() ? parseInt(snap.val().stok) : 0;
+            ref.set({
+              nama: nama,
+              stok: stokLama + parseInt(jumlah)
+            }).then(() => {
+              alert("Stok " + nama + " berhasil diperbarui!");
+              document.getElementById('jumlahStok').value = "";
+            });
+          });
+        }
       }
-    }
-  });
-</script>
+
+      // Menampilkan Data Real-time (Sinkron HP & Laptop)
+      db.ref('stok').on('value', (snapshot) => {
+        const data = snapshot.val();
+        const tbody = document.getElementById('tabelBody');
+        tbody.innerHTML = "";
+        for (let key in data) {
+          tbody.innerHTML += `
+            <tr>
+              <td class="border p-2">${data[key].nama}</td>
+              <td class="border p-2 text-center font-bold text-blue-600">${data[key].stok}</td>
+            </tr>`;
+        }
+      });
+    </script>
+</body>
+</html>
