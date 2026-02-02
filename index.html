@@ -90,4 +90,22 @@
         const data = snap.val();
         let html = "";
         for (let k in data) {
-          html += `<tr><td class="py-2 capitalize">${data[k].nama}</td><td class="text-right font-bold text-blue
+          html += <tr><td class="py-2 capitalize">${data[k].nama}</td><td class="text-right font-bold text-blue-600">${data[k].stok} pcs</td></tr>;
+        }
+        document.getElementById('tabelBody').innerHTML = html;
+      });
+
+      db.ref('riwayat').limitToLast(10).on('value', (snap) => {
+        const data = snap.val();
+        let html = "";
+        const keys = Object.keys(data || {}).reverse();
+        keys.forEach(k => {
+          const item = data[k];
+          const warna = item.tipe === 'masuk' ? 'text-green-600' : 'text-red-600';
+          html += <tr><td class="py-1">${item.waktu}</td><td class="text-right capitalize ${warna}">${item.nama} (${item.jumlah})</td></tr>;
+        });
+        document.getElementById('tabelRiwayat').innerHTML = html;
+      });
+    </script>
+</body>
+</html>
