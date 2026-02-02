@@ -3,22 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gudang SMS v4</title>
+    <title>Gudang SMS v5 - Laporan</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @media print {
+            .no-print { display: none; }
+            body { background: white; p: 0; }
+            .print-only { display: block !important; }
+        }
+    </style>
 </head>
 <body class="bg-gray-100 p-4">
 
     <div class="max-w-md mx-auto space-y-4">
-        <div class="bg-blue-900 text-white p-4 rounded text-center font-bold uppercase">
+        <div class="bg-blue-900 text-white p-4 rounded text-center font-bold uppercase no-print">
             PT. SAMUDRA MANDIRI SENTOSA
         </div>
 
-        <div class="bg-white p-5 rounded-lg shadow border-t-4 border-blue-500">
+        <div class="bg-white p-5 rounded-lg shadow border-t-4 border-blue-500 no-print">
             <div class="mb-4">
                 <label class="block text-xs font-bold mb-1">NAMA BARANG</label>
-                <input type="text" id="namaBrg" class="w-full p-2 border rounded border-gray-300">
+                <input type="text" id="namaBrg" class="w-full p-2 border rounded border-gray-300 uppercase">
             </div>
             <div class="mb-4">
                 <label class="block text-xs font-bold mb-1">JUMLAH UNIT</label>
@@ -31,18 +38,43 @@
             </div>
         </div>
 
-        <div class="bg-white rounded shadow overflow-hidden">
-            <div class="bg-gray-700 text-white p-2 text-xs font-bold">STOK SAAT INI</div>
-            <table class="w-full text-sm"><tbody id="tbStok" class="divide-y"></tbody></table>
+        <button onclick="window.print()" class="w-full bg-gray-800 text-white p-3 rounded font-bold uppercase text-xs no-print flex items-center justify-center gap-2">
+            🖨️ CETAK LAPORAN SEKARANG
+        </button>
+
+        <div id="printArea" class="bg-white rounded shadow p-4">
+            <div class="hidden print-only text-center mb-6 border-b-2 border-black pb-4">
+                <h1 class="text-xl font-bold">LAPORAN STOK GUDANG</h1>
+                <p class="text-sm">PT. SAMUDRA MANDIRI SENTOSA</p>
+                <p id="tglCetak" class="text-xs mt-2"></p>
+            </div>
+
+            <h3 class="text-xs font-bold mb-2 text-blue-800 uppercase">Daftar Stok Barang</h3>
+            <table class="w-full text-sm border-collapse border border-gray-300 mb-6">
+                <thead>
+                    <tr class="bg-gray-100 uppercase text-[10px]">
+                        <th class="border p-2 text-left">Nama Barang</th>
+                        <th class="border p-2 text-right">Stok</th>
+                    </tr>
+                </thead>
+                <tbody id="tbStok"></tbody>
+            </table>
+
+            <h3 class="text-xs font-bold mb-2 text-blue-800 uppercase">Riwayat Transaksi</h3>
+            <table class="w-full text-[9px] border-collapse border border-gray-300">
+                <thead>
+                    <tr class="bg-gray-100 uppercase">
+                        <th class="border p-2 text-left">Waktu</th>
+                        <th class="border p-2">Tipe</th>
+                        <th class="border p-2 text-left">Barang</th>
+                        <th class="border p-2 text-right">Qty</th>
+                    </tr>
+                </thead>
+                <tbody id="tbLog"></tbody>
+            </table>
         </div>
 
-        <div class="bg-white rounded shadow overflow-hidden">
-            <div class="bg-blue-600 text-white p-2 text-xs font-bold flex justify-between">
-                <span>RIWAYAT TERAKHIR</span>
-                <button onclick="hapusLog()" class="text-[8px] bg-blue-800 px-1 rounded">HAPUS</button>
-            </div>
-            <table class="w-full text-[10px]"><tbody id="tbLog" class="divide-y"></tbody></table>
-        </div>
+        <button onclick="hapusLog()" class="w-full text-[10px] text-gray-400 mt-4 no-print underline">Hapus Riwayat Transaksi</button>
     </div>
 
     <script>
@@ -79,30 +111,33 @@
                 alert("Berhasil!");
                 document.getElementById('namaBrg').value = ''; 
                 document.getElementById('jmlBrg').value = '';
-            }).catch(e => alert("Error: " + e.message));
+            });
         }
 
         function hapusLog() {
             if(confirm("Hapus semua riwayat?")) db.ref('riwayat').remove();
         }
 
+        // Tampilkan Stok
         db.ref('stok').on('value', snap => {
             let h = "";
             snap.forEach(c => {
                 const v = c.val();
-                h += <tr><td class="p-3 capitalize font-bold">${v.nama}</td><td class="p-3 text-right font-black text-blue-600">${v.stok}</td></tr>;
+                h += <tr><td class="border p-2 capitalize font-bold">${v.nama}</td><td class="border p-2 text-right font-black text-blue-600">${v.stok}</td></tr>;
             });
             document.getElementById('tbStok').innerHTML = h;
         });
 
+        // Tampilkan Riwayat
         db.ref('riwayat').on('value', snap => {
             let h = ""; let list = [];
             snap.forEach(c => list.push(c.val()));
-            list.reverse().slice(0, 10).forEach(v => {
+            list.reverse().slice(0, 20).forEach(v => {
                 const col = v.tipe === 'masuk' ? 'text-green-600' : 'text-red-600';
-                h += <tr><td class="p-2 text-gray-400">${v.waktu}</td><td class="p-2 font-bold ${col}">${v.tipe.toUpperCase()}</td><td class="p-2 capitalize">${v.nama}</td><td class="p-2 text-right font-bold">${v.qty}</td></tr>;
+                h += <tr><td class="border p-2 text-gray-500">${v.waktu}</td><td class="border p-2 font-bold ${col} text-center uppercase">${v.tipe}</td><td class="border p-2 capitalize">${v.nama}</td><td class="border p-2 text-right font-bold">${v.qty}</td></tr>;
             });
             document.getElementById('tbLog').innerHTML = h;
+            document.getElementById('tglCetak').innerText = "Dicetak pada: " + new Date().toLocaleString('id-ID');
         });
     </script>
 </body>
