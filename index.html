@@ -1,183 +1,52 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <title>Sistem Gudang - PT. Samudra Mandiri Sentosa</title>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; background-color: #f5f5f5; }
-        .container { max-width: 1000px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h2, h3 { color: #2c3e50; text-align: center; }
-        
-        /* Dashboard */
-        .dashboard { display: flex; gap: 15px; margin-bottom: 25px; }
-        .card { flex: 1; padding: 15px; border-radius: 8px; color: white; border-left: 8px solid rgba(0,0,0,0.1); }
-        .bg-blue { background-color: #3498db; }
-        .bg-green { background-color: #27ae60; }
-        .bg-orange { background-color: #f39c12; }
-
-        /* Form Styling */
-        .form-section { background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ddd; }
-        .grid-input { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
-        input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-        button { padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .btn-add { background: #27ae60; color: white; }
-        .btn-out { background: #e67e22; color: white; }
-        .btn-print { background: #7f8c8d; color: white; margin-top: 10px; }
-
-        /* Table */
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th { background: #2c3e50; color: white; padding: 12px; }
-        td { padding: 10px; border: 1px solid #ddd; text-align: center; }
-        tr:nth-child(even) { background: #f2f2f2; }
-
-        @media print {
-            .no-print, button, input, .form-section { display: none !important; }
-            .container { box-shadow: none; border: none; }
-        }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <div class="no-print">
-        <h2>PT. SAMUDRA MANDIRI SENTOSA</h2>
-        <p style="text-align: center;">PURCHASE REQUISITION & INVENTORY SYSTEM</p>
-        <hr>
-
-        <div class="dashboard">
-            <div class="card bg-blue">Total Jenis: <h2 id="stat-jenis">0</h2></div>
-            <div class="card bg-green">Total Stok: <h2 id="stat-qty">0</h2></div>
-            <div class="card bg-orange">Perlu Order: <h2 id="stat-warning">0</h2></div>
-        </div>
-
-        <div class="form-section">
-            <h3>📥 Barang Masuk / Pesanan Baru</h3>
-            <div class="grid-input">
-                <input type="text" id="prs_no" placeholder="No. PRS">
-                <input type="text" id="desc" placeholder="Nama Barang">
-                <input type="number" id="qty" placeholder="Jumlah">
-                <input type="text" id="unit" placeholder="Satuan (Pcs/Box)">
-                <button class="btn-add" onclick="tambahData()">Simpan Masuk</button>
-            </div>
-        </div>
-
-        <div class="form-section">
-            <h3>📤 Catat Barang Keluar</h3>
-            <div class="grid-input">
-                <input type="text" id="out_desc" placeholder="Cari Nama Barang...">
-                <input type="number" id="out_qty" placeholder="Jumlah Keluar">
-                <button class="btn-out" onclick="kurangiStok()">Kurangi Stok</button>
-            </div>
-        </div>
-
-        <input type="text" id="inputCari" onkeyup="cariData()" placeholder="🔍 Cari di tabel..." style="width: 100%; margin-bottom: 10px; padding: 12px;">
-    </div>
-
-    <h3>📦 Stok Barang Saat Ini</h3>
-    <table id="tabel-utama">
-        <thead>
-            <tr>
-                <th>PRS No</th>
-                <th>Nama Barang</th>
-                <th>Stok</th>
-                <th>Satuan</th>
-            </tr>
-        </thead>
-        <tbody id="isi-tabel"></tbody>
-    </table>
-
-    <button class="btn-print no-print" onclick="window.print()">🖨️ Cetak Laporan</button>
-
-    <div class="no-print" style="margin-top: 50px;">
-        <h3>📑 Riwayat Transaksi (Mutasi)</h3>
-        <table style="font-size: 12px;">
-            <thead>
-                <tr>
-                    <th>Waktu</th>
-                    <th>Aksi</th>
-                    <th>Barang</th>
-                    <th>Jumlah</th>
-                </tr>
-            </thead>
-            <tbody id="isi-log"></tbody>
-        </table>
-        <button onclick="hapusSemua()" style="color: red; background: none; margin-top: 20px;">Hapus Semua Data</button>
-    </div>
-</div>
+<script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
 
 <script>
-    window.onload = function() { tampilkanData(); tampilkanLog(); updateDashboard(); };
+  // Konfigurasi Baru dari Foto 38
+  const firebaseConfig = {
+    apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
+    authDomain: "gudang-sms-4c81c.firebaseapp.com",
+    databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "gudang-sms-4c81c",
+    storageBucket: "gudang-sms-4c81c.firebasestorage.app",
+    messagingSenderId: "598362736106",
+    appId: "1:598362736106:web:c8e2732d6ac7613931de93"
+  };
 
-    function tambahData() {
-        const prs = document.getElementById('prs_no').value;
-        const desc = document.getElementById('desc').value;
-        const qty = parseInt(document.getElementById('qty').value);
-        const unit = document.getElementById('unit').value;
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
 
-        if(!prs || !desc || !qty) return alert("Isi data dengan lengkap!");
+  // FUNGSI: Simpan Barang Masuk
+  function simpanMasuk() {
+    const nama = document.querySelector('input[placeholder="Cari Nama Barang"]').value;
+    const jumlah = document.querySelector('input[type="number"]').value;
 
-        let listData = JSON.parse(localStorage.getItem('dataGudang')) || [];
-        listData.push({ prs, desc, qty, unit });
-        localStorage.setItem('dataGudang', JSON.stringify(listData));
-        
-        catatLog("MASUK", desc, qty);
-        refreshSemua();
+    if (nama && jumlah) {
+      db.ref('stok/' + nama).once('value').then((snap) => {
+        let stokLama = snap.exists() ? parseInt(snap.val().stok) : 0;
+        db.ref('stok/' + nama).set({
+          nama: nama,
+          stok: stokLama + parseInt(jumlah),
+          waktu: new Date().toLocaleString()
+        }).then(() => alert("Stok " + nama + " berhasil ditambah!"));
+      });
     }
+  }
 
-    function kurangiStok() {
-        const namaCari = document.getElementById('out_desc').value.toLowerCase();
-        const qtyOut = parseInt(document.getElementById('out_qty').value);
-        let listData = JSON.parse(localStorage.getItem('dataGudang')) || [];
-        let sukses = false;
-
-        for(let i=0; i<listData.length; i++) {
-            if(listData[i].desc.toLowerCase() === namaCari) {
-                if(listData[i].qty >= qtyOut) {
-                    listData[i].qty -= qtyOut;
-                    sukses = true;
-                    catatLog("KELUAR", listData[i].desc, qtyOut);
-                } else { alert("Stok tidak cukup!"); return; }
-                break;
-            }
-        }
-        if(sukses) { localStorage.setItem('dataGudang', JSON.stringify(listData)); refreshSemua(); }
-        else { alert("Barang tidak ditemukan!"); }
+  // FUNGSI: Tampilkan ke Tabel secara Real-time (HP & Laptop Sinkron)
+  db.ref('stok').on('value', (snapshot) => {
+    const data = snapshot.val();
+    const tabel = document.querySelector('table tbody'); // Perbaikan 'tbody', bukan 'thody'
+    if (tabel) {
+      tabel.innerHTML = "";
+      for (let id in data) {
+        tabel.innerHTML += `<tr>
+          <td>-</td>
+          <td>${data[id].nama}</td>
+          <td>${data[id].stok}</td>
+          <td>pcs</td>
+        </tr>`;
+      }
     }
-
-    function catatLog(aksi, barang, jml) {
-        let logs = JSON.parse(localStorage.getItem('logsGudang')) || [];
-        logs.unshift({ waktu: new Date().toLocaleString(), aksi, barang, jml });
-        localStorage.setItem('logsGudang', JSON.stringify(logs));
-    }
-
-    function tampilkanData() {
-        const listData = JSON.parse(localStorage.getItem('dataGudang')) || [];
-        const t = document.getElementById('isi-tabel');
-        t.innerHTML = listData.map(i => `<tr><td>${i.prs}</td><td>${i.desc}</td><td>${i.qty}</td><td>${i.unit}</td></tr>`).join('');
-    }
-
-    function tampilkanLog() {
-        const logs = JSON.parse(localStorage.getItem('logsGudang')) || [];
-        document.getElementById('isi-log').innerHTML = logs.map(l => `<tr><td>${l.waktu}</td><td>${l.aksi}</td><td>${l.barang}</td><td>${l.jml}</td></tr>`).join('');
-    }
-
-    function updateDashboard() {
-        const listData = JSON.parse(localStorage.getItem('dataGudang')) || [];
-        document.getElementById('stat-jenis').innerText = listData.length;
-        document.getElementById('stat-qty').innerText = listData.reduce((a, b) => a + parseInt(b.qty), 0);
-        document.getElementById('stat-warning').innerText = listData.filter(i => i.qty <= 5).length;
-    }
-
-    function refreshSemua() { tampilkanData(); tampilkanLog(); updateDashboard(); }
-
-    function cariData() {
-        let filter = document.getElementById("inputCari").value.toLowerCase();
-        let baris = document.getElementById("isi-tabel").getElementsByTagName("tr");
-        for (let b of baris) { b.style.display = b.innerText.toLowerCase().includes(filter) ? "" : "none"; }
-    }
-
-    function hapusSemua() { if(confirm("Hapus semua data?")) { localStorage.clear(); location.reload(); } }
+  });
 </script>
-
-</body>
-</html>
