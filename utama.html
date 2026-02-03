@@ -1,68 +1,126 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Gudang PT SMS</title>
+    <title>SISTEM GUDANG SMS</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @media print {
-            .no-print { display: none !important; }
-            body { background: white; padding: 0; }
-            .print-only { display: block !important; }
-            .card { border: none !important; box-shadow: none !important; }
-        }
+        @media print { .no-print { display: none; } .print-only { display: block !important; } }
         .print-only { display: none; }
     </style>
 </head>
-<body class="bg-gray-100 p-4 font-sans text-slate-800">
-
-    <div class="max-w-2xl mx-auto space-y-4">
-        <div class="bg-blue-900 text-white p-6 rounded-2xl shadow-lg text-center border-b-4 border-yellow-500">
-            <h1 class="text-2xl font-bold uppercase tracking-tight">PT. SAMUDRA MANDIRI SENTOSA</h1>
-            <p class="text-xs opacity-80 tracking-[0.2em] mt-1 text-yellow-400">Inventory Management System</p>
+<body class="bg-gray-100 p-4">
+    <div class="max-w-xl mx-auto space-y-4">
+        <div class="bg-blue-900 text-white p-6 rounded-xl text-center shadow-lg border-b-4 border-yellow-500">
+            <h1 class="text-xl font-bold uppercase">PT. SAMUDRA MANDIRI SENTOSA</h1>
+            <p class="text-[10px] tracking-widest text-yellow-400">INVENTORY CONTROL SYSTEM</p>
         </div>
 
-        <div class="bg-white p-5 rounded-2xl shadow-md border border-gray-200 no-print">
+        <div class="bg-white p-5 rounded-xl shadow-md no-print border border-gray-200">
             <div class="space-y-3">
-                <input type="text" id="nama" placeholder="NAMA BARANG" class="w-full p-3 border rounded-xl uppercase font-bold outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50">
+                <input type="text" id="in_nama" placeholder="NAMA BARANG" class="w-full p-3 border rounded-lg font-bold uppercase outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50">
                 <div class="grid grid-cols-2 gap-2">
-                    <input type="number" id="qty" placeholder="JUMLAH" class="p-3 border rounded-xl font-bold outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 text-center text-lg">
-                    <input type="text" id="ket" placeholder="OLEH / KET" class="p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 text-sm">
+                    <input type="number" id="in_qty" placeholder="JUMLAH" class="p-3 border rounded-lg font-bold text-center outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50">
+                    <input type="text" id="in_ket" placeholder="OLEH / KET" class="p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 text-sm italic">
                 </div>
                 <div class="grid grid-cols-2 gap-2">
-                    <button onclick="proses('masuk')" class="bg-emerald-600 text-white py-4 rounded-xl font-bold active:scale-95 shadow-md uppercase text-xs">Simpan Stok</button>
-                    <button onclick="proses('keluar')" class="bg-rose-600 text-white py-4 rounded-xl font-bold active:scale-95 shadow-md uppercase text-xs">Kurangi Stok</button>
+                    <button onclick="f_proses('masuk')" class="bg-emerald-600 text-white py-4 rounded-lg font-bold shadow uppercase text-xs active:bg-emerald-800">Simpan Stok</button>
+                    <button onclick="f_proses('keluar')" class="bg-rose-600 text-white py-4 rounded-lg font-bold shadow uppercase text-xs active:bg-rose-800">Kurangi Stok</button>
                 </div>
-                <button onclick="window.print()" class="w-full mt-2 bg-slate-800 text-white py-2 rounded-lg font-bold text-[10px] uppercase tracking-widest hover:bg-black transition">Cetak Laporan</button>
+                <button onclick="window.print()" class="w-full bg-gray-800 text-white py-2 rounded-lg font-bold text-[10px] uppercase tracking-widest">Cetak Laporan</button>
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-md overflow-hidden border border-gray-200 card">
+        <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
             <div class="bg-slate-800 p-3 flex justify-between items-center no-print">
-                <span class="text-white text-[10px] font-bold uppercase tracking-widest px-2">📦 Stok Gudang</span>
-                <input type="text" id="cari" onkeyup="cariBarang()" placeholder="Cari barang..." class="text-[10px] p-2 rounded-lg outline-none w-1/2 bg-slate-700 text-white placeholder-slate-400 border-none">
+                <span class="text-white text-[10px] font-bold uppercase">📦 Stok Aktif</span>
+                <input type="text" id="f_cari" onkeyup="f_filter()" placeholder="Cari..." class="text-[10px] p-2 rounded outline-none w-1/2 bg-slate-700 text-white">
             </div>
-            
             <div class="print-only p-4 text-center border-b-2 border-black mb-4">
-                <h2 class="text-xl font-bold uppercase">LAPORAN STOK GUDANG AKTIF</h2>
-                <p class="text-xs italic">Dicetak pada: <span id="tglCetak"></span></p>
+                <h2 class="text-xl font-bold uppercase">LAPORAN STOK GUDANG</h2>
+                <p class="text-xs italic">Update: <span id="tgl_print"></span></p>
             </div>
-
             <table class="w-full text-sm">
-                <thead>
-                    <tr class="bg-gray-50 border-b">
-                        <th class="p-3 text-left text-xs text-gray-500 uppercase font-bold">Nama Barang</th>
-                        <th class="p-3 text-right text-xs text-gray-500 uppercase font-bold">Jumlah Stok</th>
-                    </tr>
-                </thead>
-                <tbody id="tStok" class="divide-y divide-gray-100"></tbody>
+                <thead><tr class="bg-gray-100 border-b text-xs uppercase text-gray-500"><th class="p-3 text-left">Barang</th><th class="p-3 text-right">Stok</th></tr></thead>
+                <tbody id="v_stok" class="divide-y divide-gray-100"></tbody>
             </table>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-md overflow-hidden border border-gray-200 card">
-            <div class="bg-blue-600 text-white p-3 text-[10px] font-bold uppercase no-print flex justify-between items-center px-4">
-                <span>🕒 Catatan Transaksi</span>
-                <button
+        <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200 no-print">
+            <div class="bg-blue-600 text-white p-3 text-[10px] font-bold uppercase flex justify-between">
+                <span>🕒 Transaksi Terbaru</span>
+                <button onclick="if(confirm('Reset Log?')) db.ref('riwayat').remove()" class="underline text-[8px]">Reset</button>
+            </div>
+            <div id="v_riwayat" class="p-4 space-y-4 max-h-80 overflow-y-auto"></div>
+        </div>
+    </div>
+
+    <script>
+        const conf = {
+            apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
+            authDomain: "gudang-sms-4c81c.firebaseapp.com",
+            databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "gudang-sms-4c81c",
+            storageBucket: "gudang-sms-4c81c.firebasestorage.app",
+            appId: "1:598362736106:web:c8e2732d6ac7613931de93"
+        };
+        firebase.initializeApp(conf);
+        const db = firebase.database();
+
+        function f_proses(m) {
+            const nama = document.getElementById('in_nama').value.trim().toLowerCase();
+            const qty = parseInt(document.getElementById('in_qty').value);
+            const ket = document.getElementById('in_ket').value.trim() || "-";
+            const tgl = new Date().toLocaleString('id-ID', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+
+            if (!nama || isNaN(qty)) return alert("Isi Nama & Jumlah!");
+
+            const rs = db.ref('stok/' + nama);
+            const rl = db.ref('riwayat').push();
+
+            rs.once('value').then(s => {
+                let v = s.exists() ? parseInt(s.val().stok) : 0;
+                let b = (m === 'masuk') ? (v + qty) : (v - qty);
+                if (b < 0) return alert("Stok kurang!");
+
+                rs.update({ nama: nama, stok: b });
+                rl.set({ t: tgl, m: m, n: nama, q: (m==='masuk'?'+':'-')+qty, k: ket });
+                
+                alert("Berhasil!");
+                document.getElementById('in_nama').value=''; document.getElementById('in_qty').value=''; document.getElementById('in_ket').value='';
+            }).catch(e => alert("Error: " + e.message));
+        }
+
+        function f_filter() {
+            let i = document.getElementById('f_cari').value.toLowerCase();
+            let r = document.querySelectorAll('#v_stok tr');
+            r.forEach(x => { x.style.display = x.innerText.toLowerCase().includes(i) ? "" : "none"; });
+        }
+
+        db.ref('stok').on('value', snap => {
+            let h = "";
+            snap.forEach(c => {
+                h += <tr class="border-b"><td class="p-3 capitalize font-bold text-gray-700">${c.val().nama}</td><td class="p-3 text-right font-black text-blue-600 text-lg">${c.val().stok}</td></tr>;
+            });
+            document.getElementById('v_stok').innerHTML = h || '<tr><td colspan="2" class="p-4 text-center text-gray-400 italic">Kosong</td></tr>';
+            document.getElementById('tgl_print').innerText = new Date().toLocaleString('id-ID');
+        });
+
+        db.ref('riwayat').on('value', snap => {
+            let h = ""; let arr = [];
+            snap.forEach(c => { arr.push(c.val()); });
+            arr.reverse().slice(0, 15).forEach(v => {
+                const c = v.m === 'masuk' ? 'text-emerald-600 bg-emerald-50' : 'text-rose-600 bg-rose-50';
+                h += `<div class="border-b border-gray-100 pb-2">
+                    <div class="flex justify-between items-center text-[8px] font-mono text-gray-400 mb-1 uppercase"><span>${v.t}</span><span class="px-2 py-0.5 rounded-full font-bold ${c}">${v.m}</span></div>
+                    <div class="flex justify-between items-center"><span class="capitalize font-bold text-slate-800 text-sm">${v.n}</span><span class="font-black text-slate-900 text-md">${v.q}</span></div>
+                    <div class="text-[9px] text-gray-500 italic mt-0.5">Ket: ${v.k}</div>
+                </div>`;
+            });
+            document.getElementById('v_riwayat').innerHTML = h || '<p class="text-center text-gray-300 py-4 text-xs italic">Belum ada riwayat</p>';
+        });
+    </script>
+</body>
+</html>
