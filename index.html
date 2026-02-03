@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GUDANG SMS - FINAL FIX</title>
+    <title>GUDANG SMS OK</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -12,40 +12,37 @@
 
     <div class="max-w-md mx-auto space-y-4">
         <div class="bg-blue-700 text-white p-5 rounded-2xl shadow-lg text-center border-b-4 border-yellow-500">
-            <h1 class="text-xl font-bold uppercase tracking-tight">PT. SAMUDRA MANDIRI SENTOSA</h1>
-            <p class="text-[10px] tracking-widest mt-1 text-yellow-300 font-bold">STOK GUDANG VERSI 5.0</p>
+            <h1 class="text-xl font-bold uppercase">PT. SAMUDRA MANDIRI SENTOSA</h1>
+            <p class="text-[10px] tracking-widest mt-1 text-yellow-300 font-bold underline">SISTEM AKTIF - VERSI FINAL</p>
         </div>
 
-        <div class="bg-white p-5 rounded-2xl shadow-md border">
+        <div class="bg-white p-5 rounded-2xl shadow border">
             <div class="space-y-4">
-                <input type="text" id="brg_n" placeholder="NAMA BARANG" class="w-full p-3 border rounded-xl bg-gray-50 uppercase font-bold outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="text" id="Z_NAMA" placeholder="NAMA BARANG" class="w-full p-3 border rounded-xl bg-gray-50 uppercase font-bold outline-none">
                 <div class="grid grid-cols-2 gap-3">
-                    <input type="number" id="brg_q" placeholder="JUMLAH" class="w-full p-3 border rounded-xl bg-gray-50 font-black text-center outline-none focus:ring-2 focus:ring-blue-500 text-xl">
-                    <input type="text" id="brg_k" placeholder="OLEH / KET" class="w-full p-3 border rounded-xl bg-gray-50 outline-none text-sm">
+                    <input type="number" id="Z_QTY" placeholder="JUMLAH" class="w-full p-3 border rounded-xl bg-gray-50 font-black text-center text-xl">
+                    <input type="text" id="Z_KET" placeholder="KET" class="w-full p-3 border rounded-xl bg-gray-50 text-sm">
                 </div>
                 <div class="grid grid-cols-2 gap-3 pt-2">
-                    <button onclick="prosesData('masuk')" class="bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-xl font-bold shadow-md active:scale-95 transition uppercase text-xs">Simpan Stok</button>
-                    <button onclick="prosesData('keluar')" class="bg-rose-600 hover:bg-rose-700 text-white py-4 rounded-xl font-bold shadow-md active:scale-95 transition uppercase text-xs">Kurangi Stok</button>
+                    <button onclick="Z_GAS('masuk')" class="bg-emerald-600 text-white py-4 rounded-xl font-bold shadow-md active:bg-emerald-800 uppercase text-xs">Simpan</button>
+                    <button onclick="Z_GAS('keluar')" class="bg-rose-600 text-white py-4 rounded-xl font-bold shadow-md active:bg-rose-800 uppercase text-xs">Keluar</button>
                 </div>
             </div>
         </div>
 
         <div class="bg-white rounded-2xl shadow border overflow-hidden">
-            <div class="bg-slate-900 p-3 text-white text-[10px] font-bold uppercase text-center">📦 Daftar Stok Saat Ini</div>
-            <table class="w-full text-sm">
-                <tbody id="v_tabel" class="divide-y font-semibold"></tbody>
+            <div class="bg-slate-900 p-2 text-white text-[10px] font-bold uppercase text-center">STOK GUDANG</div>
+            <table class="w-full text-sm font-bold">
+                <tbody id="Z_TABEL" class="divide-y"></tbody>
             </table>
         </div>
 
-        <div class="bg-white rounded-2xl shadow border overflow-hidden">
-            <div class="bg-blue-600 text-white p-2 text-[10px] font-bold uppercase text-center">🕒 Catatan Transaksi</div>
-            <div id="v_log" class="p-4 space-y-3 max-h-60 overflow-y-auto bg-white"></div>
-        </div>
+        <div id="Z_LOG" class="p-3 space-y-2 max-h-40 overflow-auto bg-white rounded-xl text-[10px] border shadow-inner"></div>
     </div>
 
     <script>
         // Konfigurasi Adri
-        const firebaseConfig = {
+        var firebaseConfig = {
             apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
             authDomain: "gudang-sms-4c81c.firebaseapp.com",
             databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -54,64 +51,56 @@
             appId: "1:598362736106:web:c8e2732d6ac7613931de93"
         };
         firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+        var db = firebase.database();
 
-        function prosesData(m) {
-            const nama = document.getElementById('brg_n').value.trim().toLowerCase();
-            const qty = parseInt(document.getElementById('brg_q').value);
-            const ket = document.getElementById('brg_k').value.trim() || "-";
-            const waktu = new Date().toLocaleTimeString('id-ID'); // Format waktu simpel agar tidak error
+        function Z_GAS(m) {
+            var n = document.getElementById('Z_NAMA').value.trim().toLowerCase();
+            var q = parseInt(document.getElementById('Z_QTY').value);
+            var k = document.getElementById('Z_KET').value || "-";
+            var t = new Date().toLocaleTimeString('id-ID');
 
-            if (!nama || isNaN(qty)) {
-                alert("Wajib isi Nama Barang dan Jumlah!");
+            if (!n || isNaN(q)) {
+                alert("Isi Nama & Jumlah!");
                 return;
             }
 
-            const refS = db.ref('stok/' + nama);
-            const refL = db.ref('riwayat').push();
+            var refS = db.ref('stok/' + n);
+            var refL = db.ref('riwayat').push();
 
-            refS.once('value').then(snap => {
-                let lama = snap.exists() ? parseInt(snap.val().stok) : 0;
-                let baru = (m === 'masuk') ? (lama + qty) : (lama - qty);
+            refS.once('value').then(function(s) {
+                var l = s.exists() ? parseInt(s.val().stok) : 0;
+                var b = (m === 'masuk') ? (l + q) : (l - q);
                 
-                if (baru < 0) {
-                    alert("Gagal! Stok tidak cukup.");
+                if (b < 0) {
+                    alert("Stok Gagal! Minus.");
                     return;
                 }
 
-                // Update Database
-                refS.update({ nama: nama, stok: baru });
-                refL.set({ t: waktu, m: m, n: nama, q: (m==='masuk'?'+':'-')+qty, k: ket });
+                refS.update({ nama: n, stok: b });
+                refL.set({ t: t, m: m, n: n, q: (m==='masuk'?'+':'-')+q, k: k });
                 
-                alert("BERHASIL: " + nama.toUpperCase() + " diperbarui.");
-                
-                // Reset Form
-                document.getElementById('brg_n').value=''; 
-                document.getElementById('brg_q').value=''; 
-                document.getElementById('brg_k').value='';
-            }).catch(err => {
-                alert("Terjadi Kesalahan: " + err.message);
+                alert("BERHASIL!");
+                document.getElementById('Z_NAMA').value=''; 
+                document.getElementById('Z_QTY').value=''; 
+                document.getElementById('Z_KET').value='';
             });
         }
 
-        // Tampilan Stok Realtime
-        db.ref('stok').on('value', snap => {
-            let h = "";
-            snap.forEach(c => {
-                h += <tr class="border-b"><td class="p-3 capitalize font-bold text-slate-700">${c.val().nama}</td><td class="p-3 text-right font-black text-blue-600 text-lg">${c.val().stok}</td></tr>;
+        db.ref('stok').on('value', function(snap) {
+            var h = "";
+            snap.forEach(function(c) {
+                h += "<tr class='border-b'><td class='p-3 capitalize'>" + c.val().nama + "</td><td class='p-3 text-right text-blue-700'>" + c.val().stok + "</td></tr>";
             });
-            document.getElementById('v_tabel').innerHTML = h || '<tr><td class="p-4 text-center text-gray-400 italic">Data Kosong</td></tr>';
+            document.getElementById('Z_TABEL').innerHTML = h;
         });
 
-        // Tampilan Log Realtime
-        db.ref('riwayat').on('value', snap => {
-            let h = ""; let arr = [];
-            snap.forEach(c => arr.push(c.val()));
-            arr.reverse().slice(0, 10).forEach(v => {
-                const col = v.m === 'masuk' ? 'text-emerald-600' : 'text-rose-600';
-                h += <div class="border-b pb-1"><div class="flex justify-between text-[8px] text-gray-400 font-mono"><span>${v.t}</span><span class="font-bold uppercase ${col}">${v.m}</span></div><div class="flex justify-between items-center"><span class="capitalize font-bold text-slate-800">${v.n}</span><span class="font-black text-slate-900">${v.q}</span></div></div>;
+        db.ref('riwayat').on('value', function(snap) {
+            var h = ""; var arr = [];
+            snap.forEach(function(c) { arr.push(c.val()); });
+            arr.reverse().slice(0, 5).forEach(function(v) {
+                h += "<div class='border-b pb-1'>[" + v.t + "] <b>" + v.n + "</b> " + v.q + "</div>";
             });
-            document.getElementById('v_log').innerHTML = h;
+            document.getElementById('Z_LOG').innerHTML = h;
         });
     </script>
 </body>
