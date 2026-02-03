@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laporan Gudang SMS</title>
+    <title>Sistem Gudang PT SMS</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -29,7 +29,7 @@
             <div class="space-y-3">
                 <input type="text" id="nama" placeholder="NAMA BARANG" class="w-full p-3 border rounded-xl uppercase font-bold outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50">
                 <div class="grid grid-cols-2 gap-2">
-                    <input type="number" id="qty" placeholder="JUMLAH" class="p-3 border rounded-xl font-bold outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 text-center">
+                    <input type="number" id="qty" placeholder="JUMLAH" class="p-3 border rounded-xl font-bold outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 text-center text-lg">
                     <input type="text" id="ket" placeholder="OLEH / KET" class="p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 text-sm">
                 </div>
                 <div class="grid grid-cols-2 gap-2">
@@ -63,25 +63,6 @@
         </div>
 
         <div class="bg-white rounded-2xl shadow-md overflow-hidden border border-gray-200 card">
-            <div class="bg-blue-600 text-white p-3 text-[10px] font-bold uppercase no-print flex justify-between">
+            <div class="bg-blue-600 text-white p-3 text-[10px] font-bold uppercase no-print flex justify-between items-center px-4">
                 <span>🕒 Catatan Transaksi</span>
-                <button onclick="if(confirm('Hapus log?')) db.ref('riwayat').remove()" class="text-[8px] underline">RESET</button>
-            </div>
-            <div id="tLog" class="p-3 space-y-3 bg-white">
-                </div>
-        </div>
-    </div>
-
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
-            authDomain: "gudang-sms-4c81c.firebaseapp.com",
-            databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "gudang-sms-4c81c",
-            storageBucket: "gudang-sms-4c81c.firebasestorage.app",
-            appId: "1:598362736106:web:c8e2732d6ac7613931de93"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-
-        function proses(mode) 
+                <button
