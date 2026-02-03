@@ -16,24 +16,25 @@
         .page { display: none; }
         .page-active { display: block; animation: fadeIn 0.3s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @media print { .no-print { display: none !important; } }
+        @media print { .no-print { display: none !important; } .print-only { display: block !important; } }
+        .print-only { display: none; }
     </style>
 </head>
 <body>
 
     <div class="flex flex-col md:flex-row min-h-screen">
         <nav class="w-full md:w-72 bg-white border-r p-6 space-y-8 no-print shadow-sm">
-            <div class="px-4 text-center md:text-left">
-                <h1 class="text-2xl font-black text-blue-900 tracking-tighter italic">SMS <span class="text-orange-500">SYSTEM</span></h1>
-                <p class="text-[9px] font-bold text-slate-400 tracking-[0.3em] uppercase">Inventory Control</p>
+            <div class="px-4">
+                <h1 class="text-2xl font-black text-blue-900 tracking-tighter italic">SMS <span class="text-orange-500">GUDANG</span></h1>
+                <p class="text-[9px] font-bold text-slate-400 tracking-[0.3em] uppercase">Inventory Management</p>
             </div>
             
             <div class="space-y-1">
                 <button onclick="showPage('dash')" id="m-dash" class="w-full flex items-center gap-3 p-4 text-slate-500 font-bold rounded-2xl transition hover:bg-slate-50 active-menu">
-                    <i class="fa-solid fa-chart-line"></i> Dashboard
+                    <i class="fa-solid fa-chart-pie"></i> Dashboard
                 </button>
                 <button onclick="showPage('master')" id="m-master" class="w-full flex items-center gap-3 p-4 text-slate-500 font-bold rounded-2xl transition hover:bg-slate-50">
-                    <i class="fa-solid fa-layer-group"></i> Master Barang
+                    <i class="fa-solid fa-boxes-stacked"></i> Master Barang
                 </button>
                 <button onclick="showPage('masuk')" id="m-masuk" class="w-full flex items-center gap-3 p-4 text-slate-500 font-bold rounded-2xl transition hover:bg-slate-50">
                     <i class="fa-solid fa-arrow-down-long text-emerald-500"></i> Barang Masuk
@@ -47,43 +48,33 @@
             </div>
         </nav>
 
-        <main class="flex-1 p-6 md:p-10">
+        <main class="flex-1 p-6 md:p-12 overflow-y-auto">
             
             <section id="page-dash" class="page page-active space-y-8">
-                <h2 class="text-3xl font-extrabold text-slate-800 uppercase">Ringkasan Gudang</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-white">
-                    <div class="bg-blue-600 p-8 rounded-[32px] shadow-lg shadow-blue-200">
-                        <p class="text-blue-100 text-xs font-bold uppercase">Total Jenis</p>
-                        <h3 id="st-jenis" class="text-4xl font-black mt-2">0</h3>
+                <h2 class="text-3xl font-extrabold text-slate-800">Ringkasan Gudang</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-blue-600 p-8 rounded-[32px] text-white shadow-lg shadow-blue-100">
+                        <p class="opacity-70 text-xs font-bold uppercase">Total Jenis</p>
+                        <h3 id="st-jenis" class="text-4xl font-black">0</h3>
                     </div>
-                    <div class="bg-emerald-600 p-8 rounded-[32px] shadow-lg shadow-emerald-200">
-                        <p class="text-emerald-100 text-xs font-bold uppercase">Total Stok</p>
-                        <h3 id="st-total" class="text-4xl font-black mt-2">0</h3>
+                    <div class="bg-emerald-600 p-8 rounded-[32px] text-white shadow-lg shadow-emerald-100">
+                        <p class="opacity-70 text-xs font-bold uppercase">Total Stok</p>
+                        <h3 id="st-total" class="text-4xl font-black">0</h3>
                     </div>
-                    <div class="bg-rose-600 p-8 rounded-[32px] shadow-lg shadow-rose-200">
-                        <p class="text-rose-100 text-xs font-bold uppercase">Stok Kritis</p>
-                        <h3 id="st-kritis" class="text-4xl font-black mt-2">0</h3>
+                    <div class="bg-rose-600 p-8 rounded-[32px] text-white shadow-lg shadow-rose-100">
+                        <p class="opacity-70 text-xs font-bold uppercase">Stok Kritis</p>
+                        <h3 id="st-kritis" class="text-4xl font-black">0</h3>
                     </div>
                 </div>
-                <div class="bg-white rounded-[32px] shadow-sm border overflow-hidden">
+                <div class="bg-white rounded-[32px] shadow-sm border border-slate-100 overflow-hidden">
                     <table class="w-full text-left">
-                        <thead class="bg-slate-50 text-slate-400 text-[10px] uppercase font-black tracking-widest">
-                            <tr><th class="p-6">Barang</th><th class="p-6 text-center">Stok</th><th class="p-6 text-right">Unit</th></tr>
+                        <thead class="bg-slate-50 text-slate-400 text-[10px] uppercase font-black">
+                            <tr><th class="p-6">Barang</th><th class="p-6 text-center">Stok</th><th class="p-6 text-right">Satuan</th></tr>
                         </thead>
-                        <tbody id="tb-stok" class="divide-y font-bold text-slate-700"></tbody>
+                        <tbody id="tb-stok" class="divide-y text-slate-700 font-bold"></tbody>
                     </table>
                 </div>
             </section>
 
             <section id="page-master" class="page space-y-6">
-                <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-                    <h2 class="text-3xl font-extrabold text-slate-800">MASTER BARANG</h2>
-                    <div class="flex flex-wrap gap-2 no-print">
-                        <button onclick="showModalTambah()" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold"><i class="fa-solid fa-plus"></i> Tambah</button>
-                        <button onclick="exportExcel()" class="bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold"><i class="fa-solid fa-file-excel"></i> Excel</button>
-                        <button onclick="window.print()" class="bg-rose-600 text-white px-4 py-2 rounded-xl text-xs font-bold"><i class="fa-solid fa-file-pdf"></i> PDF</button>
-                        <label class="bg-amber-500 text-white px-4 py-2 rounded-xl text-xs font-bold cursor-pointer">
-                            <i class="fa-solid fa-file-import"></i> Import <input type="file" id="importFile" class="hidden" accept=".xlsx, .xls" onchange="importExcel(event)">
-                        </label>
-                        <button onclick="hapusSemua()" class="bg-slate-900 text-white px-4 py-2 rounded-xl text-xs font-bold"><i class="fa-solid fa-trash"></i> Hapus Semua</button>
-                    </div>
+                <div class="flex flex-col lg
