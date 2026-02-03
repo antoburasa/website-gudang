@@ -3,97 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PT. SMS - Dashboard Final</title>
+    <title>PT. SMS - Inventory System</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-        .card-shadow { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
-        @media print { .no-print { display: none !important; } }
+        body { font-family: 'Inter', sans-serif; }
+        .active-menu { background-color: #1e40af; color: white; border-radius: 12px; }
+        .page { display: none; }
+        .page-active { display: block; }
     </style>
 </head>
-<body class="pb-10">
+<body class="bg-slate-50">
 
-    <div class="bg-[#1e40af] text-white p-6 text-center shadow-md mb-6">
-        <h1 class="text-2xl font-bold tracking-tight uppercase">PT. SAMUDRA MANDIRI SENTOSA</h1>
-        <p class="text-xs tracking-[0.3em] opacity-80 mt-1">INVENTORY MANAGEMENT SYSTEM</p>
-    </div>
-
-    <div class="max-w-6xl mx-auto px-4 space-y-6">
-        
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 no-print">
-            <div class="bg-white p-6 rounded-2xl border-l-8 border-blue-500 card-shadow">
-                <p class="text-gray-500 text-xs font-bold uppercase">Jenis Barang</p>
-                <h2 id="stat_jenis" class="text-4xl font-black text-blue-700 mt-1">0</h2>
-            </div>
-            <div class="bg-white p-6 rounded-2xl border-l-8 border-emerald-500 card-shadow">
-                <p class="text-gray-500 text-xs font-bold uppercase">Total Unit</p>
-                <h2 id="stat_total" class="text-4xl font-black text-emerald-700 mt-1">0</h2>
-            </div>
-            <div class="bg-white p-6 rounded-2xl border-l-8 border-orange-500 card-shadow">
-                <p class="text-gray-500 text-xs font-bold uppercase">Stok Menipis (< 10)</p>
-                <h2 id="stat_tipis" class="text-4xl font-black text-orange-700 mt-1">0</h2>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 no-print">
-            <div class="bg-white p-6 rounded-2xl card-shadow">
-                <div class="flex items-center gap-2 mb-4 text-blue-700 font-bold">
-                    <i class="fa-solid fa-box-open"></i> <span>BARANG MASUK</span>
-                </div>
-                <div class="space-y-3">
-                    <input type="text" id="in_nama" placeholder="Nama Barang (Contoh: Besi)" class="w-full p-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
-                    <div class="grid grid-cols-2 gap-2">
-                        <input type="number" id="in_qty" placeholder="Jumlah" class="p-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
-                        <input type="text" id="in_satuan" placeholder="Satuan (Pcs/Kg)" class="p-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <button onclick="prosesData('masuk')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl font-bold uppercase text-sm transition shadow-lg">Simpan Stok Masuk</button>
-                </div>
-            </div>
-
-            <div class="bg-white p-6 rounded-2xl card-shadow">
-                <div class="flex items-center gap-2 mb-4 text-rose-700 font-bold">
-                    <i class="fa-solid fa-truck-ramp-box"></i> <span>BARANG KELUAR</span>
-                </div>
-                <div class="space-y-3">
-                    <input type="text" id="out_nama" placeholder="Cari Nama Barang..." class="w-full p-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-rose-500">
-                    <input type="number" id="out_qty" placeholder="Jumlah Unit Keluar" class="w-full p-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-rose-500">
-                    <button onclick="prosesData('keluar')" class="w-full bg-rose-600 hover:bg-rose-700 text-white py-3 rounded-xl font-bold uppercase text-sm transition shadow-lg">Kurangi Stok Keluar</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-2xl card-shadow overflow-hidden">
-            <div class="bg-[#111827] p-4 flex justify-between items-center">
-                <div class="flex items-center gap-2 text-white font-bold text-sm uppercase">
-                    <i class="fa-solid fa-list-check text-orange-400"></i> Daftar Stok Real-Time
-                </div>
-                <button onclick="window.print()" class="no-print bg-gray-700 text-white px-4 py-1 rounded-lg text-xs hover:bg-gray-600">
-                    <i class="fa-solid fa-print"></i> Cetak
+    <div class="flex flex-col md:flex-row min-h-screen">
+        <nav class="w-full md:w-64 bg-white border-r p-6 space-y-8 no-print">
+            <div class="text-blue-800 font-black text-xl tracking-tighter italic">SMS SYSTEM</div>
+            
+            <div class="space-y-2">
+                <button onclick="showPage('dash')" id="m-dash" class="w-full flex items-center gap-3 p-3 text-gray-500 font-bold active-menu transition">
+                    <i class="fa-solid fa-chart-pie"></i> Dashboard
+                </button>
+                <button onclick="showPage('masuk')" id="m-masuk" class="w-full flex items-center gap-3 p-3 text-gray-500 font-bold transition">
+                    <i class="fa-solid fa-box-archive"></i> Barang Masuk
+                </button>
+                <button onclick="showPage('keluar')" id="m-keluar" class="w-full flex items-center gap-3 p-3 text-gray-500 font-bold transition">
+                    <i class="fa-solid fa-truck-fast"></i> Barang Keluar
                 </button>
             </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left">
-                    <thead>
-                        <tr class="bg-gray-50 border-b text-[10px] text-gray-400 font-black uppercase">
-                            <th class="p-4">Nama Barang</th>
-                            <th class="p-4 text-center">Jumlah Stok</th>
-                            <th class="p-4 text-right">Satuan</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabel_stok" class="divide-y text-sm font-semibold">
-                        </tbody>
-                </table>
+            
+            <div class="pt-10">
+                <button onclick="window.print()" class="w-full border-2 border-dashed p-3 text-xs font-bold text-gray-400 rounded-xl hover:bg-gray-50">
+                    <i class="fa-solid fa-print"></i> CETAK LAPORAN
+                </button>
             </div>
-        </div>
+        </nav>
 
+        <main class="flex-1 p-6 md:p-10">
+            
+            <section id="page-dash" class="page page-active space-y-6">
+                <h1 class="text-2xl font-black text-slate-800 uppercase">Dashboard Ringkasan</h1>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                        <p class="text-gray-400 text-[10px] font-black uppercase">Total Jenis</p>
+                        <h2 id="st-jenis" class="text-4xl font-black text-blue-600">0</h2>
+                    </div>
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                        <p class="text-gray-400 text-[10px] font-black uppercase">Total Stok</p>
+                        <h2 id="st-total" class="text-4xl font-black text-emerald-600">0</h2>
+                    </div>
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                        <p class="text-gray-400 text-[10px] font-black uppercase">Stok Kritis</p>
+                        <h2 id="st-kritis" class="text-4xl font-black text-rose-600">0</h2>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-slate-900 text-white text-[10px] uppercase font-bold">
+                            <tr><th class="p-4">Nama Barang</th><th class="p-4 text-center">Stok</th><th class="p-4 text-right">Satuan</th></tr>
+                        </thead>
+                        <tbody id="tb-stok" class="divide-y font-bold text-slate-700"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="page-masuk" class="page space-y-6">
+                <h1 class="text-2xl font-black text-emerald-700 uppercase">Input Barang Masuk</h1>
+                <div class="max-w-xl bg-white p-8 rounded-3xl shadow-xl border border-emerald-100 space-y-4">
+                    <div>
+                        <label class="text-[10px] font-black text-gray-400 uppercase">Nama Barang</label>
+                        <input type="text" id="in-nama" class="w-full p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-emerald-500 font-bold uppercase">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-[10px] font-black text-gray-400 uppercase">Jumlah</label>
+                            <input type="number" id="in-qty" class="w-full p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-xl">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-black text-gray-400 uppercase">Satuan</label>
+                            <input type="text" id="in-sat" placeholder="Pcs/Kg/Btg" class="w-full p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-emerald-500 font-bold">
+                        </div>
+                    </div>
+                    <button onclick="eksekusi('masuk')" class="w-full bg-emerald-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition uppercase tracking-widest">Simpan Barang Masuk</button>
+                </div>
+            </section>
+
+            <section id="page-keluar" class="page space-y-6">
+                <h1 class="text-2xl font-black text-rose-700 uppercase">Input Barang Keluar</h1>
+                <div class="max-w-xl bg-white p-8 rounded-3xl shadow-xl border border-rose-100 space-y-4">
+                    <div>
+                        <label class="text-[10px] font-black text-gray-400 uppercase">Cari Barang</label>
+                        <input type="text" id="out-nama" class="w-full p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-rose-500 font-bold uppercase">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black text-gray-400 uppercase">Jumlah Keluar</label>
+                        <input type="number" id="out-qty" class="w-full p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-rose-500 font-bold text-xl">
+                    </div>
+                    <button onclick="eksekusi('keluar')" class="w-full bg-rose-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-rose-200 hover:bg-rose-700 transition uppercase tracking-widest">Kurangi Stok</button>
+                </div>
+            </section>
+
+        </main>
     </div>
 
     <script>
-        const firebaseConfig = {
+        const config = {
             apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
             authDomain: "gudang-sms-4c81c.firebaseapp.com",
             databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -101,54 +118,50 @@
             storageBucket: "gudang-sms-4c81c.firebasestorage.app",
             appId: "1:598362736106:web:c8e2732d6ac7613931de93"
         };
-        firebase.initializeApp(firebaseConfig);
+        firebase.initializeApp(config);
         const db = firebase.database();
 
-        function prosesData(mode) {
-            const nama = mode === 'masuk' ? document.getElementById('in_nama').value : document.getElementById('out_nama').value;
-            const qty = mode === 'masuk' ? parseInt(document.getElementById('in_qty').value) : parseInt(document.getElementById('out_qty').value);
-            const satuan = document.getElementById('in_satuan').value || "pcs";
+        // NAVIGASI HALAMAN
+        function showPage(p) {
+            document.querySelectorAll('.page').forEach(s => s.classList.remove('page-active'));
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('active-menu'));
+            
+            document.getElementById('page-' + p).classList.add('page-active');
+            document.getElementById('m-' + p).classList.add('active-menu');
+        }
 
-            if (!nama || isNaN(qty)) return alert("Isi Nama & Jumlah!");
+        // DATABASE ACTION
+        function eksekusi(mode) {
+            const n = mode === 'masuk' ? document.getElementById('in-nama').value : document.getElementById('out-nama').value;
+            const q = mode === 'masuk' ? parseInt(document.getElementById('in-qty').value) : parseInt(document.getElementById('out-qty').value);
+            const s = document.getElementById('in-sat').value || "pcs";
 
-            const refS = db.ref('stok/' + nama.toLowerCase().trim());
-            refS.once('value').then(s => {
-                let current = s.exists() ? s.val().stok : 0;
-                let newStok = mode === 'masuk' ? current + qty : current - qty;
-                if (newStok < 0) return alert("Stok tidak cukup!");
+            if (!n || isNaN(q)) return alert("Isi data dengan lengkap!");
 
-                refS.update({ 
-                    nama: nama.trim(), 
-                    stok: newStok,
-                    satuan: s.exists() ? s.val().satuan : satuan 
-                });
+            const ref = db.ref('stok/' + n.toLowerCase().trim());
+            ref.once('value').then(snap => {
+                let cur = snap.exists() ? snap.val().stok : 0;
+                let final = mode === 'masuk' ? cur + q : cur - q;
+                if (final < 0) return alert("Stok tidak cukup!");
+
+                ref.update({ nama: n.trim(), stok: final, satuan: snap.exists() ? snap.val().satuan : s });
                 alert("Berhasil!");
-                location.reload(); // Refresh untuk membersihkan form
+                location.reload();
             });
         }
 
+        // REALTIME DASHBOARD
         db.ref('stok').on('value', snap => {
-            let h = ""; 
-            let totalJenis = 0, totalUnit = 0, totalTipis = 0;
-
+            let h = ""; let j = 0; let t = 0; let k = 0;
             snap.forEach(c => {
                 const d = c.val();
-                totalJenis++;
-                totalUnit += d.stok;
-                if(d.stok < 10) totalTipis++;
-
-                h += `
-                <tr class="hover:bg-blue-50 transition">
-                    <td class="p-4 font-bold text-gray-700 capitalize">${d.nama}</td>
-                    <td class="p-4 text-center text-blue-600 font-black text-lg">${d.stok}</td>
-                    <td class="p-4 text-right text-gray-400 font-bold">${d.satuan || 'pcs'}</td>
-                </tr>`;
+                j++; t += d.stok; if(d.stok < 10) k++;
+                h += <tr><td class="p-4 capitalize">${d.nama}</td><td class="p-4 text-center text-blue-600">${d.stok}</td><td class="p-4 text-right text-gray-400 text-xs">${d.satuan || 'pcs'}</td></tr>;
             });
-
-            document.getElementById('tabel_stok').innerHTML = h;
-            document.getElementById('stat_jenis').innerText = totalJenis;
-            document.getElementById('stat_total').innerText = totalUnit;
-            document.getElementById('stat_tipis').innerText = totalTipis;
+            document.getElementById('tb-stok').innerHTML = h;
+            document.getElementById('st-jenis').innerText = j;
+            document.getElementById('st-total').innerText = t;
+            document.getElementById('st-kritis').innerText = k;
         });
     </script>
 </body>
