@@ -2,109 +2,133 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>PT SMS - FINAL REPAIR</title>
+    <title>PT SMS - STABLE VERSION</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        .hal { display: none !important; }
-        .hal-aktif { display: block !important; }
-        .btn-aktif { background-color: #1e40af !important; color: white !important; }
+        .page { display: none; }
+        .page.active { display: block !important; }
+        .nav-active { background-color: #1e40af !important; color: white !important; }
     </style>
 </head>
-<body class="bg-slate-50 font-sans antialiased text-slate-900">
+<body class="bg-slate-100 font-sans">
 
     <div class="flex min-h-screen">
-        <aside class="w-72 bg-white border-r p-8 space-y-8 shadow-sm">
-            <div class="px-2">
-                <h1 class="text-2xl font-black text-blue-900 italic">SMS <span class="text-orange-500">GUDANG</span></h1>
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Inventory Management</p>
-            </div>
-            
+        <aside class="w-64 bg-white border-r p-6 fixed h-full shadow-lg">
+            <h1 class="text-xl font-black text-blue-800 mb-10 italic">SMS GUDANG</h1>
             <nav class="space-y-2">
-                <button onclick="pindah('dash')" id="m-dash" class="nav-btn w-full flex items-center gap-3 p-4 rounded-2xl font-bold text-slate-500 btn-aktif">
-                    <i class="fa-solid fa-chart-line w-5"></i> Dashboard
+                <button onclick="buka('dash', this)" class="nav-btn w-full text-left p-4 rounded-xl font-bold text-slate-500 nav-active">
+                    <i class="fa-solid fa-house mr-2"></i> DASHBOARD
                 </button>
-                <button onclick="pindah('master')" id="m-master" class="nav-btn w-full flex items-center gap-3 p-4 rounded-2xl font-bold text-slate-500">
-                    <i class="fa-solid fa-layer-group w-5"></i> Master Barang
+                <button onclick="buka('master', this)" class="nav-btn w-full text-left p-4 rounded-xl font-bold text-slate-500">
+                    <i class="fa-solid fa-box mr-2"></i> MASTER BARANG
                 </button>
-                <button onclick="pindah('masuk')" id="m-masuk" class="nav-btn w-full flex items-center gap-3 p-4 rounded-2xl font-bold text-slate-500">
-                    <i class="fa-solid fa-circle-plus w-5 text-emerald-500"></i> Barang Masuk
+                <button onclick="buka('masuk', this)" class="nav-btn w-full text-left p-4 rounded-xl font-bold text-slate-500">
+                    <i class="fa-solid fa-plus mr-2 text-green-500"></i> BARANG MASUK
                 </button>
-                <button onclick="pindah('keluar')" id="m-keluar" class="nav-btn w-full flex items-center gap-3 p-4 rounded-2xl font-bold text-slate-500">
-                    <i class="fa-solid fa-circle-minus w-5 text-rose-500"></i> Barang Keluar
+                <button onclick="buka('keluar', this)" class="nav-btn w-full text-left p-4 rounded-xl font-bold text-slate-500">
+                    <i class="fa-solid fa-minus mr-2 text-red-500"></i> BARANG KELUAR
                 </button>
             </nav>
         </aside>
 
-        <main class="flex-1 p-12">
-            
-            <section id="hal-dash" class="hal hal-aktif space-y-8">
-                <h2 class="text-3xl font-black">RINGKASAN DATA</h2>
-                <div class="grid grid-cols-2 gap-6">
-                    <div class="bg-white p-8 rounded-[32px] border shadow-sm">
-                        <p class="text-slate-400 text-xs font-black uppercase">Jenis Barang</p>
-                        <h3 id="stat-jenis" class="text-5xl font-black text-blue-600">0</h3>
+        <main class="flex-1 ml-64 p-10">
+            <section id="p-dash" class="page active">
+                <h2 class="text-3xl font-black mb-6">DASHBOARD</h2>
+                <div class="grid grid-cols-2 gap-6 mb-8">
+                    <div class="bg-white p-6 rounded-3xl border shadow-sm">
+                        <p class="text-slate-400 font-bold text-xs uppercase">Total Barang</p>
+                        <h3 id="stat-j" class="text-4xl font-black text-blue-600">0</h3>
                     </div>
-                    <div class="bg-white p-8 rounded-[32px] border shadow-sm">
-                        <p class="text-slate-400 text-xs font-black uppercase">Total Stok Unit</p>
-                        <h3 id="stat-total" class="text-5xl font-black text-emerald-600">0</h3>
+                    <div class="bg-white p-6 rounded-3xl border shadow-sm">
+                        <p class="text-slate-400 font-bold text-xs uppercase">Total Stok Unit</p>
+                        <h3 id="stat-t" class="text-4xl font-black text-green-600">0</h3>
                     </div>
                 </div>
-                <div class="bg-white rounded-[32px] shadow-sm border overflow-hidden">
-                    <table class="w-full text-left font-bold uppercase">
-                        <thead class="bg-slate-50 text-slate-400 text-[10px]">
-                            <tr><th class="p-6">Nama Barang</th><th class="p-6 text-center">Stok Saat Ini</th></tr>
+                <div class="bg-white rounded-3xl shadow-sm overflow-hidden border">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 font-black text-xs uppercase text-slate-400 border-b">
+                            <tr><th class="p-5">Nama Barang</th><th class="p-5 text-center">Stok</th></tr>
                         </thead>
-                        <tbody id="tb-stok" class="divide-y text-slate-700"></tbody>
+                        <tbody id="list-stok" class="divide-y font-bold uppercase"></tbody>
                     </table>
                 </div>
             </section>
 
-            <section id="hal-master" class="hal space-y-8">
-                <div class="flex justify-between items-center">
-                    <h2 class="text-3xl font-black">DATABASE BARANG</h2>
-                    <button onclick="document.getElementById('modalAdd').style.display='flex'" class="bg-blue-600 text-white px-8 py-3 rounded-2xl font-black uppercase text-xs shadow-lg">
-                        + Tambah Barang Baru
+            <section id="p-master" class="page">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-3xl font-black">MASTER DATA</h2>
+                    <button onclick="document.getElementById('modal-add').style.display='flex'" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-black text-xs uppercase shadow-lg">
+                        + Tambah Barang
                     </button>
                 </div>
-                <div class="bg-white rounded-[32px] shadow-sm border overflow-hidden">
-                    <table class="w-full text-left font-bold uppercase">
-                        <thead class="bg-slate-50 text-slate-400 text-[10px]">
-                            <tr><th class="p-6">Nama Barang</th><th class="p-6">Satuan</th><th class="p-6 text-center">Aksi</th></tr>
+                <div class="bg-white rounded-3xl shadow-sm border overflow-hidden">
+                    <table class="w-full text-left uppercase">
+                        <thead class="bg-slate-50 font-black text-xs text-slate-400 border-b">
+                            <tr><th class="p-5">Nama</th><th class="p-5">Satuan</th><th class="p-5 text-center">Aksi</th></tr>
                         </thead>
-                        <tbody id="tb-master" class="divide-y text-slate-700"></tbody>
+                        <tbody id="list-master" class="divide-y font-bold"></tbody>
                     </table>
                 </div>
             </section>
 
-            <section id="hal-masuk" class="hal space-y-8">
-                <h2 class="text-3xl font-black text-emerald-700">INPUT BARANG MASUK</h2>
-                <div class="max-w-md bg-white p-10 rounded-[40px] shadow-xl border space-y-4">
-                    <input type="text" id="in-nama" placeholder="NAMA BARANG" class="w-full p-5 bg-slate-50 border rounded-2xl font-black uppercase outline-none">
-                    <input type="number" id="in-qty" placeholder="JUMLAH" class="w-full p-5 bg-slate-50 border rounded-2xl font-black text-3xl outline-none">
-                    <button onclick="transaksi('masuk')" class="w-full bg-emerald-600 text-white py-5 rounded-2xl font-black text-lg shadow-lg">SIMPAN MASUK</button>
+            <section id="p-masuk" class="page">
+                <h2 class="text-3xl font-black mb-6 text-green-600">INPUT MASUK</h2>
+                <div class="max-w-md bg-white p-8 rounded-3xl border shadow-xl">
+                    <input type="text" id="in-n" placeholder="NAMA BARANG" class="w-full p-4 bg-slate-50 border rounded-xl mb-4 font-bold uppercase">
+                    <input type="number" id="in-q" placeholder="JUMLAH" class="w-full p-4 bg-slate-50 border rounded-xl mb-6 font-black text-2xl">
+                    <button onclick="aksi('masuk')" class="w-full bg-green-600 text-white py-4 rounded-xl font-black uppercase">Simpan Masuk</button>
                 </div>
             </section>
 
-            <section id="hal-keluar" class="hal space-y-8">
-                <h2 class="text-3xl font-black text-rose-700">INPUT BARANG KELUAR</h2>
-                <div class="max-w-md bg-white p-10 rounded-[40px] shadow-xl border space-y-4">
-                    <input type="text" id="out-nama" placeholder="NAMA BARANG" class="w-full p-5 bg-slate-50 border rounded-2xl font-black uppercase outline-none">
-                    <input type="number" id="out-qty" placeholder="JUMLAH" class="w-full p-5 bg-slate-50 border rounded-2xl font-black text-3xl outline-none">
-                    <button onclick="transaksi('keluar')" class="w-full bg-rose-600 text-white py-5 rounded-2xl font-black text-lg shadow-lg">SIMPAN KELUAR</button>
+            <section id="p-keluar" class="page">
+                <h2 class="text-3xl font-black mb-6 text-red-600">INPUT KELUAR</h2>
+                <div class="max-w-md bg-white p-8 rounded-3xl border shadow-xl">
+                    <input type="text" id="out-n" placeholder="NAMA BARANG" class="w-full p-4 bg-slate-50 border rounded-xl mb-4 font-bold uppercase">
+                    <input type="number" id="out-q" placeholder="JUMLAH" class="w-full p-4 bg-slate-50 border rounded-xl mb-6 font-black text-2xl">
+                    <button onclick="aksi('keluar')" class="w-full bg-red-600 text-white py-4 rounded-xl font-black uppercase">Simpan Keluar</button>
                 </div>
             </section>
-
         </main>
     </div>
 
-    <div id="modalAdd" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center p-4 z-[99]">
-        <div class="bg-white p-10 rounded-[40px] w-full max-w-sm space-y-5 shadow-2xl">
-            <h3 class="text-xl font-black uppercase">Registrasi Barang</h3>
-            <input type="text" id="m-nama" placeholder="NAMA BARANG" class="w-full p-5 bg-slate-50 border rounded-2xl font-black uppercase outline-none">
-            <input type="text" id="m-sat" placeholder="SATUAN (PCS/BTG/DLL)" class="w-full p-5 bg-slate-50 border rounded-2xl font-black uppercase outline-none">
-            <div class="flex gap-3">
-                <button onclick="saveMaster()" class="flex-1 bg-blue-600 text-white py-4 rounded-2xl font-black uppercase">Simpan</button>
-                <button onclick="document.getElementById('modalAdd').style.display='none'" class="flex-1 bg-slate-10
+    <div id="modal-add" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white p-8 rounded-3xl w-full max-w-sm">
+            <h3 class="font-black mb-4 uppercase italic">Tambah Master</h3>
+            <input type="text" id="m-n" placeholder="NAMA BARANG" class="w-full p-4 bg-slate-50 border rounded-xl mb-3 font-bold uppercase outline-none">
+            <input type="text" id="m-s" placeholder="SATUAN (PCS/BTG)" class="w-full p-4 bg-slate-50 border rounded-xl mb-4 font-bold uppercase outline-none">
+            <div class="flex gap-2">
+                <button onclick="saveM()" class="flex-1 bg-blue-600 text-white py-4 rounded-xl font-black uppercase">Simpan</button>
+                <button onclick="document.getElementById('modal-add').style.display='none'" class="flex-1 bg-slate-100 py-4 rounded-xl font-black uppercase">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const config = {
+            apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
+            authDomain: "gudang-sms-4c81c.firebaseapp.com",
+            databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "gudang-sms-4c81c",
+            storageBucket: "gudang-sms-4c81c.firebasestorage.app",
+            appId: "1:598362736106:web:c8e2732d6ac7613931de93"
+        };
+        firebase.initializeApp(config);
+        const db = firebase.database();
+
+        // NAVIGASI SEDERHANA
+        function buka(target, btn) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('nav-active'));
+            document.getElementById('p-' + target).classList.add('active');
+            btn.classList.add('nav-active');
+        }
+
+        function saveM() {
+            const n = document.getElementById('m-n').value.trim();
+            const s = document.getElementById('m-s').value.trim() || "PCS";
+            if(!n) return;
+            db.ref('stok/' + n.toLowerCase()).set({ nama: n, stok: 0, satuan: s });
+            document.getElementById('modal-add').style
