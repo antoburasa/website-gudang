@@ -34,24 +34,25 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 no-print">
             <div class="bg-white p-5 rounded-xl shadow border">
-                <h3 class="text-emerald-700 font-bold mb-4 text-sm uppercase flex items-center gap-2">📥 Barang Masuk</h3>
+                <h3 class="text-emerald-700 font-bold mb-4 text-sm uppercase">📥 Barang Masuk</h3>
                 <div class="space-y-3">
-                    <input type="text" id="nPrs" placeholder="No. PRS" class="w-full p-2 border rounded bg-slate-50 text-sm outline-none">
+                    <input type="text" id="nPrs" placeholder="No. PRS" class="w-full p-2 border rounded bg-slate-50 text-sm">
                     <input type="text" id="namaIn" placeholder="Nama Barang" class="w-full p-2 border rounded uppercase font-bold outline-none focus:ring-2 focus:ring-emerald-400">
                     <div class="flex gap-2">
                         <input type="number" id="jmlIn" placeholder="Jumlah" class="w-1/2 p-2 border rounded font-bold">
-                        <input type="text" id="satIn" placeholder="Satuan (Pcs/Box)" class="w-1/2 p-2 border rounded bg-slate-50">
+                        <input type="text" id="satIn" placeholder="Pcs/Box" class="w-1/2 p-2 border rounded bg-slate-50">
                     </div>
                     <button onclick="proses('masuk')" class="w-full bg-emerald-600 text-white py-3 rounded-lg font-bold shadow-md hover:bg-emerald-700 active:scale-95 transition-all uppercase text-xs">Simpan Masuk</button>
                 </div>
             </div>
 
             <div class="bg-white p-5 rounded-xl shadow border">
-                <h3 class="text-rose-700 font-bold mb-4 text-sm uppercase flex items-center gap-2">📤 Barang Keluar</h3>
+                <h3 class="text-rose-700 font-bold mb-4 text-sm uppercase">📤 Barang Keluar</h3>
                 <div class="space-y-3">
                     <input type="text" id="namaOut" placeholder="Cari Barang..." class="w-full p-2 border rounded uppercase outline-none focus:ring-2 focus:ring-rose-400">
                     <input type="number" id="jmlOut" placeholder="Jumlah Keluar" class="w-full p-2 border rounded font-bold">
-                    <div class="h-[44px]"></div> <button onclick="proses('keluar')" class="w-full bg-rose-600 text-white py-3 rounded-lg font-bold shadow-md hover:bg-rose-700 active:scale-95 transition-all uppercase text-xs">Kurangi Stok</button>
+                    <div class="h-[44px]"></div>
+                    <button onclick="proses('keluar')" class="w-full bg-rose-600 text-white py-3 rounded-lg font-bold shadow-md hover:bg-rose-700 active:scale-95 transition-all uppercase text-xs">Kurangi Stok</button>
                 </div>
             </div>
         </div>
@@ -75,17 +76,24 @@
 
         <div class="bg-white rounded-xl shadow overflow-hidden border">
             <div class="bg-blue-600 text-white p-3 text-[10px] font-bold uppercase flex justify-between items-center">
-                <span>🕒 Riwayat Transaksi</span>
+                <span>🕒 Riwayat 15 Transaksi Terakhir</span>
                 <button onclick="if(confirm('Hapus log?')) db.ref('riwayat').remove()" class="text-[8px] underline no-print opacity-50">Hapus Riwayat</button>
             </div>
             <table class="w-full text-[10px]">
+                <thead>
+                    <tr class="bg-slate-50 border-b text-gray-400">
+                        <th class="p-2 text-left">WAKTU</th>
+                        <th class="p-2 text-center">TIPE</th>
+                        <th class="p-2 text-left">BARANG</th>
+                        <th class="p-2 text-right">QTY</th>
+                    </tr>
+                </thead>
                 <tbody id="tbLog" class="divide-y"></tbody>
             </table>
         </div>
     </div>
 
     <script>
-        // Konfigurasi ini harus tepat
         const config = {
             apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
             authDomain: "gudang-sms-4c81c.firebaseapp.com",
@@ -102,7 +110,7 @@
             const jml = parseInt(document.getElementById(mode==='masuk'?'jmlIn':'jmlOut').value);
             const sat = document.getElementById('satIn').value || "Pcs";
             const prs = document.getElementById('nPrs').value || "-";
-            const tgl = new Date().toLocaleString('id-ID');
+            const tgl = new Date().toLocaleString('id-ID', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
 
             if (!nama || isNaN(jml)) return alert("Isi Nama & Jumlah!");
 
@@ -117,45 +125,15 @@
                 refS.update({ nama: nama, stok: baru, satuan: sat, prs: prs });
                 refL.set({ t: tgl, m: mode, n: nama, q: (mode==='masuk'?'+':'-')+jml, p: prs });
 
-                alert("Berhasil!");
+                alert("Berhasil diperbarui!");
                 document.getElementById('namaIn').value=''; document.getElementById('jmlIn').value='';
                 document.getElementById('namaOut').value=''; document.getElementById('jmlOut').value='';
             });
         }
 
-        // Sinkronisasi Stok & Statistik
         db.ref('stok').on('value', snap => {
             let h = "", tj = 0, ts = 0, tl = 0;
             snap.forEach(c => {
                 const v = c.val();
                 tj++; ts += v.stok; if(v.stok < 5) tl++;
-                h += `<tr class="hover:bg-slate-50">
-                    <td class="p-3 capitalize font-bold text-slate-700">${v.nama}</td>
-                    <td class="p-3 text-center font-black text-blue-600">${v.stok}</td>
-                    <td class="p-3 text-right text-gray-400 text-xs">${v.satuan || 'Pcs'}</td>
-                </tr>`;
-            });
-            document.getElementById('tbStok').innerHTML = h || '<tr><td colspan="3" class="p-8 text-center text-gray-300 italic">Belum ada data...</td></tr>';
-            document.getElementById('sJenis').innerText = tj;
-            document.getElementById('sTotal').innerText = ts;
-            document.getElementById('sLimit').innerText = tl;
-        });
-
-        // Sinkronisasi Riwayat
-        db.ref('riwayat').on('value', snap => {
-            let h = ""; let list = [];
-            snap.forEach(c => list.push(c.val()));
-            list.reverse().slice(0, 10).forEach(v => {
-                const col = v.m === 'masuk' ? 'text-green-600' : 'text-red-600';
-                h += `<tr>
-                    <td class="p-2 text-gray-400 text-[8px]">${v.t}</td>
-                    <td class="p-2 font-bold uppercase ${col} text-center text-[8px]">${v.m}</td>
-                    <td class="p-2 capitalize font-medium text-slate-700">${v.n}</td>
-                    <td class="p-2 text-right font-black">${v.q}</td>
-                </tr>`;
-            });
-            document.getElementById('tbLog').innerHTML = h;
-        });
-    </script>
-</body>
-</html>
+                h += `<tr><td class="p-3 capitalize
