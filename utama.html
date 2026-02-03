@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PT SMS - Inventory v2</title>
+    <title>PT SMS - Inventory v2 Fixed</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -24,8 +24,8 @@
                     <input type="text" id="ket" placeholder="OLEH / KET" class="p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-400 bg-slate-50 text-sm">
                 </div>
                 <div class="grid grid-cols-2 gap-2 pt-2">
-                    <button onclick="proses('masuk')" class="bg-emerald-600 text-white p-4 rounded-xl font-bold active:scale-95 transition shadow-md uppercase text-xs">Simpan Stok</button>
-                    <button onclick="proses('keluar')" class="bg-rose-600 text-white p-4 rounded-xl font-bold active:scale-95 transition shadow-md uppercase text-xs">Kurangi Stok</button>
+                    <button onclick="proses('masuk')" class="bg-emerald-600 text-white p-4 rounded-xl font-bold active:scale-95 transition shadow-md uppercase text-xs">Simpan</button>
+                    <button onclick="proses('keluar')" class="bg-rose-600 text-white p-4 rounded-xl font-bold active:scale-95 transition shadow-md uppercase text-xs">Keluar</button>
                 </div>
             </div>
         </div>
@@ -33,7 +33,7 @@
         <div class="bg-white rounded-2xl shadow-sm overflow-hidden border border-slate-200">
             <div class="bg-slate-800 p-3 flex justify-between items-center">
                 <span class="text-white text-[10px] font-bold uppercase">📦 Stok Gudang</span>
-                <input type="text" id="cariBarang" onkeyup="filterStok()" placeholder="Cari barang..." class="text-[10px] p-1 rounded border-none outline-none w-1/2 bg-slate-700 text-white placeholder-slate-400">
+                <input type="text" id="cariBarang" oninput="filterStok()" placeholder="Cari barang..." class="text-[10px] p-1.5 rounded-lg border-none outline-none w-1/2 bg-slate-700 text-white placeholder-slate-400">
             </div>
             <div class="max-h-64 overflow-y-auto">
                 <table class="w-full text-sm">
@@ -47,10 +47,8 @@
                 <span>🕒 Riwayat 15 Transaksi</span>
                 <button onclick="if(confirm('Hapus riwayat?')) db.ref('riwayat').remove()" class="text-[8px] underline opacity-50">RESET</button>
             </div>
-            <div id="tLog" class="p-3 space-y-3 max-h-80 overflow-y-auto"></div>
+            <div id="tLog" class="p-3 space-y-3 max-h-80 overflow-y-auto font-sans"></div>
         </div>
-        
-        <button onclick="window.print()" class="w-full py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest no-print">Cetak Laporan Lengkap</button>
     </div>
 
     <script>
@@ -65,13 +63,17 @@
         firebase.initializeApp(config);
         const db = firebase.database();
 
+        // FUNGSI UTAMA (SIMPAN/KELUAR)
         function proses(m) {
             const n = document.getElementById('nama').value.trim().toLowerCase();
             const q = parseInt(document.getElementById('qty').value);
             const k = document.getElementById('ket').value.trim() || "-";
             const w = new Date().toLocaleString('id-ID', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
 
-            if(!n || !q) return alert("Isi Nama Barang & Jumlah!");
+            if(!n || isNaN(q)) {
+                alert("Isi Nama Barang & Jumlah!");
+                return;
+            }
 
             const sRef = db.ref('stok/' + n);
             const lRef = db.ref('riwayat').push();
@@ -79,53 +81,7 @@
             sRef.once('value').then(snap => {
                 let lama = snap.exists() ? parseInt(snap.val().stok) : 0;
                 let baru = (m === 'masuk') ? (lama + q) : (lama - q);
-                if(baru < 0) return alert("Stok tidak cukup!");
-
-                sRef.update({ nama: n, stok: baru });
-                lRef.set({ waktu: w, mode: m, barang: n, jumlah: (m==='masuk'?'+':'-')+q, ket: k });
-                
-                alert("Berhasil!");
-                document.getElementById('nama').value=''; document.getElementById('qty').value=''; document.getElementById('ket').value='';
-            });
-        }
-
-        // Fungsi Cari Barang
-        function filterStok() {
-            let input = document.getElementById('cariBarang').value.toLowerCase();
-            let rows = document.getElementById('tStok').getElementsByTagName('tr');
-            for (let i = 0; i < rows.length; i++) {
-                let text = rows[i].textContent.toLowerCase();
-                rows[i].style.display = text.includes(input) ? "" : "none";
-            }
-        }
-
-        db.ref('stok').on('value', snap => {
-            let h = "";
-            snap.forEach(c => {
-                h += <tr class="hover:bg-slate-50"><td class="p-3 capitalize font-bold text-slate-700">${c.val().nama}</td><td class="p-3 text-right font-black text-blue-600">${c.val().stok}</td></tr>;
-            });
-            document.getElementById('tStok').innerHTML = h || '<p class="p-4 text-center text-slate-300">Belum ada data.</p>';
-        });
-
-        db.ref('riwayat').on('value', snap => {
-            let h = ""; let a = [];
-            snap.forEach(c => a.push(c.val()));
-            a.reverse().slice(0, 15).forEach(v => {
-                const col = v.mode === 'masuk' ? 'text-emerald-600 bg-emerald-50' : 'text-rose-600 bg-rose-50';
-                h += `<div class="flex flex-col border-b border-slate-50 pb-2">
-                    <div class="flex justify-between items-center text-[8px] font-mono text-slate-400">
-                        <span>${v.waktu}</span>
-                        <span class="px-2 py-0.5 rounded font-bold uppercase ${col}">${v.mode}</span>
-                    </div>
-                    <div class="flex justify-between mt-1 items-center">
-                        <span class="capitalize font-bold text-slate-800 text-xs">${v.barang}</span>
-                        <span class="font-black text-slate-900">${v.jumlah}</span>
-                    </div>
-                    <div class="text-[9px] text-slate-500 italic">Oleh: ${v.ket || '-'}</div>
-                </div>`;
-            });
-            document.getElementById('tLog').innerHTML = h || '<p class="text-center text-slate-300 italic py-4">Belum ada riwayat.</p>';
-        });
-    </script>
-</body>
-</html>
+                if(baru < 0) {
+                    alert("Stok tidak cukup!");
+                    return;
+                }
