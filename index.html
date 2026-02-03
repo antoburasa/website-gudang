@@ -1,128 +1,172 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title>Manajemen Stok Barang</title>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-  <style>
-    body { font-family: Arial; padding: 20px; }
-    input, select, button { padding: 6px; margin: 4px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 15px; }
-    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
-    th { background: #f0f0f0; }
-  </style>
+<meta charset="UTF-8">
+<title>Manajemen Stok Gudang</title>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+
 </head>
-<body>
+<body class="bg-gray-100 p-6">
 
-<h2>Manajemen Stok Barang</h2>
+<h1 class="text-2xl font-bold mb-4">Manajemen Stok Barang</h1>
 
-<h3>Tambah Barang</h3>
-<input id="nama" placeholder="Nama Barang">
-<input id="stok" type="number" placeholder="Stok Awal">
-<button onclick="tambahBarang()">Tambah</button>
+<!-- TAMBAH BARANG -->
+<div class="bg-white p-4 rounded shadow mb-6">
+  <h2 class="font-bold mb-2">Tambah Barang</h2>
+  <input id="namaBarang" placeholder="Nama Barang" class="border p-2 w-full mb-2">
+  <input id="stokBarang" type="number" placeholder="Stok Awal" class="border p-2 w-full mb-2">
+  <button onclick="tambahBarang()" class="bg-blue-600 text-white px-4 py-2 rounded">
+    Tambah
+  </button>
+</div>
 
-<h3>Transaksi</h3>
-<select id="barang"></select>
-<input id="jumlah" type="number" placeholder="Jumlah">
-<select id="tipe">
-  <option value="masuk">Barang Masuk</option>
-  <option value="keluar">Barang Keluar</option>
-</select>
-<button onclick="transaksi()">Proses</button>
+<!-- TRANSAKSI -->
+<div class="bg-white p-4 rounded shadow mb-6">
+  <h2 class="font-bold mb-2">Transaksi</h2>
 
-<h3>Data Stok</h3>
-<table>
-  <thead>
-    <tr><th>Nama</th><th>Stok</th></tr>
-  </thead>
-  <tbody id="stokTable"></tbody>
-</table>
+  <select id="pilihBarang" class="border p-2 w-full mb-2"></select>
 
-<h3>Riwayat Transaksi</h3>
-<table>
-  <thead>
-    <tr>
-      <th>Tanggal</th>
-      <th>Nama Barang</th>
-      <th>Jumlah</th>
-      <th>Tipe</th>
-    </tr>
-  </thead>
-  <tbody id="transaksiTable"></tbody>
-</table>
+  <input id="jumlahTransaksi" type="number" placeholder="Jumlah" class="border p-2 w-full mb-2">
+
+  <div class="flex gap-2">
+    <button onclick="transaksi('MASUK')" class="bg-green-600 text-white px-4 py-2 rounded w-full">
+      Barang Masuk
+    </button>
+    <button onclick="transaksi('KELUAR')" class="bg-red-600 text-white px-4 py-2 rounded w-full">
+      Barang Keluar
+    </button>
+  </div>
+</div>
+
+<!-- DATA STOK -->
+<div class="bg-white p-4 rounded shadow mb-6">
+  <h2 class="font-bold mb-2">Data Stok</h2>
+  <table class="w-full border">
+    <thead class="bg-gray-200">
+      <tr>
+        <th class="border p-2">Nama</th>
+        <th class="border p-2">Stok</th>
+      </tr>
+    </thead>
+    <tbody id="tabelStok"></tbody>
+  </table>
+</div>
+
+<!-- RIWAYAT TRANSAKSI -->
+<div class="bg-white p-4 rounded shadow">
+  <h2 class="font-bold mb-2">Riwayat Transaksi</h2>
+  <table class="w-full border">
+    <thead class="bg-gray-200">
+      <tr>
+        <th class="border p-2">Tanggal</th>
+        <th class="border p-2">Nama</th>
+        <th class="border p-2">Jumlah</th>
+        <th class="border p-2">Tipe</th>
+      </tr>
+    </thead>
+    <tbody id="tabelRiwayat"></tbody>
+  </table>
+</div>
 
 <script>
-  // 🔥 GANTI SESUAI FIREBASE KAMU
-  var firebaseConfig = {
-    apiKey: "API_KEY",
-    authDomain: "PROJECT_ID.firebaseapp.com",
-    databaseURL: "https://PROJECT_ID.firebaseio.com",
-    projectId: "PROJECT_ID"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+// 🔥 FIREBASE CONFIG (PUNYA KAMU)
+firebase.initializeApp({
+  apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
+  authDomain: "gudang-sms-4c81c.firebaseapp.com",
+  databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "gudang-sms-4c81c"
+});
 
-  function tambahBarang() {
-    const nama = namaInput.value;
-    const stok = parseInt(stokInput.value);
-    db.ref("stok").push({ nama, stok });
-    namaInput.value = stokInput.value = "";
+const db = firebase.database();
+
+// TAMBAH BARANG
+function tambahBarang() {
+  const nama = namaBarang.value.trim();
+  const stok = parseInt(stokBarang.value);
+
+  if (!nama || isNaN(stok)) {
+    alert("Lengkapi data");
+    return;
   }
 
-  function transaksi() {
-    const id = barangSelect.value;
-    const jumlah = parseInt(jumlahInput.value);
-    const tipe = tipeSelect.value;
+  db.ref("stok").push({
+    nama: nama,
+    stok: stok
+  });
 
-    db.ref("stok/" + id).once("value", snap => {
-      let data = snap.val();
-      let stokBaru = tipe === "masuk"
-        ? data.stok + jumlah
-        : data.stok - jumlah;
+  namaBarang.value = "";
+  stokBarang.value = "";
+}
 
-      if (stokBaru < 0) return alert("Stok tidak cukup!");
+// TRANSAKSI
+function transaksi(tipe) {
+  const key = pilihBarang.value;
+  const jumlah = parseInt(jumlahTransaksi.value);
 
-      db.ref("stok/" + id).update({ stok: stokBaru });
-
-      db.ref("transaksi").push({
-        nama: data.nama,
-        jumlah,
-        tipe,
-        waktu: new Date().toLocaleString()
-      });
-    });
+  if (!key || isNaN(jumlah)) {
+    alert("Lengkapi transaksi");
+    return;
   }
 
-  const namaInput = document.getElementById("nama");
-  const stokInput = document.getElementById("stok");
-  const barangSelect = document.getElementById("barang");
-  const jumlahInput = document.getElementById("jumlah");
-  const tipeSelect = document.getElementById("tipe");
+  const ref = db.ref("stok/" + key);
 
-  db.ref("stok").on("value", snap => {
-    stokTable.innerHTML = "";
-    barangSelect.innerHTML = "";
-    snap.forEach(child => {
-      let d = child.val();
-      stokTable.innerHTML += <tr><td>${d.nama}</td><td>${d.stok}</td></tr>;
-      barangSelect.innerHTML += <option value="${child.key}">${d.nama}</option>;
-    });
-  });
+  ref.once("value").then(snap => {
+    let stok = snap.val().stok;
+    if (tipe === "KELUAR" && stok < jumlah) {
+      alert("Stok tidak cukup");
+      return;
+    }
 
-  db.ref("transaksi").on("value", snap => {
-    transaksiTable.innerHTML = "";
-    snap.forEach(child => {
-      let t = child.val();
-      transaksiTable.innerHTML += `
-        <tr>
-          <td>${t.waktu}</td>
-          <td>${t.nama}</td>
-          <td>${t.jumlah}</td>
-          <td>${t.tipe}</td>
-        </tr>`;
+    const stokBaru = tipe === "MASUK" ? stok + jumlah : stok - jumlah;
+    ref.update({ stok: stokBaru });
+
+    db.ref("transaksi").push({
+      tanggal: new Date().toLocaleString(),
+      nama: snap.val().nama,
+      jumlah: jumlah,
+      tipe: tipe
     });
+
+    jumlahTransaksi.value = "";
   });
+}
+
+// LOAD DATA
+db.ref("stok").on("value", snap => {
+  tabelStok.innerHTML = "";
+  pilihBarang.innerHTML = "<option value=''>Pilih Barang</option>";
+
+  snap.forEach(c => {
+    const d = c.val();
+
+    tabelStok.innerHTML += `
+      <tr>
+        <td class="border p-2">${d.nama}</td>
+        <td class="border p-2">${d.stok}</td>
+      </tr>`;
+
+    pilihBarang.innerHTML += `
+      <option value="${c.key}">${d.nama}</option>`;
+  });
+});
+
+// RIWAYAT
+db.ref("transaksi").limitToLast(50).on("value", snap => {
+  tabelRiwayat.innerHTML = "";
+  snap.forEach(c => {
+    const d = c.val();
+    tabelRiwayat.innerHTML =
+      `<tr>
+        <td class="border p-2">${d.tanggal}</td>
+        <td class="border p-2">${d.nama}</td>
+        <td class="border p-2">${d.jumlah}</td>
+        <td class="border p-2">${d.tipe}</td>
+      </tr>` + tabelRiwayat.innerHTML;
+  });
+});
 </script>
 
 </body>
