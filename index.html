@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PT. SMS - Enterprise Inventory</title>
+    <title>PT. SMS - GUDANG SYSTEM</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -11,51 +11,39 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f1f5f9; }
         .active-menu { background-color: #1e40af !important; color: white !important; }
         .page { display: none; }
-        .page-active { display: block; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .page-active { display: block !important; }
         @media print { .no-print { display: none !important; } }
     </style>
 </head>
-<body>
+<body class="antialiased text-slate-900">
 
     <div class="flex flex-col md:flex-row min-h-screen">
-        <nav class="w-full md:w-72 bg-white border-r p-6 space-y-8 no-print shadow-sm">
+        <nav class="w-full md:w-72 bg-white border-r p-6 space-y-8 no-print shadow-sm z-20">
             <div class="px-4">
                 <h1 class="text-2xl font-black text-blue-900 tracking-tighter italic">SMS <span class="text-orange-500">GUDANG</span></h1>
+                <p class="text-[9px] font-bold text-slate-400 tracking-[0.3em] uppercase">Inventory Control</p>
             </div>
             
-            <div class="space-y-1">
-                <button onclick="showPage('dash')" id="m-dash" class="w-full flex items-center gap-3 p-4 text-slate-500 font-bold rounded-2xl transition hover:bg-slate-50 active-menu">
+            <div class="space-y-1" id="nav-container">
+                <button onclick="showPage('dash')" id="m-dash" class="nav-btn w-full flex items-center gap-3 p-4 text-slate-500 font-bold rounded-2xl transition hover:bg-slate-50 active-menu">
                     <i class="fa-solid fa-chart-pie"></i> Dashboard
                 </button>
-                <button onclick="showPage('master')" id="m-master" class="w-full flex items-center gap-3 p-4 text-slate-500 font-bold rounded-2xl transition hover:bg-slate-50">
+                <button onclick="showPage('master')" id="m-master" class="nav-btn w-full flex items-center gap-3 p-4 text-slate-500 font-bold rounded-2xl transition hover:bg-slate-50">
                     <i class="fa-solid fa-boxes-stacked"></i> Master Barang
                 </button>
-                <button onclick="showPage('masuk')" id="m-masuk" class="w-full flex items-center gap-3 p-4 text-slate-500 font-bold rounded-2xl transition hover:bg-slate-50">
+                <button onclick="showPage('masuk')" id="m-masuk" class="nav-btn w-full flex items-center gap-3 p-4 text-slate-500 font-bold rounded-2xl transition hover:bg-slate-50">
                     <i class="fa-solid fa-arrow-down-long text-emerald-500"></i> Barang Masuk
                 </button>
-                <button onclick="showPage('keluar')" id="m-keluar" class="w-full flex items-center gap-3 p-4 text-slate-500 font-bold rounded-2xl transition hover:bg-slate-50">
+                <button onclick="showPage('keluar')" id="m-keluar" class="nav-btn w-full flex items-center gap-3 p-4 text-slate-500 font-bold rounded-2xl transition hover:bg-slate-50">
                     <i class="fa-solid fa-arrow-up-long text-rose-500"></i> Barang Keluar
                 </button>
-                <button onclick="showPage('log')" id="m-log" class="w-full flex items-center gap-3 p-4 text-slate-500 font-bold rounded-2xl transition hover:bg-slate-50">
+                <button onclick="showPage('log')" id="m-log" class="nav-btn w-full flex items-center gap-3 p-4 text-slate-500 font-bold rounded-2xl transition hover:bg-slate-50">
                     <i class="fa-solid fa-clock-rotate-left"></i> Riwayat
                 </button>
             </div>
         </nav>
 
-        <main class="flex-1 p-6 md:p-12 overflow-y-auto">
-            
-            <section id="page-dash" class="page page-active space-y-8">
-                <h2 class="text-3xl font-extrabold text-slate-800 uppercase">Dashboard</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="bg-blue-600 p-8 rounded-[32px] text-white shadow-lg">
-                        <p class="opacity-70 text-xs font-bold uppercase">Jenis</p>
-                        <h3 id="st-jenis" class="text-4xl font-black mt-2">0</h3>
-                    </div>
-                    <div class="bg-emerald-600 p-8 rounded-[32px] text-white shadow-lg">
-                        <p class="opacity-70 text-xs font-bold uppercase">Stok</p>
-                        <h3 id="st-total" class="text-4xl font-black mt-2">0</h3>
-                    </div>
+        <main class="flex
