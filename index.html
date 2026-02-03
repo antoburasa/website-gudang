@@ -1,134 +1,269 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <title>PT SMS - STABLE VERSION</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        .page { display: none; }
-        .page.active { display: block !important; }
-        .nav-active { background-color: #1e40af !important; color: white !important; }
-    </style>
+<meta charset="UTF-8">
+<title>SMS Gudang</title>
+
+<!-- Firebase v8 -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<!-- UI -->
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+<!-- Excel -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+<style>
+.page{display:none}
+.page.active{display:block}
+.nav-active{background:#1e40af;color:white}
+.input{width:100%;padding:12px;border:1px solid #ccc;border-radius:10px;margin-bottom:10px}
+.btn{width:100%;padding:12px;border-radius:10px;font-weight:700;color:white}
+</style>
 </head>
-<body class="bg-slate-100 font-sans">
 
-    <div class="flex min-h-screen">
-        <aside class="w-64 bg-white border-r p-6 fixed h-full shadow-lg">
-            <h1 class="text-xl font-black text-blue-800 mb-10 italic">SMS GUDANG</h1>
-            <nav class="space-y-2">
-                <button onclick="buka('dash', this)" class="nav-btn w-full text-left p-4 rounded-xl font-bold text-slate-500 nav-active">
-                    <i class="fa-solid fa-house mr-2"></i> DASHBOARD
-                </button>
-                <button onclick="buka('master', this)" class="nav-btn w-full text-left p-4 rounded-xl font-bold text-slate-500">
-                    <i class="fa-solid fa-box mr-2"></i> MASTER BARANG
-                </button>
-                <button onclick="buka('masuk', this)" class="nav-btn w-full text-left p-4 rounded-xl font-bold text-slate-500">
-                    <i class="fa-solid fa-plus mr-2 text-green-500"></i> BARANG MASUK
-                </button>
-                <button onclick="buka('keluar', this)" class="nav-btn w-full text-left p-4 rounded-xl font-bold text-slate-500">
-                    <i class="fa-solid fa-minus mr-2 text-red-500"></i> BARANG KELUAR
-                </button>
-            </nav>
-        </aside>
+<body class="bg-slate-100">
 
-        <main class="flex-1 ml-64 p-10">
-            <section id="p-dash" class="page active">
-                <h2 class="text-3xl font-black mb-6">DASHBOARD</h2>
-                <div class="grid grid-cols-2 gap-6 mb-8">
-                    <div class="bg-white p-6 rounded-3xl border shadow-sm">
-                        <p class="text-slate-400 font-bold text-xs uppercase">Total Barang</p>
-                        <h3 id="stat-j" class="text-4xl font-black text-blue-600">0</h3>
-                    </div>
-                    <div class="bg-white p-6 rounded-3xl border shadow-sm">
-                        <p class="text-slate-400 font-bold text-xs uppercase">Total Stok Unit</p>
-                        <h3 id="stat-t" class="text-4xl font-black text-green-600">0</h3>
-                    </div>
-                </div>
-                <div class="bg-white rounded-3xl shadow-sm overflow-hidden border">
-                    <table class="w-full text-left">
-                        <thead class="bg-slate-50 font-black text-xs uppercase text-slate-400 border-b">
-                            <tr><th class="p-5">Nama Barang</th><th class="p-5 text-center">Stok</th></tr>
-                        </thead>
-                        <tbody id="list-stok" class="divide-y font-bold uppercase"></tbody>
-                    </table>
-                </div>
-            </section>
+<!-- LOGIN -->
+<div id="loginBox" class="fixed inset-0 flex items-center justify-center bg-slate-100 z-50">
+<div class="bg-white p-8 rounded-xl w-80 shadow">
+<h2 class="text-xl font-black mb-4">LOGIN</h2>
+<input id="email" class="input" placeholder="Email">
+<input id="password" type="password" class="input" placeholder="Password">
+<button onclick="login()" class="btn bg-blue-600">Masuk</button>
+</div>
+</div>
 
-            <section id="p-master" class="page">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-3xl font-black">MASTER DATA</h2>
-                    <button onclick="document.getElementById('modal-add').style.display='flex'" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-black text-xs uppercase shadow-lg">
-                        + Tambah Barang
-                    </button>
-                </div>
-                <div class="bg-white rounded-3xl shadow-sm border overflow-hidden">
-                    <table class="w-full text-left uppercase">
-                        <thead class="bg-slate-50 font-black text-xs text-slate-400 border-b">
-                            <tr><th class="p-5">Nama</th><th class="p-5">Satuan</th><th class="p-5 text-center">Aksi</th></tr>
-                        </thead>
-                        <tbody id="list-master" class="divide-y font-bold"></tbody>
-                    </table>
-                </div>
-            </section>
+<div class="flex min-h-screen">
 
-            <section id="p-masuk" class="page">
-                <h2 class="text-3xl font-black mb-6 text-green-600">INPUT MASUK</h2>
-                <div class="max-w-md bg-white p-8 rounded-3xl border shadow-xl">
-                    <input type="text" id="in-n" placeholder="NAMA BARANG" class="w-full p-4 bg-slate-50 border rounded-xl mb-4 font-bold uppercase">
-                    <input type="number" id="in-q" placeholder="JUMLAH" class="w-full p-4 bg-slate-50 border rounded-xl mb-6 font-black text-2xl">
-                    <button onclick="aksi('masuk')" class="w-full bg-green-600 text-white py-4 rounded-xl font-black uppercase">Simpan Masuk</button>
-                </div>
-            </section>
+<!-- SIDEBAR -->
+<aside class="w-64 bg-white fixed h-full p-6 border-r">
+<h1 class="text-xl font-black text-blue-700 mb-6">SMS GUDANG</h1>
 
-            <section id="p-keluar" class="page">
-                <h2 class="text-3xl font-black mb-6 text-red-600">INPUT KELUAR</h2>
-                <div class="max-w-md bg-white p-8 rounded-3xl border shadow-xl">
-                    <input type="text" id="out-n" placeholder="NAMA BARANG" class="w-full p-4 bg-slate-50 border rounded-xl mb-4 font-bold uppercase">
-                    <input type="number" id="out-q" placeholder="JUMLAH" class="w-full p-4 bg-slate-50 border rounded-xl mb-6 font-black text-2xl">
-                    <button onclick="aksi('keluar')" class="w-full bg-red-600 text-white py-4 rounded-xl font-black uppercase">Simpan Keluar</button>
-                </div>
-            </section>
-        </main>
-    </div>
+<button onclick="buka('dash',this)" class="nav-btn nav-active w-full p-4 rounded-xl font-bold mb-2">
+Dashboard
+</button>
+<button onclick="buka('master',this)" class="nav-btn w-full p-4 rounded-xl font-bold mb-2">
+Master Barang
+</button>
+<button onclick="buka('masuk',this)" class="nav-btn w-full p-4 rounded-xl font-bold mb-2">
+Barang Masuk
+</button>
+<button onclick="buka('keluar',this)" class="nav-btn w-full p-4 rounded-xl font-bold mb-2">
+Barang Keluar
+</button>
+<button onclick="buka('log',this)" class="nav-btn w-full p-4 rounded-xl font-bold mb-2">
+Riwayat
+</button>
 
-    <div id="modal-add" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-50">
-        <div class="bg-white p-8 rounded-3xl w-full max-w-sm">
-            <h3 class="font-black mb-4 uppercase italic">Tambah Master</h3>
-            <input type="text" id="m-n" placeholder="NAMA BARANG" class="w-full p-4 bg-slate-50 border rounded-xl mb-3 font-bold uppercase outline-none">
-            <input type="text" id="m-s" placeholder="SATUAN (PCS/BTG)" class="w-full p-4 bg-slate-50 border rounded-xl mb-4 font-bold uppercase outline-none">
-            <div class="flex gap-2">
-                <button onclick="saveM()" class="flex-1 bg-blue-600 text-white py-4 rounded-xl font-black uppercase">Simpan</button>
-                <button onclick="document.getElementById('modal-add').style.display='none'" class="flex-1 bg-slate-100 py-4 rounded-xl font-black uppercase">Batal</button>
-            </div>
-        </div>
-    </div>
+<button onclick="logout()" class="mt-6 text-red-600 font-bold">Logout</button>
+</aside>
 
-    <script>
-        const config = {
-            apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
-            authDomain: "gudang-sms-4c81c.firebaseapp.com",
-            databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "gudang-sms-4c81c",
-            storageBucket: "gudang-sms-4c81c.firebasestorage.app",
-            appId: "1:598362736106:web:c8e2732d6ac7613931de93"
-        };
-        firebase.initializeApp(config);
-        const db = firebase.database();
+<!-- MAIN -->
+<main class="flex-1 ml-64 p-10">
 
-        // NAVIGASI SEDERHANA
-        function buka(target, btn) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('nav-active'));
-            document.getElementById('p-' + target).classList.add('active');
-            btn.classList.add('nav-active');
-        }
+<!-- DASHBOARD -->
+<section id="p-dash" class="page active">
+<h2 class="text-3xl font-black mb-6">Dashboard</h2>
 
-        function saveM() {
-            const n = document.getElementById('m-n').value.trim();
-            const s = document.getElementById('m-s').value.trim() || "PCS";
-            if(!n) return;
-            db.ref('stok/' + n.toLowerCase()).set({ nama: n, stok: 0, satuan: s });
-            document.getElementById('modal-add').style
+<div class="grid grid-cols-2 gap-6 mb-6">
+<div class="bg-white p-6 rounded-xl">
+<p class="text-xs text-slate-400">Total Barang</p>
+<h3 id="statBarang" class="text-4xl font-black text-blue-600">0</h3>
+</div>
+<div class="bg-white p-6 rounded-xl">
+<p class="text-xs text-slate-400">Total Stok</p>
+<h3 id="statStok" class="text-4xl font-black text-green-600">0</h3>
+</div>
+</div>
+
+<table class="w-full bg-white rounded-xl overflow-hidden">
+<thead class="bg-slate-100 text-xs uppercase font-bold">
+<tr><th class="p-4">Barang</th><th class="p-4 text-center">Stok</th></tr>
+</thead>
+<tbody id="listStok"></tbody>
+</table>
+</section>
+
+<!-- MASTER -->
+<section id="p-master" class="page">
+<h2 class="text-3xl font-black mb-4">Master Barang</h2>
+
+<input id="mNama" class="input" placeholder="Nama Barang">
+<input id="mSatuan" class="input" placeholder="Satuan (PCS)">
+<button onclick="saveMaster()" class="btn bg-blue-600 mb-4">Simpan</button>
+
+<table class="w-full bg-white rounded-xl overflow-hidden">
+<thead class="bg-slate-100 text-xs uppercase font-bold">
+<tr><th class="p-4">Nama</th><th class="p-4">Satuan</th><th class="p-4 text-center">Aksi</th></tr>
+</thead>
+<tbody id="listMaster"></tbody>
+</table>
+</section>
+
+<!-- MASUK -->
+<section id="p-masuk" class="page">
+<h2 class="text-3xl font-black text-green-600 mb-4">Barang Masuk</h2>
+<input id="inNama" class="input" placeholder="Nama Barang">
+<input id="inQty" type="number" class="input" placeholder="Jumlah">
+<button onclick="aksi('MASUK')" class="btn bg-green-600">Simpan</button>
+</section>
+
+<!-- KELUAR -->
+<section id="p-keluar" class="page">
+<h2 class="text-3xl font-black text-red-600 mb-4">Barang Keluar</h2>
+<input id="outNama" class="input" placeholder="Nama Barang">
+<input id="outQty" type="number" class="input" placeholder="Jumlah">
+<button onclick="aksi('KELUAR')" class="btn bg-red-600">Simpan</button>
+</section>
+
+<!-- RIWAYAT -->
+<section id="p-log" class="page">
+<h2 class="text-3xl font-black mb-4">Riwayat Transaksi</h2>
+<button onclick="exportExcel()" class="mb-4 bg-green-600 text-white px-4 py-2 rounded-xl font-bold">
+Export Excel
+</button>
+
+<table class="w-full bg-white rounded-xl overflow-hidden">
+<thead class="bg-slate-100 text-xs uppercase font-bold">
+<tr>
+<th class="p-3">Waktu</th>
+<th class="p-3">Barang</th>
+<th class="p-3">Qty</th>
+<th class="p-3">Tipe</th>
+<th class="p-3">User</th>
+</tr>
+</thead>
+<tbody id="listLog"></tbody>
+</table>
+</section>
+
+</main>
+</div>
+
+<script>
+// FIREBASE CONFIG
+firebase.initializeApp({
+apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
+databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app"
+});
+
+const auth = firebase.auth();
+const db = firebase.database();
+let currentUser = "";
+
+// AUTH
+auth.onAuthStateChanged(u=>{
+if(u){
+currentUser = u.email;
+loginBox.style.display='none';
+}else{
+loginBox.style.display='flex';
+}
+});
+
+function login(){
+auth.signInWithEmailAndPassword(email.value,password.value)
+.catch(e=>alert(e.message));
+}
+
+function logout(){ auth.signOut(); }
+
+// NAV
+function buka(p,b){
+document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+document.querySelectorAll('.nav-btn').forEach(x=>x.classList.remove('nav-active'));
+document.getElementById('p-'+p).classList.add('active');
+b.classList.add('nav-active');
+}
+
+// MASTER
+function saveMaster(){
+const n=mNama.value.trim();
+const s=mSatuan.value.trim()||'PCS';
+if(!n) return alert('Nama kosong');
+db.ref('stok/'+n.toLowerCase()).set({nama:n,stok:0,satuan:s});
+mNama.value=''; mSatuan.value='';
+}
+
+// MASUK / KELUAR
+function aksi(tipe){
+const nama=(tipe==='MASUK'?inNama.value:outNama.value).trim().toLowerCase();
+const qty=parseInt(tipe==='MASUK'?inQty.value:outQty.value);
+if(!nama||qty<=0) return alert('Input salah');
+
+const ref=db.ref('stok/'+nama);
+ref.once('value').then(s=>{
+if(!s.exists()) return alert('Barang tidak ada');
+let stok=s.val().stok||0;
+stok=tipe==='MASUK'?stok+qty:stok-qty;
+if(stok<0) return alert('Stok kurang');
+
+ref.update({stok});
+db.ref('transaksi').push({
+nama:s.val().nama,
+qty:qty,
+tipe:tipe,
+waktu:Date.now(),
+user:currentUser
+});
+});
+}
+
+// REALTIME
+db.ref('stok').on('value',s=>{
+let h1='',h2='',j=0,t=0;
+s.forEach(c=>{
+const d=c.val(); j++; t+=d.stok;
+h1+=<tr><td class="p-4">${d.nama}</td><td class="p-4 text-center font-black">${d.stok}</td></tr>;
+h2+=`<tr><td class="p-4">${d.nama}</td><td class="p-4">${d.satuan}</td>
+<td class="p-4 text-center">
+<button onclick="db.ref('stok/${c.key}').remove()" class="text-red-600">
+<i class="fa fa-trash"></i></button></td></tr>`;
+});
+listStok.innerHTML=h1;
+listMaster.innerHTML=h2;
+statBarang.innerText=j;
+statStok.innerText=t;
+});
+
+// LOG
+db.ref('transaksi').limitToLast(100).on('value',s=>{
+let h='';
+s.forEach(c=>{
+const d=c.val();
+h+=`<tr>
+<td class="p-3">${new Date(d.waktu).toLocaleString()}</td>
+<td class="p-3">${d.nama}</td>
+<td class="p-3">${d.qty}</td>
+<td class="p-3 font-bold">${d.tipe}</td>
+<td class="p-3">${d.user}</td>
+</tr>`;
+});
+listLog.innerHTML=h;
+});
+
+// EXPORT
+function exportExcel(){
+db.ref('transaksi').once('value').then(s=>{
+let data=[['Waktu','Barang','Qty','Tipe','User']];
+s.forEach(c=>{
+const d=c.val();
+data.push([
+new Date(d.waktu).toLocaleString(),
+d.nama,d.qty,d.tipe,d.user
+]);
+});
+const wb=XLSX.utils.book_new();
+const ws=XLSX.utils.aoa_to_sheet(data);
+XLSX.utils.book_append_sheet(wb,ws,'Transaksi');
+XLSX.writeFile(wb,'riwayat-transaksi.xlsx');
+});
+}
+</script>
+
+</body>
+</html>
