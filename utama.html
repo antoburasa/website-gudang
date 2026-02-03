@@ -2,32 +2,32 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>SMS GUDANG</title>
+    <title>GUDANG SMS OK</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 p-4">
+<body class="bg-slate-200 p-4">
     <div class="max-w-md mx-auto space-y-4">
-        <div class="bg-blue-900 text-white p-4 rounded text-center font-bold">PT. SAMUDRA MANDIRI SENTOSA</div>
+        <div class="bg-blue-900 text-white p-4 rounded-lg text-center font-bold uppercase shadow-lg">PT. SAMUDRA MANDIRI SENTOSA</div>
 
-        <div class="bg-white p-4 rounded shadow">
-            <input type="text" id="n" placeholder="NAMA BARANG" class="w-full p-2 border mb-2 uppercase font-bold outline-none">
-            <input type="number" id="q" placeholder="JUMLAH" class="w-full p-2 border mb-4 font-bold outline-none">
+        <div class="bg-white p-5 rounded-xl shadow">
+            <input type="text" id="nama" placeholder="NAMA BARANG" class="w-full p-2 border mb-2 uppercase font-bold">
+            <input type="number" id="qty" placeholder="JUMLAH" class="w-full p-2 border mb-4 font-bold">
             <div class="grid grid-cols-2 gap-2">
-                <button onclick="save('masuk')" class="bg-green-600 text-white p-3 rounded font-bold">SIMPAN</button>
-                <button onclick="save('keluar')" class="bg-red-600 text-white p-3 rounded font-bold">KELUAR</button>
+                <button onclick="proses('masuk')" class="bg-green-600 text-white p-3 rounded-lg font-bold active:scale-95 transition">SIMPAN</button>
+                <button onclick="proses('keluar')" class="bg-red-600 text-white p-3 rounded-lg font-bold active:scale-95 transition">KELUAR</button>
             </div>
         </div>
 
-        <div class="bg-white p-2 rounded shadow">
-            <p class="text-[10px] font-bold border-b mb-1">STOK</p>
-            <table class="w-full text-sm"><tbody id="st"></tbody></table>
+        <div class="bg-white rounded-lg shadow p-2 text-sm">
+            <p class="font-bold border-b mb-2 text-blue-900">STOK GUDANG:</p>
+            <div id="tStok" class="space-y-1"></div>
         </div>
 
-        <div class="bg-white p-2 rounded shadow">
-            <p class="text-[10px] font-bold border-b mb-1 uppercase">Riwayat Transaksi</p>
-            <table class="w-full text-[10px]"><tbody id="rt"></tbody></table>
+        <div class="bg-white rounded-lg shadow p-2 text-[10px]">
+            <p class="font-bold border-b mb-2 text-gray-500">RIWAYAT TRANSAKSI:</p>
+            <div id="tLog" class="space-y-1"></div>
         </div>
     </div>
 
@@ -43,53 +43,50 @@
         firebase.initializeApp(config);
         const db = firebase.database();
 
-        function save(mode) {
-            const nama = document.getElementById('n').value.trim().toLowerCase();
-            const jml = parseInt(document.getElementById('q').value);
-            const tgl = new Date().toLocaleString('id-ID');
+        function proses(m) {
+            const n = document.getElementById('nama').value.trim().toLowerCase();
+            const q = parseInt(document.getElementById('qty').value);
+            const w = new Date().toLocaleString('id-ID');
 
-            if (!nama || isNaN(jml)) {
-                alert("Mohon isi Nama & Jumlah!");
-                return;
-            }
+            if(!n || !q) return alert("Wajib Isi Nama & Jumlah!");
 
-            const refS = db.ref('stok/' + nama);
-            const refR = db.ref('riwayat').push();
+            const sRef = db.ref('stok/' + n);
+            const lRef = db.ref('riwayat').push();
 
-            refS.once('value').then(s => {
-                let lama = s.exists() ? parseInt(s.val().stok) : 0;
-                let baru = (mode === 'masuk') ? (lama + jml) : (lama - jml);
-                if (baru < 0) {
-                    alert("Stok tidak cukup!");
-                    return;
-                }
+            sRef.once('value').then(snap => {
+                let lama = snap.exists() ? parseInt(snap.val().stok) : 0;
+                let baru = (m === 'masuk') ? (lama + q) : (lama - q);
+                if(baru < 0) return alert("Maaf, stok tidak cukup!");
 
-                refS.update({ nama: nama, stok: baru });
-                refR.set({ t: tgl, m: mode, n: nama, q: (mode === 'masuk' ? '+' : '-') + jml });
-
-                alert("Berhasil!");
-                document.getElementById('n').value = '';
-                document.getElementById('q').value = '';
-            }).catch(e => alert("Error: " + e.message));
+                sRef.update({ nama: n, stok: baru });
+                lRef.set({ waktu: w, mode: m, barang: n, jumlah: (m==='masuk'?'+':'-')+q });
+                
+                alert("SUKSES! Data Terupdate.");
+                document.getElementById('nama').value=''; document.getElementById('qty').value='';
+            }).catch(e => alert("Gagal Simpan: " + e.message));
         }
 
         db.ref('stok').on('value', snap => {
             let h = "";
             snap.forEach(c => {
-                const d = c.val();
-                h += <tr class="border-b"><td class="p-2 capitalize font-bold">${d.nama}</td><td class="p-2 text-right font-black text-blue-600">${d.stok}</td></tr>;
+                h += `<div class="flex justify-between border-b pb-1">
+                    <span class="capitalize font-bold">${c.val().nama}</span>
+                    <span class="font-black text-blue-600">${c.val().stok}</span>
+                </div>`;
             });
-            document.getElementById('st').innerHTML = h;
+            document.getElementById('tStok').innerHTML = h || 'Belum ada data.';
         });
 
         db.ref('riwayat').on('value', snap => {
-            let h = ""; let list = [];
-            snap.forEach(c => list.push(c.val()));
-            list.reverse().slice(0, 15).forEach(i => {
-                const col = i.m === 'masuk' ? 'text-green-600' : 'text-red-600';
-                h += <tr class="border-b"><td class="p-1 text-gray-400 font-mono">${i.t}</td><td class="p-1 font-bold uppercase ${col}">${i.m}</td><td class="p-1 capitalize">${i.n}</td><td class="p-1 text-right font-bold">${i.q}</td></tr>;
+            let h = ""; let a = [];
+            snap.forEach(c => a.push(c.val()));
+            a.reverse().slice(0, 15).forEach(v => {
+                const col = v.mode === 'masuk' ? 'text-green-600' : 'text-red-600';
+                h += `<div class="border-b pb-1 text-gray-500 font-mono">
+                    ${v.waktu} | <span class="font-bold uppercase ${col}">${v.mode}</span> | <span class="capitalize text-black font-semibold">${v.barang}</span> | <span class="font-bold text-black">${v.jumlah}</span>
+                </div>`;
             });
-            document.getElementById('rt').innerHTML = h;
+            document.getElementById('tLog').innerHTML = h || 'Belum ada riwayat.';
         });
     </script>
 </body>
