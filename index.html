@@ -3,10 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GUDANG SMS OK</title>
+    <title>GUDANG SMS - PRINT READY</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Mengatur agar tombol hilang saat kertas diprint */
+        @media print {
+            .no-print { display: none !important; }
+            .bg-gray-100 { background: white !important; }
+            body { padding: 0; }
+            .shadow, .shadow-lg { shadow: none !important; border: 1px solid #ccc; }
+        }
+    </style>
 </head>
 <body class="bg-gray-100 p-4 font-sans text-slate-800">
 
@@ -16,7 +25,7 @@
             <p class="text-[10px] tracking-widest mt-1 text-yellow-300 font-bold underline">SISTEM AKTIF - VERSI FINAL</p>
         </div>
 
-        <div class="bg-white p-5 rounded-2xl shadow border">
+        <div class="bg-white p-5 rounded-2xl shadow border no-print">
             <div class="space-y-4">
                 <input type="text" id="Z_NAMA" placeholder="NAMA BARANG" class="w-full p-3 border rounded-xl bg-gray-50 uppercase font-bold outline-none">
                 <div class="grid grid-cols-2 gap-3">
@@ -27,21 +36,25 @@
                     <button onclick="Z_GAS('masuk')" class="bg-emerald-600 text-white py-4 rounded-xl font-bold shadow-md active:bg-emerald-800 uppercase text-xs">Simpan</button>
                     <button onclick="Z_GAS('keluar')" class="bg-rose-600 text-white py-4 rounded-xl font-bold shadow-md active:bg-rose-800 uppercase text-xs">Keluar</button>
                 </div>
+                <button onclick="window.print()" class="w-full mt-2 py-2 text-[10px] text-gray-400 font-bold uppercase tracking-widest border border-dashed border-gray-300 rounded-lg hover:bg-gray-50">
+                    🖨️ Cetak Laporan Stok
+                </button>
             </div>
         </div>
 
         <div class="bg-white rounded-2xl shadow border overflow-hidden">
-            <div class="bg-slate-900 p-2 text-white text-[10px] font-bold uppercase text-center">STOK GUDANG</div>
+            <div class="bg-slate-900 p-2 text-white text-[10px] font-bold uppercase text-center">STOK GUDANG TERKINI</div>
             <table class="w-full text-sm font-bold">
                 <tbody id="Z_TABEL" class="divide-y"></tbody>
             </table>
         </div>
 
-        <div id="Z_LOG" class="p-3 space-y-2 max-h-40 overflow-auto bg-white rounded-xl text-[10px] border shadow-inner"></div>
+        <div class="no-print">
+            <div id="Z_LOG" class="p-3 space-y-2 max-h-40 overflow-auto bg-white rounded-xl text-[10px] border shadow-inner"></div>
+        </div>
     </div>
 
     <script>
-        // Konfigurasi Adri
         var firebaseConfig = {
             apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
             authDomain: "gudang-sms-4c81c.firebaseapp.com",
@@ -57,7 +70,7 @@
             var n = document.getElementById('Z_NAMA').value.trim().toLowerCase();
             var q = parseInt(document.getElementById('Z_QTY').value);
             var k = document.getElementById('Z_KET').value || "-";
-            var t = new Date().toLocaleTimeString('id-ID');
+            var t = new Date().toLocaleString('id-ID');
 
             if (!n || isNaN(q)) {
                 alert("Isi Nama & Jumlah!");
@@ -98,7 +111,7 @@
             var h = ""; var arr = [];
             snap.forEach(function(c) { arr.push(c.val()); });
             arr.reverse().slice(0, 5).forEach(function(v) {
-                h += "<div class='border-b pb-1'>[" + v.t + "] <b>" + v.n + "</b> " + v.q + "</div>";
+                h += "<div class='border-b pb-1 text-gray-500'>[" + v.t + "] <b>" + v.n + "</b> " + v.q + "</div>";
             });
             document.getElementById('Z_LOG').innerHTML = h;
         });
