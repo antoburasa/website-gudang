@@ -12,7 +12,7 @@
             .no-print { display: none !important; }
             body { background: white; padding: 0; }
             .print-only { display: block !important; }
-            .card { border: none !important; shadow: none !important; }
+            .card { border: none !important; box-shadow: none !important; }
         }
         .print-only { display: none; }
     </style>
@@ -54,8 +54,8 @@
             <table class="w-full text-sm">
                 <thead>
                     <tr class="bg-gray-50 border-b">
-                        <th class="p-3 text-left text-xs text-gray-500 uppercase">Nama Barang</th>
-                        <th class="p-3 text-right text-xs text-gray-500 uppercase">Jumlah Stok</th>
+                        <th class="p-3 text-left text-xs text-gray-500 uppercase font-bold">Nama Barang</th>
+                        <th class="p-3 text-right text-xs text-gray-500 uppercase font-bold">Jumlah Stok</th>
                     </tr>
                 </thead>
                 <tbody id="tStok" class="divide-y divide-gray-100"></tbody>
@@ -63,13 +63,12 @@
         </div>
 
         <div class="bg-white rounded-2xl shadow-md overflow-hidden border border-gray-200 card">
-            <div class="bg-blue-600 text-white p-3 text-[10px] font-bold uppercase no-print">
-                🕒 Catatan Transaksi
+            <div class="bg-blue-600 text-white p-3 text-[10px] font-bold uppercase no-print flex justify-between">
+                <span>🕒 Catatan Transaksi</span>
+                <button onclick="if(confirm('Hapus log?')) db.ref('riwayat').remove()" class="text-[8px] underline">RESET</button>
             </div>
-            <div class="print-only p-2 bg-gray-100 text-[10px] font-bold uppercase text-center mt-6">
-                Riwayat Transaksi Terbaru
-            </div>
-            <div id="tLog" class="p-3 space-y-3 bg-white"></div>
+            <div id="tLog" class="p-3 space-y-3 bg-white">
+                </div>
         </div>
     </div>
 
@@ -85,68 +84,4 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        function proses(mode) {
-            const nama = document.getElementById('nama').value.trim().toLowerCase();
-            const qty = parseInt(document.getElementById('qty').value);
-            const ket = document.getElementById('ket').value.trim() || "-";
-            const waktu = new Date().toLocaleString('id-ID', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
-
-            if (!nama || isNaN(qty)) { alert("Mohon isi Nama Barang dan Jumlah!"); return; }
-
-            const stref = db.ref('stok/' + nama);
-            const logref = db.ref('riwayat').push();
-
-            stref.once('value').then(snap => {
-                let lama = snap.exists() ? parseInt(snap.val().stok) : 0;
-                let baru = (mode === 'masuk') ? (lama + qty) : (lama - qty);
-                if (baru < 0) { alert("Stok tidak cukup!"); return; }
-
-                stref.update({ nama: nama, stok: baru });
-                logref.set({ t: waktu, m: mode, n: nama, q: (mode==='masuk' ? '+' : '-') + qty, k: ket });
-                
-                alert("Berhasil diperbarui!");
-                document.getElementById('nama').value = ''; document.getElementById('qty').value = ''; document.getElementById('ket').value = '';
-            });
-        }
-
-        function cariBarang() {
-            let input = document.getElementById('cari').value.toLowerCase();
-            let rows = document.querySelectorAll('#tStok tr');
-            rows.forEach(row => { row.style.display = row.innerText.toLowerCase().includes(input) ? "" : "none"; });
-        }
-
-        db.ref('stok').on('value', snap => {
-            let html = "";
-            snap.forEach(c => {
-                const data = c.val();
-                html += `<tr class="border-b">
-                    <td class="p-3 capitalize font-bold text-slate-700">${data.nama}</td>
-                    <td class="p-3 text-right font-black text-blue-600 text-lg">${data.stok}</td>
-                </tr>`;
-            });
-            document.getElementById('tStok').innerHTML = html;
-            document.getElementById('tglCetak').innerText = new Date().toLocaleString('id-ID');
-        });
-
-        db.ref('riwayat').on('value', snap => {
-            let html = ""; let dataLog = [];
-            snap.forEach(c => dataLog.push(c.val()));
-            dataLog.reverse().slice(0, 15).forEach(v => {
-                const warnaAksi = v.m === 'masuk' ? 'text-emerald-600 bg-emerald-50' : 'text-rose-600 bg-rose-50';
-                html += `<div class="flex flex-col border-b border-gray-100 pb-2">
-                    <div class="flex justify-between items-center text-[8px] font-mono text-gray-400">
-                        <span>${v.t}</span>
-                        <span class="px-2 py-0.5 rounded-full font-bold uppercase ${warnaAksi}">${v.m}</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="capitalize font-bold text-slate-800 text-sm">${v.n}</span>
-                        <span class="font-black text-slate-900">${v.q}</span>
-                    </div>
-                    <div class="text-[9px] text-gray-500 italic">Ket: ${v.k || '-'}</div>
-                </div>`;
-            });
-            document.getElementById('tLog').innerHTML = html;
-        });
-    </script>
-</body>
-</html>
+        function proses(mode) 
