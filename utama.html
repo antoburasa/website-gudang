@@ -115,4 +115,48 @@
             let input = document.getElementById('cari').value.toLowerCase();
             let rows = document.querySelectorAll('#tStok tr');
             rows.forEach(row => {
-                row.style.display = row.innerText.toLowerCase().includes(input
+                row.style.display = row.innerText.toLowerCase().includes(input) ? "" : "none";
+            });
+        }
+
+        // Menampilkan Daftar Stok
+        db.ref('stok').on('value', snap => {
+            let html = "";
+            snap.forEach(c => {
+                const data = c.val();
+                html += `<tr class="hover:bg-gray-50 border-b">
+                    <td class="p-3 capitalize font-bold text-slate-700">${data.nama}</td>
+                    <td class="p-3 text-right font-black text-blue-600 text-lg">${data.stok}</td>
+                </tr>`;
+            });
+            document.getElementById('tStok').innerHTML = html || '<tr><td class="p-4 text-center text-gray-400">Data Kosong</td></tr>';
+            cariBarang(); // Pastikan filter tetap jalan jika ada update stok
+        });
+
+        // Menampilkan Riwayat Transaksi
+        db.ref('riwayat').on('value', snap => {
+            let html = "";
+            let dataLog = [];
+            snap.forEach(c => {
+                dataLog.push(c.val());
+            });
+
+            dataLog.reverse().slice(0, 15).forEach(v => {
+                const warnaAksi = v.m === 'masuk' ? 'text-emerald-600 bg-emerald-50' : 'text-rose-600 bg-rose-50';
+                html += `<div class="flex flex-col border-b border-gray-100 pb-2">
+                    <div class="flex justify-between items-center text-[8px] font-mono text-gray-400 mb-1">
+                        <span>${v.t}</span>
+                        <span class="px-2 py-0.5 rounded-full font-bold uppercase ${warnaAksi}">${v.m}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="capitalize font-bold text-slate-800 text-sm">${v.n}</span>
+                        <span class="font-black text-slate-900 text-md">${v.q}</span>
+                    </div>
+                    <div class="text-[9px] text-gray-500 font-medium italic mt-0.5">Ket: ${v.k || '-'}</div>
+                </div>`;
+            });
+            document.getElementById('tLog').innerHTML = html || '<p class="text-center text-gray-300 py-4 text-[10px]">Belum ada riwayat</p>';
+        });
+    </script>
+</body>
+</html>
