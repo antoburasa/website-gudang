@@ -1,37 +1,33 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Gudang SMS</title>
+    <title>SMS GUDANG</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-200 p-4">
+<body class="bg-gray-100 p-4">
     <div class="max-w-md mx-auto space-y-4">
-        <div class="bg-blue-800 text-white p-4 rounded shadow-md text-center font-bold uppercase">PT. SAMUDRA MANDIRI SENTOSA</div>
+        <div class="bg-blue-900 text-white p-4 rounded text-center font-bold">PT. SAMUDRA MANDIRI SENTOSA</div>
 
-        <div class="bg-white p-5 rounded shadow">
-            <input type="text" id="n" placeholder="NAMA BARANG" class="w-full p-2 border mb-2 uppercase">
-            <input type="number" id="q" placeholder="JUMLAH" class="w-full p-2 border mb-4">
+        <div class="bg-white p-4 rounded shadow">
+            <input type="text" id="n" placeholder="NAMA BARANG" class="w-full p-2 border mb-2 uppercase font-bold outline-none">
+            <input type="number" id="q" placeholder="JUMLAH" class="w-full p-2 border mb-4 font-bold outline-none">
             <div class="grid grid-cols-2 gap-2">
-                <button onclick="kirim('masuk')" class="bg-green-600 text-white p-3 rounded font-bold">SIMPAN</button>
-                <button onclick="kirim('keluar')" class="bg-red-600 text-white p-3 rounded font-bold">KELUAR</button>
+                <button onclick="save('masuk')" class="bg-green-600 text-white p-3 rounded font-bold">SIMPAN</button>
+                <button onclick="save('keluar')" class="bg-red-600 text-white p-3 rounded font-bold">KELUAR</button>
             </div>
         </div>
 
-        <div class="bg-white rounded shadow p-2">
-            <p class="text-[10px] font-bold border-b mb-2">STOK BARANG</p>
+        <div class="bg-white p-2 rounded shadow">
+            <p class="text-[10px] font-bold border-b mb-1">STOK</p>
             <table class="w-full text-sm"><tbody id="st"></tbody></table>
         </div>
 
-        <div class="bg-white rounded shadow p-2">
-            <div class="flex justify-between border-b mb-2 italic">
-                <p class="text-[10px] font-bold">RIWAYAT (15 DATA)</p>
-                <button onclick="db.ref('riwayat').remove()" class="text-[8px] text-red-500 underline uppercase">Hapus Riwayat</button>
-            </div>
-            <table class="w-full text-[10px]"><tbody id="lt"></tbody></table>
+        <div class="bg-white p-2 rounded shadow">
+            <p class="text-[10px] font-bold border-b mb-1 uppercase">Riwayat Transaksi</p>
+            <table class="w-full text-[10px]"><tbody id="rt"></tbody></table>
         </div>
     </div>
 
@@ -47,48 +43,53 @@
         firebase.initializeApp(config);
         const db = firebase.database();
 
-        function kirim(m) {
+        function save(mode) {
             const nama = document.getElementById('n').value.trim().toLowerCase();
             const jml = parseInt(document.getElementById('q').value);
-            const tgl = new Date().toLocaleString('id-ID', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+            const tgl = new Date().toLocaleString('id-ID');
 
-            if (!nama || isNaN(jml)) return alert("Isi data!");
+            if (!nama || isNaN(jml)) {
+                alert("Mohon isi Nama & Jumlah!");
+                return;
+            }
 
-            const rs = db.ref('stok/' + nama);
-            const rl = db.ref('riwayat').push();
+            const refS = db.ref('stok/' + nama);
+            const refR = db.ref('riwayat').push();
 
-            rs.once('value').then(s => {
-                let v = s.exists() ? parseInt(s.val().stok) : 0;
-                let b = (m === 'masuk') ? (v + jml) : (v - jml);
-                if (b < 0) return alert("Stok kurang!");
+            refS.once('value').then(s => {
+                let lama = s.exists() ? parseInt(s.val().stok) : 0;
+                let baru = (mode === 'masuk') ? (lama + jml) : (lama - jml);
+                if (baru < 0) {
+                    alert("Stok tidak cukup!");
+                    return;
+                }
 
-                rs.update({ nama: nama, stok: b });
-                rl.set({ t: tgl, m: m, n: nama, q: (m==='masuk'?'+':'-')+jml });
-                
-                alert("OK! " + nama.toUpperCase() + " berhasil diupdate.");
-                document.getElementById('n').value = ''; document.getElementById('q').value = '';
-            });
+                refS.update({ nama: nama, stok: baru });
+                refR.set({ t: tgl, m: mode, n: nama, q: (mode === 'masuk' ? '+' : '-') + jml });
+
+                alert("Berhasil!");
+                document.getElementById('n').value = '';
+                document.getElementById('q').value = '';
+            }).catch(e => alert("Error: " + e.message));
         }
 
         db.ref('stok').on('value', snap => {
             let h = "";
             snap.forEach(c => {
-                h += <tr class="border-b"><td class="p-2 capitalize font-bold">${c.val().nama}</td><td class="p-2 text-right text-blue-600 font-black">${c.val().stok}</td></tr>;
+                const d = c.val();
+                h += <tr class="border-b"><td class="p-2 capitalize font-bold">${d.nama}</td><td class="p-2 text-right font-black text-blue-600">${d.stok}</td></tr>;
             });
             document.getElementById('st').innerHTML = h;
         });
 
         db.ref('riwayat').on('value', snap => {
-            let h = ""; let arr = [];
-            snap.forEach(c => {
-                const v = c.val();
-                arr.push({t: v.t || v.waktu || "-", m: v.m || v.mode || "-", n: v.n || v.nama || "-", q: v.q || v.qty || "0"});
+            let h = ""; let list = [];
+            snap.forEach(c => list.push(c.val()));
+            list.reverse().slice(0, 15).forEach(i => {
+                const col = i.m === 'masuk' ? 'text-green-600' : 'text-red-600';
+                h += <tr class="border-b"><td class="p-1 text-gray-400 font-mono">${i.t}</td><td class="p-1 font-bold uppercase ${col}">${i.m}</td><td class="p-1 capitalize">${i.n}</td><td class="p-1 text-right font-bold">${i.q}</td></tr>;
             });
-            arr.reverse().slice(0, 15).forEach(i => {
-                const c = i.m === 'masuk' ? 'text-green-600' : 'text-red-600';
-                h += <tr class="border-b"><td class="p-1 text-gray-400">${i.t}</td><td class="p-1 font-bold uppercase ${c}">${i.m}</td><td class="p-1 capitalize">${i.n}</td><td class="p-1 text-right font-bold">${i.q}</td></tr>;
-            });
-            document.getElementById('lt').innerHTML = h;
+            document.getElementById('rt').innerHTML = h;
         });
     </script>
 </body>
