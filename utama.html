@@ -8,62 +8,105 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-100 font-sans">
+<body class="bg-slate-100 font-sans p-4">
 
-    <div class="bg-blue-900 text-white p-6 shadow-md text-center no-print border-b-4 border-yellow-500">
-        <h1 class="text-2xl font-bold uppercase tracking-tight">PT. SAMUDRA MANDIRI SENTOSA</h1>
-        <p class="text-[10px] tracking-[0.3em] opacity-80 mt-1 uppercase font-light">Inventory Control Center</p>
+    <div class="max-w-md mx-auto space-y-4">
+        <div class="bg-blue-900 text-white p-4 rounded-xl shadow-md text-center no-print">
+            <h1 class="text-xl font-bold uppercase">PT. SAMUDRA MANDIRI SENTOSA</h1>
+        </div>
+
+        <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-blue-600 no-print">
+            <div class="space-y-3">
+                <input type="text" id="n" placeholder="NAMA BARANG" class="w-full p-2 border rounded uppercase font-bold outline-none">
+                <input type="number" id="q" placeholder="JUMLAH UNIT" class="w-full p-2 border rounded font-bold outline-none">
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="aksi('masuk')" class="bg-green-600 text-white p-3 rounded-lg font-bold">SIMPAN</button>
+                    <button onclick="aksi('keluar')" class="bg-red-600 text-white p-3 rounded-lg font-bold">KELUAR</button>
+                </div>
+                <button onclick="window.print()" class="w-full bg-slate-800 text-white p-2 rounded text-[10px] font-bold uppercase mt-2">Cetak Laporan</button>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden border">
+            <div class="bg-slate-800 text-white p-2 text-[10px] font-bold uppercase">Stok Gudang</div>
+            <table class="w-full text-sm border-collapse">
+                <tbody id="st" class="divide-y"></tbody>
+            </table>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden border">
+            <div class="bg-blue-600 text-white p-2 text-[10px] font-bold uppercase flex justify-between">
+                <span>Riwayat Transaksi</span>
+                <button onclick="if(confirm('Hapus?')) db.ref('riwayat').remove()" class="text-[8px] underline">RESET</button>
+            </div>
+            <table class="w-full text-[9px] border-collapse">
+                <tbody id="lt" class="divide-y text-gray-600"></tbody>
+            </table>
+        </div>
     </div>
 
-    <div class="max-w-6xl mx-auto p-4 space-y-6">
-        
-        <div class="grid grid-cols-3 gap-3 no-print">
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 text-center">
-                <p class="text-[9px] font-bold text-slate-400 uppercase">Jenis Barang</p>
-                <h2 id="sJenis" class="text-2xl font-black text-blue-600">0</h2>
-            </div>
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 text-center">
-                <p class="text-[9px] font-bold text-slate-400 uppercase">Total Unit</p>
-                <h2 id="sTotal" class="text-2xl font-black text-emerald-600">0</h2>
-            </div>
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 text-center">
-                <p class="text-[9px] font-bold text-slate-400 uppercase">Limit (<5)</p>
-                <h2 id="sLimit" class="text-2xl font-black text-orange-600">0</h2>
-            </div>
-        </div>
+    <script>
+        const config = {
+            apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
+            authDomain: "gudang-sms-4c81c.firebaseapp.com",
+            databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "gudang-sms-4c81c",
+            storageBucket: "gudang-sms-4c81c.firebasestorage.app",
+            appId: "1:598362736106:web:c8e2732d6ac7613931de93"
+        };
+        firebase.initializeApp(config);
+        const db = firebase.database();
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 no-print">
-            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-                <h3 class="text-emerald-700 font-bold mb-4 text-xs uppercase flex items-center gap-2">📥 Input Barang Masuk</h3>
-                <div class="space-y-3">
-                    <input type="text" id="nPrs" placeholder="No. PRS" class="w-full p-2 border rounded bg-slate-50 text-sm outline-none focus:ring-1 focus:ring-emerald-400">
-                    <input type="text" id="namaIn" placeholder="NAMA BARANG" class="w-full p-2 border rounded uppercase font-bold outline-none focus:ring-1 focus:ring-emerald-400">
-                    <div class="flex gap-2">
-                        <input type="number" id="jmlIn" placeholder="JUMLAH" class="w-1/2 p-2 border rounded font-bold outline-none focus:ring-1 focus:ring-emerald-400">
-                        <input type="text" id="satIn" placeholder="SATUAN" class="w-1/2 p-2 border rounded bg-slate-50 text-sm">
-                    </div>
-                    <button onclick="proses('masuk')" class="w-full bg-emerald-600 text-white py-3 rounded-lg font-bold shadow-sm hover:bg-emerald-700 active:scale-95 transition-all uppercase text-xs">Simpan Stok Masuk</button>
-                </div>
-            </div>
+        function aksi(m) {
+            const nama = document.getElementById('n').value.trim().toLowerCase();
+            const jml = parseInt(document.getElementById('q').value);
+            const tgl = new Date().toLocaleString('id-ID', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
 
-            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-                <h3 class="text-rose-700 font-bold mb-4 text-xs uppercase flex items-center gap-2">📤 Input Barang Keluar</h3>
-                <div class="space-y-3">
-                    <input type="text" id="namaOut" placeholder="CARI NAMA BARANG..." class="w-full p-2 border rounded uppercase outline-none focus:ring-1 focus:ring-rose-400">
-                    <input type="number" id="jmlOut" placeholder="JUMLAH KELUAR" class="w-full p-2 border rounded font-bold outline-none focus:ring-1 focus:ring-rose-400">
-                    <div class="h-[44px]"></div>
-                    <button onclick="proses('keluar')" class="w-full bg-rose-600 text-white py-3 rounded-lg font-bold shadow-sm hover:bg-rose-700 active:scale-95 transition-all uppercase text-xs">Update Stok Keluar</button>
-                </div>
-            </div>
-        </div>
+            if (!nama || isNaN(jml)) return alert("Isi data!");
 
-        <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-200">
-            <div class="bg-slate-800 text-white p-3 text-[10px] font-bold uppercase tracking-widest flex justify-between items-center">
-                <span>📦 Stok Gudang Saat Ini</span>
-                <button onclick="window.print()" class="bg-slate-600 px-3 py-1 rounded text-[9px] hover:bg-slate-500 no-print uppercase">Cetak Laporan</button>
-            </div>
-            <table class="w-full text-sm">
-                <thead class="bg-slate-50 border-b text-[9px] text-slate-400">
-                    <tr>
-                        <th class="p-3 text-left">NAMA BARANG</th>
-                        <th class="p-3 text-center">STOK
+            const rs = db.ref('stok/' + nama);
+            const rl = db.ref('riwayat').push();
+
+            rs.once('value').then(s => {
+                let v = s.exists() ? parseInt(s.val().stok) : 0;
+                let b = (m === 'masuk') ? (v + jml) : (v - jml);
+                if (b < 0) return alert("Stok tidak cukup!");
+
+                rs.update({ nama: nama, stok: b });
+                rl.set({ waktu: tgl, mode: m, nama: nama, qty: (m==='masuk'?'+':'-')+jml });
+                
+                alert("Berhasil!");
+                document.getElementById('n').value = ''; document.getElementById('q').value = '';
+            });
+        }
+
+        db.ref('stok').on('value', snap => {
+            let h = "";
+            snap.forEach(c => {
+                const v = c.val();
+                h += <tr><td class="p-3 capitalize font-bold text-slate-700">${v.nama}</td><td class="p-3 text-right font-black text-blue-600">${v.stok}</td></tr>;
+            });
+            document.getElementById('st').innerHTML = h || '<tr><td class="p-4 text-center text-gray-300">Kosong</td></tr>';
+        });
+
+        db.ref('riwayat').on('value', snap => {
+            let h = ""; let arr = [];
+            snap.forEach(c => {
+                const v = c.val();
+                // Mengambil data dengan berbagai kemungkinan nama variabel agar riwayat lama muncul
+                arr.push({
+                    t: v.waktu || v.t || v.w || "-",
+                    m: v.mode || v.m || "-",
+                    n: v.nama || v.n || "-",
+                    q: v.qty || v.q || "0"
+                });
+            });
+            arr.reverse().slice(0, 15).forEach(i => {
+                const c = i.m === 'masuk' ? 'text-green-600' : 'text-red-600';
+                h += <tr><td class="p-2 font-mono text-gray-400">${i.t}</td><td class="p-2 font-bold uppercase ${c}">${i.m}</td><td class="p-2 capitalize font-medium">${i.n}</td><td class="p-2 text-right font-bold text-slate-800">${i.q}</td></tr>;
+            });
+            document.getElementById('lt').innerHTML = h || '<tr><td class="p-4 text-center text-gray-300">Belum ada aktivitas</td></tr>';
+        });
+    </script>
+</body>
+</html>
