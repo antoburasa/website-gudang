@@ -2,201 +2,196 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Manajemen Stok Gudang</title>
+<title>Aplikasi Stok Barang</title>
 
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-<script src="https://cdn.tailwindcss.com"></script>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
+<!-- XLSX -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<style>
+body { font-family: Arial; background:#f4f6f8; padding:20px }
+input, button { padding:8px; margin:4px }
+table { border-collapse: collapse; width:100%; background:white }
+th, td { border:1px solid #ccc; padding:6px; text-align:center }
+th { background:#eee }
+.section { background:white; padding:15px; margin-bottom:20px; border-radius:6px }
+</style>
 </head>
-<body class="bg-gray-100 p-6">
 
-<h1 class="text-2xl font-bold mb-4">Manajemen Stok Barang</h1>
+<body>
 
-<!-- TAMBAH BARANG -->
-<div class="bg-white p-4 rounded shadow mb-4">
-  <h2 class="font-bold mb-2">Tambah Barang</h2>
-  <input id="namaBarang" placeholder="Nama Barang" class="border p-2 w-full mb-2">
-  <input id="stokBarang" type="number" placeholder="Stok Awal" class="border p-2 w-full mb-2">
-  <button onclick="tambahBarang()" class="bg-blue-600 text-white px-4 py-2 rounded">
-    Tambah
-  </button>
+<h2>📦 Aplikasi Stok Barang</h2>
+
+<div class="section">
+<h3>Tambah Barang</h3>
+<input id="namaBarang" placeholder="Nama Barang">
+<input id="stokBarang" type="number" placeholder="Stok Awal">
+<button onclick="tambahBarang()">Tambah</button>
 </div>
 
-<!-- TRANSAKSI -->
-<div class="bg-white p-4 rounded shadow mb-4">
-  <h2 class="font-bold mb-2">Transaksi</h2>
-  <select id="pilihBarang" class="border p-2 w-full mb-2"></select>
-  <input id="jumlahTransaksi" type="number" placeholder="Jumlah" class="border p-2 w-full mb-2">
-  <div class="flex gap-2">
-    <button onclick="transaksi('MASUK')" class="bg-green-600 text-white px-4 py-2 rounded w-full">Masuk</button>
-    <button onclick="transaksi('KELUAR')" class="bg-red-600 text-white px-4 py-2 rounded w-full">Keluar</button>
-  </div>
+<div class="section">
+<h3>Daftar Barang</h3>
+<table>
+<thead>
+<tr>
+<th>Nama</th>
+<th>Stok</th>
+<th>Masuk</th>
+<th>Keluar</th>
+<th>Aksi</th>
+</tr>
+</thead>
+<tbody id="tabelBarang"></tbody>
+</table>
 </div>
 
-<!-- DATA STOK -->
-<div class="bg-white p-4 rounded shadow mb-4">
-  <h2 class="font-bold mb-2">Data Stok</h2>
-  <table class="w-full border">
-    <thead class="bg-gray-200">
-      <tr>
-        <th class="border p-2">Nama</th>
-        <th class="border p-2">Stok</th>
-        <th class="border p-2">Aksi</th>
-      </tr>
-    </thead>
-    <tbody id="tabelStok"></tbody>
-  </table>
-</div>
+<div class="section">
+<h3>Riwayat Transaksi</h3>
+<input type="date" id="filterTanggal">
+<button onclick="loadRiwayat()">Filter</button>
+<button onclick="exportExcel()">Export Excel</button>
+<button onclick="printRiwayat()">Print</button>
 
-<!-- FILTER -->
-<div class="bg-white p-4 rounded shadow mb-4">
-  <h2 class="font-bold mb-2">Filter Riwayat</h2>
-  <div class="flex gap-2">
-    <input type="date" id="tglMulai" class="border p-2 w-full">
-    <input type="date" id="tglAkhir" class="border p-2 w-full">
-    <button onclick="filterTanggal()" class="bg-blue-600 text-white px-4 py-2 rounded">Filter</button>
-  </div>
-</div>
-
-<!-- RIWAYAT -->
-<div class="bg-white p-4 rounded shadow">
-  <div class="flex justify-between mb-2">
-    <h2 class="font-bold">Riwayat Transaksi</h2>
-    <div class="flex gap-2">
-      <button onclick="exportExcel()" class="bg-green-600 text-white px-3 py-1 rounded">Excel</button>
-      <button onclick="window.print()" class="bg-gray-600 text-white px-3 py-1 rounded">Print</button>
-    </div>
-  </div>
-
-  <table class="w-full border" id="tabelPrint">
-    <thead class="bg-gray-200">
-      <tr>
-        <th class="border p-2">Tanggal</th>
-        <th class="border p-2">Nama</th>
-        <th class="border p-2">Jumlah</th>
-        <th class="border p-2">Tipe</th>
-      </tr>
-    </thead>
-    <tbody id="tabelRiwayat"></tbody>
-  </table>
+<table>
+<thead>
+<tr>
+<th>Tanggal</th>
+<th>Barang</th>
+<th>Jenis</th>
+<th>Jumlah</th>
+</tr>
+</thead>
+<tbody id="tabelRiwayat"></tbody>
+</table>
 </div>
 
 <script>
-firebase.initializeApp({
-  apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
-  authDomain: "gudang-sms-4c81c.firebaseapp.com",
-  databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "gudang-sms-4c81c"
-});
+// 🔥 GANTI DENGAN CONFIG FIREBASE KAMU
+var firebaseConfig = {
+  apiKey: "API_KEY",
+  authDomain: "PROJECT_ID.firebaseapp.com",
+  databaseURL: "https://PROJECT_ID.firebaseio.com",
+  projectId: "PROJECT_ID",
+  storageBucket: "PROJECT_ID.appspot.com",
+  messagingSenderId: "SENDER_ID",
+  appId: "APP_ID"
+};
+firebase.initializeApp(firebaseConfig);
 
 const db = firebase.database();
-let dataRiwayat = [];
 
-// TAMBAH BARANG
+// ================= TAMBAH BARANG =================
 function tambahBarang() {
-  if (!namaBarang.value || !stokBarang.value) return alert("Lengkapi data");
-  db.ref("stok").push({ nama: namaBarang.value, stok: parseInt(stokBarang.value) });
-  namaBarang.value = stokBarang.value = "";
+  const nama = namaBarang.value.trim();
+  const stok = parseInt(stokBarang.value);
+
+  if (nama === "" || isNaN(stok)) {
+    alert("Isi nama & stok");
+    return;
+  }
+
+  db.ref("barang").push({ nama, stok });
+  namaBarang.value = "";
+  stokBarang.value = "";
 }
 
-// TRANSAKSI
-function transaksi(tipe) {
-  const key = pilihBarang.value;
-  const j = parseInt(jumlahTransaksi.value);
-  if (!key || !j) return alert("Lengkapi transaksi");
-
-  db.ref("stok/" + key).once("value").then(s => {
-    let stok = s.val().stok;
-    if (tipe === "KELUAR" && stok < j) return alert("Stok kurang");
-
-    const baru = tipe === "MASUK" ? stok + j : stok - j;
-    db.ref("stok/" + key).update({ stok: baru });
-
-    const now = new Date();
-    db.ref("transaksi").push({
-      tanggalISO: now.toISOString().substring(0,10),
-      tanggal: now.toLocaleString(),
-      nama: s.val().nama,
-      jumlah: j,
-      tipe: tipe
-    });
-
-    jumlahTransaksi.value = "";
-  });
-}
-
-// LOAD STOK
-db.ref("stok").on("value", snap => {
-  tabelStok.innerHTML = "";
-  pilihBarang.innerHTML = "<option value=''>Pilih Barang</option>";
-
-  snap.forEach(c => {
-    const d = c.val();
-    tabelStok.innerHTML += `
+// ================= LOAD BARANG =================
+db.ref("barang").on("value", snap => {
+  tabelBarang.innerHTML = "";
+  snap.forEach(item => {
+    const b = item.val();
+    tabelBarang.innerHTML += `
       <tr>
-        <td class="border p-2">
-          <input value="${d.nama}" onchange="editBarang('${c.key}',this.value)">
-        </td>
-        <td class="border p-2">${d.stok}</td>
-        <td class="border p-2 text-center">
-          <button onclick="hapusBarang('${c.key}')" class="text-red-600">Hapus</button>
+        <td>${b.nama}</td>
+        <td>${b.stok}</td>
+        <td><button onclick="transaksi('${item.key}', 'masuk')">+</button></td>
+        <td><button onclick="transaksi('${item.key}', 'keluar')">-</button></td>
+        <td>
+          <button onclick="editBarang('${item.key}','${b.nama}',${b.stok})">Edit</button>
+          <button onclick="hapusBarang('${item.key}')">Hapus</button>
         </td>
       </tr>`;
-    pilihBarang.innerHTML += <option value="${c.key}">${d.nama}</option>;
   });
 });
 
-function editBarang(id, nama) {
-  db.ref("stok/" + id).update({ nama });
+// ================= TRANSAKSI =================
+function transaksi(id, jenis) {
+  let jumlah = parseInt(prompt("Jumlah:"));
+  if (isNaN(jumlah) || jumlah <= 0) return;
+
+  db.ref("barang/" + id).once("value", snap => {
+    let data = snap.val();
+    let stokBaru = jenis === "masuk"
+      ? data.stok + jumlah
+      : data.stok - jumlah;
+
+    if (stokBaru < 0) {
+      alert("Stok tidak cukup");
+      return;
+    }
+
+    db.ref("barang/" + id).update({ stok: stokBaru });
+
+    db.ref("riwayat").push({
+      tanggal: new Date().toISOString().slice(0,10),
+      barang: data.nama,
+      jenis,
+      jumlah
+    });
+  });
+}
+
+// ================= EDIT & HAPUS =================
+function editBarang(id, nama, stok) {
+  let n = prompt("Nama Barang:", nama);
+  let s = parseInt(prompt("Stok:", stok));
+  if (n && !isNaN(s)) {
+    db.ref("barang/" + id).update({ nama:n, stok:s });
+  }
 }
 
 function hapusBarang(id) {
-  if (confirm("Hapus barang?")) db.ref("stok/" + id).remove();
+  if (confirm("Hapus barang?")) {
+    db.ref("barang/" + id).remove();
+  }
 }
 
-// RIWAYAT
-db.ref("transaksi").on("value", snap => {
-  dataRiwayat = [];
+// ================= RIWAYAT =================
+function loadRiwayat() {
+  const filter = filterTanggal.value;
   tabelRiwayat.innerHTML = "";
-  snap.forEach(c => {
-    dataRiwayat.push(c.val());
-  });
-  tampilRiwayat(dataRiwayat);
-});
 
-function tampilRiwayat(data) {
-  tabelRiwayat.innerHTML = "";
-  data.forEach(d => {
-    tabelRiwayat.innerHTML += `
-      <tr>
-        <td class="border p-2">${d.tanggal}</td>
-        <td class="border p-2">${d.nama}</td>
-        <td class="border p-2">${d.jumlah}</td>
-        <td class="border p-2">${d.tipe}</td>
-      </tr>`;
+  db.ref("riwayat").once("value", snap => {
+    snap.forEach(r => {
+      let d = r.val();
+      if (!filter || d.tanggal === filter) {
+        tabelRiwayat.innerHTML += `
+          <tr>
+            <td>${d.tanggal}</td>
+            <td>${d.barang}</td>
+            <td>${d.jenis}</td>
+            <td>${d.jumlah}</td>
+          </tr>`;
+      }
+    });
   });
 }
+loadRiwayat();
 
-// FILTER
-function filterTanggal() {
-  const a = tglMulai.value;
-  const b = tglAkhir.value;
-  tampilRiwayat(dataRiwayat.filter(d => d.tanggalISO >= a && d.tanggalISO <= b));
-}
-
-// EXPORT EXCEL
+// ================= EXPORT EXCEL =================
 function exportExcel() {
-  let csv = "Tanggal,Nama,Jumlah,Tipe\n";
-  dataRiwayat.forEach(d => {
-    csv += ${d.tanggal},${d.nama},${d.jumlah},${d.tipe}\n;
-  });
+  let wb = XLSX.utils.book_new();
+  let ws = XLSX.utils.table_to_sheet(document.querySelector("#tabelRiwayat").parentNode);
+  XLSX.utils.book_append_sheet(wb, ws, "Riwayat");
+  XLSX.writeFile(wb, "riwayat_transaksi.xlsx");
+}
 
-  const blob = new Blob([csv], { type: "text/csv" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "riwayat_transaksi.csv";
-  a.click();
+// ================= PRINT =================
+function printRiwayat() {
+  window.print();
 }
 </script>
 
