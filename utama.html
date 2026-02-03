@@ -1,52 +1,50 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PT SMS - Inventory System</title>
+    <title>Gudang SMS vFinal</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-100 font-sans p-4">
+<body class="bg-gray-100 p-4">
 
     <div class="max-w-md mx-auto space-y-4">
-        <div class="bg-blue-900 text-white p-4 rounded-xl shadow-md text-center no-print">
-            <h1 class="text-xl font-bold uppercase">PT. SAMUDRA MANDIRI SENTOSA</h1>
+        <div class="bg-blue-900 text-white p-4 rounded-lg text-center font-bold uppercase">
+            PT. SAMUDRA MANDIRI SENTOSA
         </div>
 
-        <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-blue-600 no-print">
-            <div class="space-y-3">
-                <input type="text" id="n" placeholder="NAMA BARANG" class="w-full p-2 border rounded uppercase font-bold outline-none">
-                <input type="number" id="q" placeholder="JUMLAH UNIT" class="w-full p-2 border rounded font-bold outline-none">
-                <div class="grid grid-cols-2 gap-2">
-                    <button onclick="aksi('masuk')" class="bg-green-600 text-white p-3 rounded-lg font-bold">SIMPAN</button>
-                    <button onclick="aksi('keluar')" class="bg-red-600 text-white p-3 rounded-lg font-bold">KELUAR</button>
-                </div>
-                <button onclick="window.print()" class="w-full bg-slate-800 text-white p-2 rounded text-[10px] font-bold uppercase mt-2">Cetak Laporan</button>
+        <div class="bg-white p-5 rounded-xl shadow-md border-t-4 border-blue-600">
+            <input type="text" id="n" placeholder="NAMA BARANG" class="w-full p-2 border rounded mb-3 uppercase font-bold outline-none focus:ring-2 focus:ring-blue-400">
+            <input type="number" id="q" placeholder="JUMLAH UNIT" class="w-full p-2 border rounded mb-4 font-bold outline-none focus:ring-2 focus:ring-blue-400">
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="tombol('masuk')" class="bg-green-600 text-white p-3 rounded-lg font-bold shadow active:scale-95 transition">SIMPAN</button>
+                <button onclick="tombol('keluar')" class="bg-red-600 text-white p-3 rounded-lg font-bold shadow active:scale-95 transition">KELUAR</button>
             </div>
+            <button onclick="window.print()" class="w-full mt-4 bg-gray-800 text-white p-2 rounded text-[10px] uppercase font-bold">Cetak Laporan</button>
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm overflow-hidden border">
-            <div class="bg-slate-800 text-white p-2 text-[10px] font-bold uppercase">Stok Gudang</div>
-            <table class="w-full text-sm border-collapse">
-                <tbody id="st" class="divide-y"></tbody>
+        <div class="bg-white rounded-lg shadow overflow-hidden border">
+            <div class="bg-gray-800 text-white p-2 text-[10px] font-bold uppercase">Stok Gudang Aktif</div>
+            <table class="w-full text-sm">
+                <tbody id="st" class="divide-y divide-gray-100"></tbody>
             </table>
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm overflow-hidden border">
-            <div class="bg-blue-600 text-white p-2 text-[10px] font-bold uppercase flex justify-between">
-                <span>Riwayat Transaksi</span>
-                <button onclick="if(confirm('Hapus?')) db.ref('riwayat').remove()" class="text-[8px] underline">RESET</button>
+        <div class="bg-white rounded-lg shadow overflow-hidden border">
+            <div class="bg-blue-600 text-white p-2 text-[10px] font-bold uppercase flex justify-between items-center">
+                <span>Riwayat 15 Terakhir</span>
+                <button onclick="if(confirm('Hapus log?')) db.ref('riwayat').remove()" class="text-[8px] underline">RESET</button>
             </div>
-            <table class="w-full text-[9px] border-collapse">
-                <tbody id="lt" class="divide-y text-gray-600"></tbody>
+            <table class="w-full text-[10px]">
+                <tbody id="lt" class="divide-y divide-gray-50"></tbody>
             </table>
         </div>
     </div>
 
     <script>
-        const config = {
+        const fconfig = {
             apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
             authDomain: "gudang-sms-4c81c.firebaseapp.com",
             databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -54,30 +52,31 @@
             storageBucket: "gudang-sms-4c81c.firebasestorage.app",
             appId: "1:598362736106:web:c8e2732d6ac7613931de93"
         };
-        firebase.initializeApp(config);
+        firebase.initializeApp(fconfig);
         const db = firebase.database();
 
-        function aksi(m) {
+        function tombol(mode) {
             const nama = document.getElementById('n').value.trim().toLowerCase();
             const jml = parseInt(document.getElementById('q').value);
             const tgl = new Date().toLocaleString('id-ID', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
 
-            if (!nama || isNaN(jml)) return alert("Isi data!");
+            if (!nama || isNaN(jml)) return alert("Mohon isi Nama & Jumlah!");
 
             const rs = db.ref('stok/' + nama);
             const rl = db.ref('riwayat').push();
 
             rs.once('value').then(s => {
                 let v = s.exists() ? parseInt(s.val().stok) : 0;
-                let b = (m === 'masuk') ? (v + jml) : (v - jml);
+                let b = (mode === 'masuk') ? (v + jml) : (v - jml);
                 if (b < 0) return alert("Stok tidak cukup!");
 
                 rs.update({ nama: nama, stok: b });
-                rl.set({ waktu: tgl, mode: m, nama: nama, qty: (m==='masuk'?'+':'-')+jml });
+                rl.set({ t: tgl, m: mode, n: nama, q: (mode==='masuk'?'+':'-')+jml });
                 
-                alert("Berhasil!");
-                document.getElementById('n').value = ''; document.getElementById('q').value = '';
-            });
+                alert("Data " + nama.toUpperCase() + " berhasil diupdate!");
+                document.getElementById('n').value = ''; 
+                document.getElementById('q').value = '';
+            }).catch(e => alert("Koneksi gagal: " + e.message));
         }
 
         db.ref('stok').on('value', snap => {
@@ -86,26 +85,25 @@
                 const v = c.val();
                 h += <tr><td class="p-3 capitalize font-bold text-slate-700">${v.nama}</td><td class="p-3 text-right font-black text-blue-600">${v.stok}</td></tr>;
             });
-            document.getElementById('st').innerHTML = h || '<tr><td class="p-4 text-center text-gray-300">Kosong</td></tr>';
+            document.getElementById('st').innerHTML = h || '<tr><td class="p-4 text-center text-gray-300">Belum ada stok</td></tr>';
         });
 
         db.ref('riwayat').on('value', snap => {
             let h = ""; let arr = [];
             snap.forEach(c => {
                 const v = c.val();
-                // Mengambil data dengan berbagai kemungkinan nama variabel agar riwayat lama muncul
                 arr.push({
-                    t: v.waktu || v.t || v.w || "-",
-                    m: v.mode || v.m || "-",
-                    n: v.nama || v.n || "-",
-                    q: v.qty || v.q || "0"
+                    t: v.t || v.waktu || "-",
+                    m: v.m || v.mode || "-",
+                    n: v.n || v.nama || "-",
+                    q: v.q || v.qty || "0"
                 });
             });
             arr.reverse().slice(0, 15).forEach(i => {
                 const c = i.m === 'masuk' ? 'text-green-600' : 'text-red-600';
-                h += <tr><td class="p-2 font-mono text-gray-400">${i.t}</td><td class="p-2 font-bold uppercase ${c}">${i.m}</td><td class="p-2 capitalize font-medium">${i.n}</td><td class="p-2 text-right font-bold text-slate-800">${i.q}</td></tr>;
+                h += <tr><td class="p-2 text-gray-400 font-mono">${i.t}</td><td class="p-2 font-bold uppercase ${c}">${i.m}</td><td class="p-2 capitalize font-semibold">${i.n}</td><td class="p-2 text-right font-black">${i.q}</td></tr>;
             });
-            document.getElementById('lt').innerHTML = h || '<tr><td class="p-4 text-center text-gray-300">Belum ada aktivitas</td></tr>';
+            document.getElementById('lt').innerHTML = h || '<tr><td class="p-4 text-center text-gray-300 italic">Belum ada riwayat</td></tr>';
         });
     </script>
 </body>
