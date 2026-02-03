@@ -1,125 +1,138 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title>Stok Barang Sederhana</title>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <style>
-    body { font-family: Arial; margin: 20px; }
-    input, button { margin: 5px; padding: 5px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 15px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-  </style>
+<meta charset="UTF-8">
+<title>Manajemen Stok Barang</title>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+body { font-family: Arial; background:#f4f6f8; }
+.container { max-width: 900px; margin:auto; background:#fff; padding:20px; border-radius:8px; }
+input, select, button { padding:6px; margin:5px 0; width:100%; }
+button { cursor:pointer; }
+table { width:100%; border-collapse:collapse; margin-top:15px; }
+th, td { border:1px solid #ccc; padding:8px; text-align:center; }
+tr:hover { background:#f1f1f1; cursor:pointer; }
+</style>
 </head>
+
 <body>
+<div class="container">
 
 <h2>📦 Manajemen Stok Barang</h2>
 
 <h3>Tambah Barang</h3>
-<input id="nama" placeholder="Nama Barang">
-<input id="stok" type="number" placeholder="Stok Awal">
-<button onclick="tambahBarang()">Tambah</button>
+<input id="namaBarang" placeholder="Nama Barang">
+<input id="stokAwal" type="number" placeholder="Stok Awal">
+<button onclick="tambahBarang()">Tambah Barang</button>
 
 <h3>Transaksi</h3>
-<input id="idBarang" placeholder="ID Barang">
+<input id="selectedId" placeholder="Klik barang di tabel" readonly>
 <input id="jumlah" type="number" placeholder="Jumlah">
 <select id="jenis">
   <option value="masuk">Barang Masuk</option>
   <option value="keluar">Barang Keluar</option>
 </select>
-<button onclick="transaksi()">Proses</button>
+<button onclick="prosesTransaksi()">Proses</button>
 
 <button onclick="exportExcel()">⬇ Export Excel</button>
 
 <h3>📊 Data Stok</h3>
-<table id="tabel">
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th>Nama</th>
-      <th>Stok</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Nama</th>
+<th>Stok</th>
+</tr>
+</thead>
+<tbody id="tabelStok"></tbody>
 </table>
 
+</div>
+
 <script>
-  // 🔥 GANTI DENGAN CONFIG FIREBASE KAMU
-  const firebaseConfig = {
-    apiKey: "API_KEY",
-    authDomain: "PROJECT_ID.firebaseapp.com",
-    databaseURL: "https://PROJECT_ID-default-rtdb.firebaseio.com",
-    projectId: "PROJECT_ID",
-  };
+const firebaseConfig = {
+  apiKey: "API_KEY",
+  authDomain: "PROJECT_ID.firebaseapp.com",
+  databaseURL: "https://PROJECT_ID-default-rtdb.firebaseio.com",
+  projectId: "PROJECT_ID"
+};
 
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-  function tambahBarang() {
-    const nama = namaInput.value;
-    const stok = parseInt(stokInput.value);
-    const id = Date.now();
+function tambahBarang() {
+  const nama = namaBarang.value.trim();
+  const stok = parseInt(stokAwal.value);
 
-    db.ref("stok/" + id).set({ nama, stok });
-    namaInput.value = "";
-    stokInput.value = "";
+  if(!nama || isNaN(stok)) {
+    alert("Lengkapi data");
+    return;
   }
 
-  function transaksi() {
-    const id = idBarang.value;
-    const jumlah = parseInt(jumlahInput.value);
-    const jenis = jenisSelect.value;
+  db.ref("stok").push({ nama, stok });
+  namaBarang.value = "";
+  stokAwal.value = "";
+}
 
-    const ref = db.ref("stok/" + id);
-    ref.once("value", snap => {
-      if (!snap.exists()) return alert("Barang tidak ditemukan");
+function prosesTransaksi() {
+  const id = selectedId.value;
+  const jumlah = parseInt(document.getElementById("jumlah").value);
+  const jenis = document.getElementById("jenis").value;
 
-      let stok = snap.val().stok;
-      stok = jenis === "masuk" ? stok + jumlah : stok - jumlah;
-
-      ref.update({ stok });
-
-      db.ref("transaksi").push({
-        barangId: id,
-        jumlah,
-        jenis,
-        waktu: new Date().toLocaleString()
-      });
-    });
+  if(!id || isNaN(jumlah)) {
+    alert("Pilih barang & jumlah");
+    return;
   }
 
-  db.ref("stok").on("value", snap => {
-    const tbody = document.querySelector("#tabel tbody");
-    tbody.innerHTML = "";
-    snap.forEach(item => {
-      tbody.innerHTML += `
-        <tr>
-          <td>${item.key}</td>
-          <td>${item.val().nama}</td>
-          <td>${item.val().stok}</td>
-        </tr>`;
+  const ref = db.ref("stok/" + id);
+  ref.once("value", snap => {
+    let stok = snap.val().stok;
+    stok = jenis === "masuk" ? stok + jumlah : stok - jumlah;
+    if(stok < 0) return alert("Stok tidak cukup");
+
+    ref.update({ stok });
+
+    db.ref("transaksi").push({
+      barang: snap.val().nama,
+      jumlah,
+      jenis,
+      waktu: new Date().toLocaleString()
     });
   });
+}
 
-  function exportExcel() {
-    db.ref("transaksi").once("value", snap => {
-      const data = [];
-      snap.forEach(item => data.push(item.val()));
+db.ref("stok").on("value", snap => {
+  tabelStok.innerHTML = "";
+  snap.forEach(item => {
+    tabelStok.innerHTML += `
+      <tr onclick="pilih('${item.key}')">
+        <td>${item.key}</td>
+        <td>${item.val().nama}</td>
+        <td>${item.val().stok}</td>
+      </tr>`;
+  });
+});
 
-      const ws = XLSX.utils.json_to_sheet(data);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Transaksi");
-      XLSX.writeFile(wb, "riwayat_transaksi.xlsx");
-    });
-  }
+function pilih(id) {
+  selectedId.value = id;
+}
 
-  const namaInput = document.getElementById("nama");
-  const stokInput = document.getElementById("stok");
-  const idBarang = document.getElementById("idBarang");
-  const jumlahInput = document.getElementById("jumlah");
-  const jenisSelect = document.getElementById("jenis");
+function exportExcel() {
+  db.ref("transaksi").once("value", snap => {
+    const data = [];
+    snap.forEach(i => data.push(i.val()));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Transaksi");
+    XLSX.writeFile(wb, "riwayat_transaksi.xlsx");
+  });
+}
 </script>
 
 </body>
