@@ -7,17 +7,16 @@
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
-body{margin:0;font-family:Arial;background:#f1f5f9;padding:15px}
-h1,h2{margin:5px 0}
-.card{background:#fff;padding:15px;border-radius:8px;margin-bottom:15px;box-shadow:0 2px 6px rgba(0,0,0,.05)}
+body{margin:0;font-family:Arial;background:#f1f5f9;padding:16px}
+h1,h2{margin:6px 0}
+.card{background:#fff;padding:16px;border-radius:8px;margin-bottom:14px;box-shadow:0 2px 6px rgba(0,0,0,.05)}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
-.stat{background:#eff6ff;text-align:center;padding:15px;border-radius:8px}
+.stat{background:#eff6ff;text-align:center;padding:14px;border-radius:8px}
 .stat h3{margin:0;font-size:13px;color:#475569}
-.stat p{margin:5px 0 0;font-size:22px;font-weight:bold;color:#1e40af}
-.row{display:flex;flex-wrap:wrap;gap:8px}
+.stat p{margin:4px 0 0;font-size:22px;font-weight:bold;color:#1e40af}
+.row{display:flex;gap:8px;flex-wrap:wrap}
 input,select,button{padding:8px;border-radius:6px;border:1px solid #cbd5e1}
 button{background:#2563eb;color:#fff;border:none;cursor:pointer}
 button:hover{opacity:.9}
@@ -26,10 +25,6 @@ th,td{padding:8px;border-bottom:1px solid #e5e7eb;text-align:center}
 th{background:#e2e8f0}
 .masuk{color:green;font-weight:bold}
 .keluar{color:red;font-weight:bold}
-.action{cursor:pointer}
-@media print{
-button,input,select{display:none}
-}
 </style>
 </head>
 
@@ -40,8 +35,8 @@ button,input,select{display:none}
 <div class="card grid">
   <div class="stat"><h3>Jenis Barang</h3><p id="dBarang">0</p></div>
   <div class="stat"><h3>Total Stok</h3><p id="dStok">0</p></div>
-  <div class="stat"><h3>Total Masuk</h3><p id="dMasuk">0</p></div>
-  <div class="stat"><h3>Total Keluar</h3><p id="dKeluar">0</p></div>
+  <div class="stat"><h3>Masuk</h3><p id="dMasuk">0</p></div>
+  <div class="stat"><h3>Keluar</h3><p id="dKeluar">0</p></div>
 </div>
 
 <div class="card">
@@ -62,18 +57,12 @@ button,input,select{display:none}
 <option value="keluar">Keluar</option>
 </select>
 <input id="tJumlah" type="number" placeholder="Jumlah">
-<button onclick="transaksi()">Proses</button>
+<button onclick="prosesTransaksi()">Proses</button>
 </div>
 </div>
 
 <div class="card">
-<h2>Riwayat</h2>
-<div class="row">
-<input type="date" id="fMulai">
-<input type="date" id="fAkhir">
-<button onclick="exportExcel()">Export Excel</button>
-<button onclick="window.print()">Print</button>
-</div>
+<h2>Riwayat Transaksi</h2>
 <table>
 <thead>
 <tr>
@@ -87,7 +76,7 @@ button,input,select{display:none}
 <script>
 // ================= FIREBASE =================
 const firebaseConfig = {
-  apiKey: "ISI_API_KEY",
+  apiKey: "API_KEY_KAMU",
   authDomain: "PROJECT.firebaseapp.com",
   databaseURL: "https://PROJECT.firebaseio.com",
   projectId: "PROJECT"
@@ -95,70 +84,104 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// ================= BARANG =================
+// ================= TAMBAH BARANG (FIX) =================
 function tambahBarang(){
-  const nama=bNama.value.trim();
-  const stok=parseInt(bStok.value);
-  if(!nama||stok<0)return alert("Data salah");
-  db.ref("barang").push({nama,stok});
-  bNama.value="";bStok.value="";
+  const namaRaw = bNama.value.trim();
+  const stok = parseInt(bStok.value);
+
+  if(!namaRaw || stok < 0){
+    alert("Nama / stok tidak valid");
+    return;
+  }
+
+  const key = namaRaw.toLowerCase().replace(/\s+/g,'_');
+
+  db.ref("barang/"+key).once("value",snap=>{
+    if(snap.exists()){
+      alert("Barang sudah ada");
+      return;
+    }
+
+    db.ref("barang/"+key).set({
+      nama: namaRaw,
+      stok: stok
+    });
+
+    bNama.value="";
+    bStok.value="";
+  });
 }
 
-db.ref("barang").on("value",s=>{
+// ================= LOAD BARANG =================
+db.ref("barang").on("value",snap=>{
   tBarang.innerHTML="";
   let totalStok=0,count=0;
-  s.forEach(c=>{
-    count++; totalStok+=c.val().stok;
-    tBarang.innerHTML+=<option value="${c.key}">${c.val().nama}</option>;
+
+  snap.forEach(c=>{
+    count++;
+    totalStok+=c.val().stok;
+    tBarang.innerHTML+=`
+      <option value="${c.key}">${c.val().nama}</option>`;
   });
+
   dBarang.innerText=count;
   dStok.innerText=totalStok;
 });
 
 // ================= TRANSAKSI =================
-function transaksi(){
+function prosesTransaksi(){
   const id=tBarang.value;
   const jenis=tJenis.value;
   const jumlah=parseInt(tJumlah.value);
-  if(jumlah<=0)return alert("Jumlah salah");
+
+  if(!id || jumlah<=0){
+    alert("Data transaksi salah");
+    return;
+  }
 
   const ref=db.ref("barang/"+id);
-  ref.once("value",s=>{
-    let stok=s.val().stok;
-    if(jenis==="keluar" && stok<jumlah)return alert("Stok kurang");
-    stok=jenis==="masuk"?stok+jumlah:stok-jumlah;
+  ref.once("value",snap=>{
+    let stok=snap.val().stok;
+
+    if(jenis==="keluar" && stok<jumlah){
+      alert("Stok tidak cukup");
+      return;
+    }
+
+    stok = jenis==="masuk" ? stok+jumlah : stok-jumlah;
     ref.update({stok});
 
     db.ref("transaksi").push({
-      tanggal:new Date().toISOString().slice(0,10),
-      barang:s.val().nama,
+      tanggal:new Date().toLocaleString(),
+      barang:snap.val().nama,
       jenis,
       jumlah
     });
+
     tJumlah.value="";
   });
 }
 
 // ================= RIWAYAT =================
-db.ref("transaksi").on("value",s=>{
+db.ref("transaksi").on("value",snap=>{
   riwayat.innerHTML="";
   let masuk=0,keluar=0;
-  s.forEach(c=>{
+
+  snap.forEach(c=>{
     const d=c.val();
-    if(d.jenis==="masuk")masuk+=d.jumlah;
+    if(d.jenis==="masuk") masuk+=d.jumlah;
     else keluar+=d.jumlah;
 
-    riwayat.innerHTML=
+    riwayat.innerHTML =
     `<tr>
       <td>${d.tanggal}</td>
       <td>${d.barang}</td>
       <td class="${d.jenis}">${d.jenis}</td>
       <td>${d.jumlah}</td>
-      <td>
-        <span class="action" onclick="hapus('${c.key}')">🗑</span>
-      </td>
+      <td><button onclick="hapus('${c.key}')">Hapus</button></td>
     </tr>` + riwayat.innerHTML;
   });
+
   dMasuk.innerText=masuk;
   dKeluar.innerText=keluar;
 });
@@ -167,14 +190,6 @@ function hapus(id){
   if(confirm("Hapus transaksi?")){
     db.ref("transaksi/"+id).remove();
   }
-}
-
-// ================= EXPORT =================
-function exportExcel(){
-  let wb=XLSX.utils.book_new();
-  let ws=XLSX.utils.table_to_sheet(document.querySelector("table"));
-  XLSX.utils.book_append_sheet(wb,ws,"Riwayat");
-  XLSX.writeFile(wb,"riwayat-gudang.xlsx");
 }
 </script>
 
