@@ -1,61 +1,99 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GUDANG SMS - PRINT READY</title>
+    <title>PT. SMS - Dashboard Final</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* Mengatur agar tombol hilang saat kertas diprint */
-        @media print {
-            .no-print { display: none !important; }
-            .bg-gray-100 { background: white !important; }
-            body { padding: 0; }
-            .shadow, .shadow-lg { shadow: none !important; border: 1px solid #ccc; }
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .card-shadow { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+        @media print { .no-print { display: none !important; } }
     </style>
 </head>
-<body class="bg-gray-100 p-4 font-sans text-slate-800">
+<body class="pb-10">
 
-    <div class="max-w-md mx-auto space-y-4">
-        <div class="bg-blue-700 text-white p-5 rounded-2xl shadow-lg text-center border-b-4 border-yellow-500">
-            <h1 class="text-xl font-bold uppercase">PT. SAMUDRA MANDIRI SENTOSA</h1>
-            <p class="text-[10px] tracking-widest mt-1 text-yellow-300 font-bold underline">SISTEM AKTIF - VERSI FINAL</p>
-        </div>
+    <div class="bg-[#1e40af] text-white p-6 text-center shadow-md mb-6">
+        <h1 class="text-2xl font-bold tracking-tight uppercase">PT. SAMUDRA MANDIRI SENTOSA</h1>
+        <p class="text-xs tracking-[0.3em] opacity-80 mt-1">INVENTORY MANAGEMENT SYSTEM</p>
+    </div>
 
-        <div class="bg-white p-5 rounded-2xl shadow border no-print">
-            <div class="space-y-4">
-                <input type="text" id="Z_NAMA" placeholder="NAMA BARANG" class="w-full p-3 border rounded-xl bg-gray-50 uppercase font-bold outline-none">
-                <div class="grid grid-cols-2 gap-3">
-                    <input type="number" id="Z_QTY" placeholder="JUMLAH" class="w-full p-3 border rounded-xl bg-gray-50 font-black text-center text-xl">
-                    <input type="text" id="Z_KET" placeholder="KET" class="w-full p-3 border rounded-xl bg-gray-50 text-sm">
-                </div>
-                <div class="grid grid-cols-2 gap-3 pt-2">
-                    <button onclick="Z_GAS('masuk')" class="bg-emerald-600 text-white py-4 rounded-xl font-bold shadow-md active:bg-emerald-800 uppercase text-xs">Simpan</button>
-                    <button onclick="Z_GAS('keluar')" class="bg-rose-600 text-white py-4 rounded-xl font-bold shadow-md active:bg-rose-800 uppercase text-xs">Keluar</button>
-                </div>
-                <button onclick="window.print()" class="w-full mt-2 py-2 text-[10px] text-gray-400 font-bold uppercase tracking-widest border border-dashed border-gray-300 rounded-lg hover:bg-gray-50">
-                    🖨️ Cetak Laporan Stok
-                </button>
+    <div class="max-w-6xl mx-auto px-4 space-y-6">
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 no-print">
+            <div class="bg-white p-6 rounded-2xl border-l-8 border-blue-500 card-shadow">
+                <p class="text-gray-500 text-xs font-bold uppercase">Jenis Barang</p>
+                <h2 id="stat_jenis" class="text-4xl font-black text-blue-700 mt-1">0</h2>
+            </div>
+            <div class="bg-white p-6 rounded-2xl border-l-8 border-emerald-500 card-shadow">
+                <p class="text-gray-500 text-xs font-bold uppercase">Total Unit</p>
+                <h2 id="stat_total" class="text-4xl font-black text-emerald-700 mt-1">0</h2>
+            </div>
+            <div class="bg-white p-6 rounded-2xl border-l-8 border-orange-500 card-shadow">
+                <p class="text-gray-500 text-xs font-bold uppercase">Stok Menipis (< 10)</p>
+                <h2 id="stat_tipis" class="text-4xl font-black text-orange-700 mt-1">0</h2>
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow border overflow-hidden">
-            <div class="bg-slate-900 p-2 text-white text-[10px] font-bold uppercase text-center">STOK GUDANG TERKINI</div>
-            <table class="w-full text-sm font-bold">
-                <tbody id="Z_TABEL" class="divide-y"></tbody>
-            </table>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 no-print">
+            <div class="bg-white p-6 rounded-2xl card-shadow">
+                <div class="flex items-center gap-2 mb-4 text-blue-700 font-bold">
+                    <i class="fa-solid fa-box-open"></i> <span>BARANG MASUK</span>
+                </div>
+                <div class="space-y-3">
+                    <input type="text" id="in_nama" placeholder="Nama Barang (Contoh: Besi)" class="w-full p-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="number" id="in_qty" placeholder="Jumlah" class="p-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                        <input type="text" id="in_satuan" placeholder="Satuan (Pcs/Kg)" class="p-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <button onclick="prosesData('masuk')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl font-bold uppercase text-sm transition shadow-lg">Simpan Stok Masuk</button>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl card-shadow">
+                <div class="flex items-center gap-2 mb-4 text-rose-700 font-bold">
+                    <i class="fa-solid fa-truck-ramp-box"></i> <span>BARANG KELUAR</span>
+                </div>
+                <div class="space-y-3">
+                    <input type="text" id="out_nama" placeholder="Cari Nama Barang..." class="w-full p-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-rose-500">
+                    <input type="number" id="out_qty" placeholder="Jumlah Unit Keluar" class="w-full p-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-rose-500">
+                    <button onclick="prosesData('keluar')" class="w-full bg-rose-600 hover:bg-rose-700 text-white py-3 rounded-xl font-bold uppercase text-sm transition shadow-lg">Kurangi Stok Keluar</button>
+                </div>
+            </div>
         </div>
 
-        <div class="no-print">
-            <div id="Z_LOG" class="p-3 space-y-2 max-h-40 overflow-auto bg-white rounded-xl text-[10px] border shadow-inner"></div>
+        <div class="bg-white rounded-2xl card-shadow overflow-hidden">
+            <div class="bg-[#111827] p-4 flex justify-between items-center">
+                <div class="flex items-center gap-2 text-white font-bold text-sm uppercase">
+                    <i class="fa-solid fa-list-check text-orange-400"></i> Daftar Stok Real-Time
+                </div>
+                <button onclick="window.print()" class="no-print bg-gray-700 text-white px-4 py-1 rounded-lg text-xs hover:bg-gray-600">
+                    <i class="fa-solid fa-print"></i> Cetak
+                </button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="bg-gray-50 border-b text-[10px] text-gray-400 font-black uppercase">
+                            <th class="p-4">Nama Barang</th>
+                            <th class="p-4 text-center">Jumlah Stok</th>
+                            <th class="p-4 text-right">Satuan</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabel_stok" class="divide-y text-sm font-semibold">
+                        </tbody>
+                </table>
+            </div>
         </div>
+
     </div>
 
     <script>
-        var firebaseConfig = {
+        const firebaseConfig = {
             apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
             authDomain: "gudang-sms-4c81c.firebaseapp.com",
             databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -64,56 +102,53 @@
             appId: "1:598362736106:web:c8e2732d6ac7613931de93"
         };
         firebase.initializeApp(firebaseConfig);
-        var db = firebase.database();
+        const db = firebase.database();
 
-        function Z_GAS(m) {
-            var n = document.getElementById('Z_NAMA').value.trim().toLowerCase();
-            var q = parseInt(document.getElementById('Z_QTY').value);
-            var k = document.getElementById('Z_KET').value || "-";
-            var t = new Date().toLocaleString('id-ID');
+        function prosesData(mode) {
+            const nama = mode === 'masuk' ? document.getElementById('in_nama').value : document.getElementById('out_nama').value;
+            const qty = mode === 'masuk' ? parseInt(document.getElementById('in_qty').value) : parseInt(document.getElementById('out_qty').value);
+            const satuan = document.getElementById('in_satuan').value || "pcs";
 
-            if (!n || isNaN(q)) {
-                alert("Isi Nama & Jumlah!");
-                return;
-            }
+            if (!nama || isNaN(qty)) return alert("Isi Nama & Jumlah!");
 
-            var refS = db.ref('stok/' + n);
-            var refL = db.ref('riwayat').push();
+            const refS = db.ref('stok/' + nama.toLowerCase().trim());
+            refS.once('value').then(s => {
+                let current = s.exists() ? s.val().stok : 0;
+                let newStok = mode === 'masuk' ? current + qty : current - qty;
+                if (newStok < 0) return alert("Stok tidak cukup!");
 
-            refS.once('value').then(function(s) {
-                var l = s.exists() ? parseInt(s.val().stok) : 0;
-                var b = (m === 'masuk') ? (l + q) : (l - q);
-                
-                if (b < 0) {
-                    alert("Stok Gagal! Minus.");
-                    return;
-                }
-
-                refS.update({ nama: n, stok: b });
-                refL.set({ t: t, m: m, n: n, q: (m==='masuk'?'+':'-')+q, k: k });
-                
-                alert("BERHASIL!");
-                document.getElementById('Z_NAMA').value=''; 
-                document.getElementById('Z_QTY').value=''; 
-                document.getElementById('Z_KET').value='';
+                refS.update({ 
+                    nama: nama.trim(), 
+                    stok: newStok,
+                    satuan: s.exists() ? s.val().satuan : satuan 
+                });
+                alert("Berhasil!");
+                location.reload(); // Refresh untuk membersihkan form
             });
         }
 
-        db.ref('stok').on('value', function(snap) {
-            var h = "";
-            snap.forEach(function(c) {
-                h += "<tr class='border-b'><td class='p-3 capitalize'>" + c.val().nama + "</td><td class='p-3 text-right text-blue-700'>" + c.val().stok + "</td></tr>";
-            });
-            document.getElementById('Z_TABEL').innerHTML = h;
-        });
+        db.ref('stok').on('value', snap => {
+            let h = ""; 
+            let totalJenis = 0, totalUnit = 0, totalTipis = 0;
 
-        db.ref('riwayat').on('value', function(snap) {
-            var h = ""; var arr = [];
-            snap.forEach(function(c) { arr.push(c.val()); });
-            arr.reverse().slice(0, 5).forEach(function(v) {
-                h += "<div class='border-b pb-1 text-gray-500'>[" + v.t + "] <b>" + v.n + "</b> " + v.q + "</div>";
+            snap.forEach(c => {
+                const d = c.val();
+                totalJenis++;
+                totalUnit += d.stok;
+                if(d.stok < 10) totalTipis++;
+
+                h += `
+                <tr class="hover:bg-blue-50 transition">
+                    <td class="p-4 font-bold text-gray-700 capitalize">${d.nama}</td>
+                    <td class="p-4 text-center text-blue-600 font-black text-lg">${d.stok}</td>
+                    <td class="p-4 text-right text-gray-400 font-bold">${d.satuan || 'pcs'}</td>
+                </tr>`;
             });
-            document.getElementById('Z_LOG').innerHTML = h;
+
+            document.getElementById('tabel_stok').innerHTML = h;
+            document.getElementById('stat_jenis').innerText = totalJenis;
+            document.getElementById('stat_total').innerText = totalUnit;
+            document.getElementById('stat_tipis').innerText = totalTipis;
         });
     </script>
 </body>
