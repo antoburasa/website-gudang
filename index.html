@@ -2,24 +2,24 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sistem Gudang</title>
 
 <style>
-body{font-family:Arial;background:#f4f6f8;padding:20px}
-h2{margin-top:0}
-.card{background:#fff;padding:15px;border-radius:8px;margin-bottom:15px}
-.dashboard{display:flex;gap:10px}
-.box{flex:1;background:#fff;padding:15px;border-radius:8px;text-align:center}
-.box h3{margin:0;font-size:14px;color:#666}
+body{font-family:Arial;background:#f4f6f8;margin:0;padding:10px}
+h2,h3{margin:10px 0}
+.card{background:#fff;padding:12px;border-radius:10px;margin-bottom:10px}
+.dashboard{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.box{background:#0d6efd;color:#fff;padding:15px;border-radius:10px;text-align:center}
 .box span{font-size:22px;font-weight:bold}
-input,select,button{width:100%;padding:8px;margin-top:6px}
-button{background:#0d6efd;color:#fff;border:none;border-radius:5px;cursor:pointer}
-button:hover{opacity:0.9}
-table{width:100%;border-collapse:collapse;margin-top:10px}
+input,select,button{width:100%;padding:10px;margin-top:6px;border-radius:6px;border:1px solid #ccc}
+button{background:#0d6efd;color:#fff;border:none}
+button.danger{background:#dc3545}
+button.warn{background:#ffc107;color:#000}
+table{width:100%;border-collapse:collapse;font-size:13px}
 th,td{border:1px solid #ddd;padding:6px;text-align:center}
-th{background:#f1f1f1}
-.btn-danger{background:#dc3545}
-.btn-warning{background:#ffc107;color:#000}
+th{background:#eee}
+.stok-item{display:flex;justify-content:space-between;padding:6px;border-bottom:1px solid #eee}
 @media print{
   button,input,select{display:none}
 }
@@ -28,18 +28,17 @@ th{background:#f1f1f1}
 
 <body>
 
-<h2>Sistem Gudang</h2>
+<h2>📦 Sistem Gudang</h2>
 
 <!-- DASHBOARD -->
 <div class="dashboard">
-  <div class="box"><h3>Total Stok</h3><span id="total">0</span></div>
-  <div class="box"><h3>Masuk</h3><span id="masuk">0</span></div>
-  <div class="box"><h3>Keluar</h3><span id="keluar">0</span></div>
+  <div class="box">Total Stok<br><span id="total">0</span></div>
+  <div class="box">Jenis Barang<br><span id="jenisBarang">0</span></div>
 </div>
 
 <!-- FORM -->
 <div class="card">
-  <h3>Tambah / Edit Transaksi</h3>
+  <h3>➕ Transaksi</h3>
   <input id="barang" placeholder="Nama Barang">
   <select id="jenis">
     <option value="masuk">Masuk</option>
@@ -52,23 +51,30 @@ th{background:#f1f1f1}
 
 <!-- FILTER -->
 <div class="card">
-  <h3>Filter & Laporan</h3>
+  <h3>📅 Filter & Laporan</h3>
   <input type="date" id="tglAwal">
   <input type="date" id="tglAkhir">
   <button onclick="load()">Filter</button>
+  <button onclick="exportExcel()">Export Excel</button>
   <button onclick="window.print()">Print</button>
+</div>
+
+<!-- STOK PER BARANG -->
+<div class="card">
+  <h3>📊 Stok per Barang</h3>
+  <div id="stokBarang"></div>
 </div>
 
 <!-- RIWAYAT -->
 <div class="card">
-  <h3>Riwayat Transaksi</h3>
+  <h3>📜 Riwayat Transaksi</h3>
   <table>
     <thead>
       <tr>
-        <th>Tanggal</th>
+        <th>Tgl</th>
         <th>Barang</th>
         <th>Jenis</th>
-        <th>Jumlah</th>
+        <th>Jml</th>
         <th>Aksi</th>
       </tr>
     </thead>
@@ -79,6 +85,9 @@ th{background:#f1f1f1}
 <!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<!-- EXCEL -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <script>
 const firebaseConfig = {
@@ -94,82 +103,72 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-/* SIMPAN / UPDATE */
+/* SIMPAN */
 function simpan(){
-  const barang=document.getElementById("barang").value;
-  const jenis=document.getElementById("jenis").value;
-  const jumlah=parseInt(document.getElementById("jumlah").value);
-  const editId=document.getElementById("editId").value;
+  const barang=barangEl.value;
+  const jenis=jenisEl.value;
+  const jumlah=parseInt(jumlahEl.value);
+  if(!barang||!jumlah)return alert("Lengkapi data");
 
-  if(!barang||!jumlah){alert("Lengkapi data");return;}
-
-  const data={
-    barang,jenis,jumlah,
-    tanggal:new Date().toISOString().slice(0,10)
-  };
-
-  if(editId){
-    db.ref("riwayat/"+editId).set(data);
-    document.getElementById("editId").value="";
-  }else{
-    db.ref("riwayat").push(data);
-  }
-
-  document.getElementById("barang").value="";
-  document.getElementById("jumlah").value="";
+  const data={barang,jenis,jumlah,tanggal:new Date().toISOString().slice(0,10)};
+  editId.value?db.ref("riwayat/"+editId.value).set(data):db.ref("riwayat").push(data);
+  barangEl.value=jumlahEl.value="";editId.value="";
+  load();
 }
 
-/* LOAD DATA */
+/* LOAD */
 function load(){
-  const awal=document.getElementById("tglAwal").value;
-  const akhir=document.getElementById("tglAkhir").value;
-
+  const a=tglAwal.value,b=tglAkhir.value;
   db.ref("riwayat").once("value",snap=>{
-    let html="",total=0,m=0,k=0;
-
+    let html="",stok={},total=0;
     snap.forEach(x=>{
       const d=x.val(),id=x.key;
-      if((!awal||d.tanggal>=awal)&&(!akhir||d.tanggal<=akhir)){
-        if(d.jenis==="masuk"){total+=d.jumlah;m+=d.jumlah}
-        else{total-=d.jumlah;k+=d.jumlah}
-
-        html+=`
-        <tr>
-          <td>${d.tanggal}</td>
-          <td>${d.barang}</td>
-          <td>${d.jenis}</td>
-          <td>${d.jumlah}</td>
-          <td>
-            <button class="btn-warning" onclick="edit('${id}','${d.barang}','${d.jenis}',${d.jumlah})">Edit</button>
-            <button class="btn-danger" onclick="hapus('${id}')">Hapus</button>
-          </td>
-        </tr>`;
+      if((!a||d.tanggal>=a)&&(!b||d.tanggal<=b)){
+        stok[d.barang]=(stok[d.barang]||0)+(d.jenis=="masuk"?d.jumlah:-d.jumlah);
+        total+=d.jenis=="masuk"?d.jumlah:-d.jumlah;
+        html+=`<tr>
+        <td>${d.tanggal}</td><td>${d.barang}</td><td>${d.jenis}</td><td>${d.jumlah}</td>
+        <td>
+          <button class="warn" onclick="edit('${id}','${d.barang}','${d.jenis}',${d.jumlah})">✏️</button>
+          <button class="danger" onclick="hapus('${id}')">🗑</button>
+        </td></tr>`;
       }
     });
+    data.innerHTML=html;
+    totalEl.innerText=total;
+    jenisBarang.innerText=Object.keys(stok).length;
 
-    document.getElementById("data").innerHTML=html;
-    document.getElementById("total").innerText=total;
-    document.getElementById("masuk").innerText=m;
-    document.getElementById("keluar").innerText=k;
+    stokBarang.innerHTML="";
+    for(let b in stok){
+      stokBarang.innerHTML+=<div class="stok-item"><span>${b}</span><b>${stok[b]}</b></div>;
+    }
   });
 }
 
 /* EDIT */
-function edit(id,barang,jenis,jumlah){
-  document.getElementById("barang").value=barang;
-  document.getElementById("jenis").value=jenis;
-  document.getElementById("jumlah").value=jumlah;
-  document.getElementById("editId").value=id;
+function edit(id,b,j,jml){
+  editId.value=id;barangEl.value=b;jenisEl.value=j;jumlahEl.value=jml;
 }
 
 /* HAPUS */
 function hapus(id){
-  if(confirm("Hapus transaksi?")){
-    db.ref("riwayat/"+id).remove();
-    load();
-  }
+  if(confirm("Hapus transaksi?"))db.ref("riwayat/"+id).remove().then(load);
 }
 
+/* EXPORT EXCEL */
+function exportExcel(){
+  const rows=[["Tanggal","Barang","Jenis","Jumlah"]];
+  document.querySelectorAll("#data tr").forEach(r=>{
+    rows.push([...r.children].slice(0,4).map(td=>td.innerText));
+  });
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),"Laporan");
+  XLSX.writeFile(wb,"laporan_gudang.xlsx");
+}
+
+const barangEl=barang,jenisEl=jenis,jumlahEl=jumlah,editId=document.getElementById("editId");
+const tglAwal=document.getElementById("tglAwal"),tglAkhir=document.getElementById("tglAkhir");
+const totalEl=document.getElementById("total"),jenisBarang=document.getElementById("jenisBarang");
 load();
 </script>
 
