@@ -146,6 +146,25 @@ onValue(ref(db,"riwayat"),snap=>{
   document.getElementById("keluar").innerText=k;
 });
 </script>
+  <!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDbf4Nf0j0lEjB3R8Un8Ypgi0io-tTB3o",
+    authDomain: "gudang-sms-4c81c.firebaseapp.com",
+    databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "gudang-sms-4c81c",
+    storageBucket: "gudang-sms-4c81c.firebasestorage.app",
+    messagingSenderId: "598362736106",
+    appId: "1:598362736106:web:c0e2732d6ac7513931de93"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+</script>
 
 </body>
 </html>
+
