@@ -5,60 +5,24 @@
 <title>Sistem Gudang</title>
 
 <style>
-body{
-  font-family:Arial;
-  background:#f4f6f8;
-  margin:0;
-  padding:20px;
-}
+body{font-family:Arial;background:#f4f6f8;padding:20px}
 h2{margin-top:0}
-
-.card{
-  background:#fff;
-  padding:15px;
-  border-radius:8px;
-  margin-bottom:15px;
-}
-
-.dashboard{
-  display:flex;
-  gap:10px;
-}
-.box{
-  flex:1;
-  background:#fff;
-  padding:15px;
-  border-radius:8px;
-  text-align:center;
-}
+.card{background:#fff;padding:15px;border-radius:8px;margin-bottom:15px}
+.dashboard{display:flex;gap:10px}
+.box{flex:1;background:#fff;padding:15px;border-radius:8px;text-align:center}
 .box h3{margin:0;font-size:14px;color:#666}
 .box span{font-size:22px;font-weight:bold}
-
-input,select,button{
-  width:100%;
-  padding:8px;
-  margin-top:6px;
-}
-button{
-  background:#0d6efd;
-  color:#fff;
-  border:none;
-  border-radius:5px;
-  cursor:pointer;
-}
+input,select,button{width:100%;padding:8px;margin-top:6px}
+button{background:#0d6efd;color:#fff;border:none;border-radius:5px;cursor:pointer}
 button:hover{opacity:0.9}
-
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:10px;
-}
-th,td{
-  border:1px solid #ddd;
-  padding:6px;
-  text-align:center;
-}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{border:1px solid #ddd;padding:6px;text-align:center}
 th{background:#f1f1f1}
+.btn-danger{background:#dc3545}
+.btn-warning{background:#ffc107;color:#000}
+@media print{
+  button,input,select{display:none}
+}
 </style>
 </head>
 
@@ -68,34 +32,31 @@ th{background:#f1f1f1}
 
 <!-- DASHBOARD -->
 <div class="dashboard">
-  <div class="box">
-    <h3>Total Stok</h3>
-    <span id="totalStok">0</span>
-  </div>
-  <div class="box">
-    <h3>Masuk</h3>
-    <span id="masuk">0</span>
-  </div>
-  <div class="box">
-    <h3>Keluar</h3>
-    <span id="keluar">0</span>
-  </div>
+  <div class="box"><h3>Total Stok</h3><span id="total">0</span></div>
+  <div class="box"><h3>Masuk</h3><span id="masuk">0</span></div>
+  <div class="box"><h3>Keluar</h3><span id="keluar">0</span></div>
 </div>
 
 <!-- FORM -->
 <div class="card">
-  <h3>Tambah Transaksi</h3>
-
+  <h3>Tambah / Edit Transaksi</h3>
   <input id="barang" placeholder="Nama Barang">
-  
   <select id="jenis">
-    <option value="masuk">Barang Masuk</option>
-    <option value="keluar">Barang Keluar</option>
+    <option value="masuk">Masuk</option>
+    <option value="keluar">Keluar</option>
   </select>
-
   <input id="jumlah" type="number" placeholder="Jumlah">
-
+  <input id="editId" type="hidden">
   <button onclick="simpan()">Simpan</button>
+</div>
+
+<!-- FILTER -->
+<div class="card">
+  <h3>Filter & Laporan</h3>
+  <input type="date" id="tglAwal">
+  <input type="date" id="tglAkhir">
+  <button onclick="load()">Filter</button>
+  <button onclick="window.print()">Print</button>
 </div>
 
 <!-- RIWAYAT -->
@@ -108,9 +69,10 @@ th{background:#f1f1f1}
         <th>Barang</th>
         <th>Jenis</th>
         <th>Jumlah</th>
+        <th>Aksi</th>
       </tr>
     </thead>
-    <tbody id="riwayat"></tbody>
+    <tbody id="data"></tbody>
   </table>
 </div>
 
@@ -124,7 +86,7 @@ const firebaseConfig = {
   authDomain: "gudang-sms-4c81c.firebaseapp.com",
   databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "gudang-sms-4c81c",
-  storageBucket: "gudang-sms-4c81c.firebasestorage.app",
+  storageBucket: "gudang-sms-4c81c.appspot.com",
   messagingSenderId: "598362736106",
   appId: "1:598362736106:web:c0e2732d6ac7513931de93"
 };
@@ -132,55 +94,83 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-/* SIMPAN DATA */
+/* SIMPAN / UPDATE */
 function simpan(){
-  const barang = document.getElementById("barang").value;
-  const jenis  = document.getElementById("jenis").value;
-  const jumlah = parseInt(document.getElementById("jumlah").value);
+  const barang=document.getElementById("barang").value;
+  const jenis=document.getElementById("jenis").value;
+  const jumlah=parseInt(document.getElementById("jumlah").value);
+  const editId=document.getElementById("editId").value;
 
-  if(!barang || !jumlah){
-    alert("Lengkapi data!");
-    return;
+  if(!barang||!jumlah){alert("Lengkapi data");return;}
+
+  const data={
+    barang,jenis,jumlah,
+    tanggal:new Date().toISOString().slice(0,10)
+  };
+
+  if(editId){
+    db.ref("riwayat/"+editId).set(data);
+    document.getElementById("editId").value="";
+  }else{
+    db.ref("riwayat").push(data);
   }
-
-  db.ref("riwayat").push({
-    barang: barang,
-    jenis: jenis,
-    jumlah: jumlah,
-    tanggal: new Date().toLocaleString()
-  });
 
   document.getElementById("barang").value="";
   document.getElementById("jumlah").value="";
 }
 
-/* LOAD RIWAYAT + DASHBOARD */
-db.ref("riwayat").on("value", snap=>{
-  let html="";
-  let total=0, m=0, k=0;
+/* LOAD DATA */
+function load(){
+  const awal=document.getElementById("tglAwal").value;
+  const akhir=document.getElementById("tglAkhir").value;
 
-  snap.forEach(x=>{
-    const d=x.val();
-    if(d.jenis==="masuk"){
-      total+=d.jumlah; m+=d.jumlah;
-    }else{
-      total-=d.jumlah; k+=d.jumlah;
-    }
+  db.ref("riwayat").once("value",snap=>{
+    let html="",total=0,m=0,k=0;
 
-    html+=`
-      <tr>
-        <td>${d.tanggal}</td>
-        <td>${d.barang}</td>
-        <td>${d.jenis}</td>
-        <td>${d.jumlah}</td>
-      </tr>`;
+    snap.forEach(x=>{
+      const d=x.val(),id=x.key;
+      if((!awal||d.tanggal>=awal)&&(!akhir||d.tanggal<=akhir)){
+        if(d.jenis==="masuk"){total+=d.jumlah;m+=d.jumlah}
+        else{total-=d.jumlah;k+=d.jumlah}
+
+        html+=`
+        <tr>
+          <td>${d.tanggal}</td>
+          <td>${d.barang}</td>
+          <td>${d.jenis}</td>
+          <td>${d.jumlah}</td>
+          <td>
+            <button class="btn-warning" onclick="edit('${id}','${d.barang}','${d.jenis}',${d.jumlah})">Edit</button>
+            <button class="btn-danger" onclick="hapus('${id}')">Hapus</button>
+          </td>
+        </tr>`;
+      }
+    });
+
+    document.getElementById("data").innerHTML=html;
+    document.getElementById("total").innerText=total;
+    document.getElementById("masuk").innerText=m;
+    document.getElementById("keluar").innerText=k;
   });
+}
 
-  document.getElementById("riwayat").innerHTML=html;
-  document.getElementById("totalStok").innerText=total;
-  document.getElementById("masuk").innerText=m;
-  document.getElementById("keluar").innerText=k;
-});
+/* EDIT */
+function edit(id,barang,jenis,jumlah){
+  document.getElementById("barang").value=barang;
+  document.getElementById("jenis").value=jenis;
+  document.getElementById("jumlah").value=jumlah;
+  document.getElementById("editId").value=id;
+}
+
+/* HAPUS */
+function hapus(id){
+  if(confirm("Hapus transaksi?")){
+    db.ref("riwayat/"+id).remove();
+    load();
+  }
+}
+
+load();
 </script>
 
 </body>
