@@ -2,195 +2,149 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sistem Gudang</title>
-
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
 <style>
-body{margin:0;font-family:Arial;background:#f1f5f9;padding:16px}
-h1,h2{margin:6px 0}
-.card{background:#fff;padding:16px;border-radius:8px;margin-bottom:14px;box-shadow:0 2px 6px rgba(0,0,0,.05)}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
-.stat{background:#eff6ff;text-align:center;padding:14px;border-radius:8px}
-.stat h3{margin:0;font-size:13px;color:#475569}
-.stat p{margin:4px 0 0;font-size:22px;font-weight:bold;color:#1e40af}
-.row{display:flex;gap:8px;flex-wrap:wrap}
-input,select,button{padding:8px;border-radius:6px;border:1px solid #cbd5e1}
-button{background:#2563eb;color:#fff;border:none;cursor:pointer}
-button:hover{opacity:.9}
-table{width:100%;border-collapse:collapse}
-th,td{padding:8px;border-bottom:1px solid #e5e7eb;text-align:center}
-th{background:#e2e8f0}
-.masuk{color:green;font-weight:bold}
-.keluar{color:red;font-weight:bold}
+body{font-family:Arial;background:#f4f6f8;margin:0;padding:20px}
+h2{margin-top:0}
+.card{background:#fff;padding:15px;border-radius:8px;margin-bottom:15px}
+input,select,button{padding:8px;margin:4px 0;width:100%}
+button{background:#0d6efd;color:#fff;border:none;border-radius:5px;cursor:pointer}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{border:1px solid #ddd;padding:8px;text-align:center}
+th{background:#f1f1f1}
+.dashboard{display:flex;gap:10px}
+.box{flex:1;background:#fff;padding:15px;border-radius:8px;text-align:center}
+.box h3{margin:0;font-size:14px;color:#555}
+.box span{font-size:24px;font-weight:bold}
 </style>
 </head>
 
 <body>
 
-<h1>📦 Sistem Gudang</h1>
+<h2>Sistem Gudang</h2>
 
-<div class="card grid">
-  <div class="stat"><h3>Jenis Barang</h3><p id="dBarang">0</p></div>
-  <div class="stat"><h3>Total Stok</h3><p id="dStok">0</p></div>
-  <div class="stat"><h3>Masuk</h3><p id="dMasuk">0</p></div>
-  <div class="stat"><h3>Keluar</h3><p id="dKeluar">0</p></div>
+<!-- DASHBOARD -->
+<div class="dashboard">
+  <div class="box"><h3>Jenis Barang</h3><span id="jmlBarang">0</span></div>
+  <div class="box"><h3>Total Stok</h3><span id="totalStok">0</span></div>
+  <div class="box"><h3>Masuk</h3><span id="masuk">0</span></div>
+  <div class="box"><h3>Keluar</h3><span id="keluar">0</span></div>
 </div>
 
+<!-- TAMBAH BARANG -->
 <div class="card">
-<h2>Tambah Barang</h2>
-<div class="row">
-<input id="bNama" placeholder="Nama Barang">
-<input id="bStok" type="number" placeholder="Stok Awal">
+<h3>Tambah Barang</h3>
+<input id="namaBarang" placeholder="Nama Barang">
+<input id="stokAwal" type="number" placeholder="Stok Awal">
 <button onclick="tambahBarang()">Simpan</button>
 </div>
-</div>
 
+<!-- TRANSAKSI -->
 <div class="card">
-<h2>Transaksi</h2>
-<div class="row">
-<select id="tBarang"></select>
-<select id="tJenis">
-<option value="masuk">Masuk</option>
-<option value="keluar">Keluar</option>
+<h3>Transaksi</h3>
+<select id="pilihBarang"></select>
+<select id="jenis">
+  <option value="masuk">Masuk</option>
+  <option value="keluar">Keluar</option>
 </select>
-<input id="tJumlah" type="number" placeholder="Jumlah">
-<button onclick="prosesTransaksi()">Proses</button>
-</div>
+<input id="jumlah" type="number" placeholder="Jumlah">
+<button onclick="transaksi()">Proses</button>
 </div>
 
+<!-- RIWAYAT -->
 <div class="card">
-<h2>Riwayat Transaksi</h2>
+<h3>Riwayat Transaksi</h3>
 <table>
 <thead>
 <tr>
-<th>Tanggal</th><th>Barang</th><th>Jenis</th><th>Jumlah</th><th>Aksi</th>
+<th>Tanggal</th><th>Barang</th><th>Jenis</th><th>Jumlah</th>
 </tr>
 </thead>
 <tbody id="riwayat"></tbody>
 </table>
 </div>
 
-<script>
-// ================= FIREBASE =================
+<!-- FIREBASE -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getDatabase, ref, set, push, onValue, update } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+
 const firebaseConfig = {
-  apiKey: "API_KEY_KAMU",
-  authDomain: "PROJECT.firebaseapp.com",
-  databaseURL: "https://PROJECT.firebaseio.com",
-  projectId: "PROJECT"
+  apiKey: "ISI_API_KEY",
+  authDomain: "ISI_AUTH_DOMAIN",
+  databaseURL: "ISI_DATABASE_URL",
+  projectId: "ISI_PROJECT_ID",
 };
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
 
-// ================= TAMBAH BARANG (FIX) =================
-function tambahBarang(){
-  const namaRaw = bNama.value.trim();
-  const stok = parseInt(bStok.value);
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
-  if(!namaRaw || stok < 0){
-    alert("Nama / stok tidak valid");
-    return;
-  }
+// TAMBAH BARANG
+window.tambahBarang = function(){
+  const nama = document.getElementById("namaBarang").value;
+  const stok = Number(document.getElementById("stokAwal").value);
+  if(!nama || stok<=0) return alert("Isi data");
 
-  const key = namaRaw.toLowerCase().replace(/\s+/g,'_');
-
-  db.ref("barang/"+key).once("value",snap=>{
-    if(snap.exists()){
-      alert("Barang sudah ada");
-      return;
-    }
-
-    db.ref("barang/"+key).set({
-      nama: namaRaw,
-      stok: stok
-    });
-
-    bNama.value="";
-    bStok.value="";
+  set(ref(db,"barang/"+nama),{
+    nama:nama,
+    stok:stok
   });
+
+  document.getElementById("namaBarang").value="";
+  document.getElementById("stokAwal").value="";
 }
 
-// ================= LOAD BARANG =================
-db.ref("barang").on("value",snap=>{
-  tBarang.innerHTML="";
-  let totalStok=0,count=0;
-
-  snap.forEach(c=>{
+// LOAD BARANG
+onValue(ref(db,"barang"),snap=>{
+  let total=0,count=0;
+  let opt="";
+  snap.forEach(x=>{
     count++;
-    totalStok+=c.val().stok;
-    tBarang.innerHTML+=`
-      <option value="${c.key}">${c.val().nama}</option>`;
+    total+=x.val().stok;
+    opt+=<option value="${x.key}">${x.key}</option>;
   });
-
-  dBarang.innerText=count;
-  dStok.innerText=totalStok;
+  document.getElementById("jmlBarang").innerText=count;
+  document.getElementById("totalStok").innerText=total;
+  document.getElementById("pilihBarang").innerHTML=opt;
 });
 
-// ================= TRANSAKSI =================
-function prosesTransaksi(){
-  const id=tBarang.value;
-  const jenis=tJenis.value;
-  const jumlah=parseInt(tJumlah.value);
+// TRANSAKSI
+window.transaksi = function(){
+  const barang = pilihBarang.value;
+  const jenis = document.getElementById("jenis").value;
+  const jumlah = Number(document.getElementById("jumlah").value);
+  if(jumlah<=0) return alert("Jumlah salah");
 
-  if(!id || jumlah<=0){
-    alert("Data transaksi salah");
-    return;
-  }
+  const stokRef = ref(db,"barang/"+barang);
+  onValue(stokRef,s=>{
+    let stok = s.val().stok;
+    if(jenis=="keluar" && stok<jumlah) return alert("Stok kurang");
+    stok = jenis=="masuk"? stok+jumlah : stok-jumlah;
+    update(stokRef,{stok:stok});
+  },{once:true});
 
-  const ref=db.ref("barang/"+id);
-  ref.once("value",snap=>{
-    let stok=snap.val().stok;
-
-    if(jenis==="keluar" && stok<jumlah){
-      alert("Stok tidak cukup");
-      return;
-    }
-
-    stok = jenis==="masuk" ? stok+jumlah : stok-jumlah;
-    ref.update({stok});
-
-    db.ref("transaksi").push({
-      tanggal:new Date().toLocaleString(),
-      barang:snap.val().nama,
-      jenis,
-      jumlah
-    });
-
-    tJumlah.value="";
+  push(ref(db,"riwayat"),{
+    barang:barang,
+    jenis:jenis,
+    jumlah:jumlah,
+    tanggal:new Date().toLocaleString()
   });
+
+  document.getElementById("jumlah").value="";
 }
 
-// ================= RIWAYAT =================
-db.ref("transaksi").on("value",snap=>{
-  riwayat.innerHTML="";
-  let masuk=0,keluar=0;
-
-  snap.forEach(c=>{
-    const d=c.val();
-    if(d.jenis==="masuk") masuk+=d.jumlah;
-    else keluar+=d.jumlah;
-
-    riwayat.innerHTML =
-    `<tr>
-      <td>${d.tanggal}</td>
-      <td>${d.barang}</td>
-      <td class="${d.jenis}">${d.jenis}</td>
-      <td>${d.jumlah}</td>
-      <td><button onclick="hapus('${c.key}')">Hapus</button></td>
-    </tr>` + riwayat.innerHTML;
+// RIWAYAT
+onValue(ref(db,"riwayat"),snap=>{
+  let html="",m=0,k=0;
+  snap.forEach(x=>{
+    const d=x.val();
+    if(d.jenis=="masuk")m+=d.jumlah; else k+=d.jumlah;
+    html+=<tr><td>${d.tanggal}</td><td>${d.barang}</td><td>${d.jenis}</td><td>${d.jumlah}</td></tr>;
   });
-
-  dMasuk.innerText=masuk;
-  dKeluar.innerText=keluar;
+  document.getElementById("riwayat").innerHTML=html;
+  document.getElementById("masuk").innerText=m;
+  document.getElementById("keluar").innerText=k;
 });
-
-function hapus(id){
-  if(confirm("Hapus transaksi?")){
-    db.ref("transaksi/"+id).remove();
-  }
-}
 </script>
 
 </body>
