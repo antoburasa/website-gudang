@@ -2,67 +2,116 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Dashboard Gudang</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sistem Gudang</title>
 
 <style>
-body{font-family:Arial;margin:20px;background:#f4f6f8}
+body{
+  font-family:Arial;
+  background:#f4f6f8;
+  margin:0;
+  padding:20px;
+}
 h2{margin-top:0}
-.card{background:#fff;padding:15px;border-radius:8px;margin-bottom:15px}
-input,select,button{padding:8px;margin:5px 0;width:100%}
-button{cursor:pointer;border:none;border-radius:5px}
-.btn{background:#2563eb;color:#fff}
-.btn-danger{background:#dc2626;color:#fff}
-.btn-warning{background:#f59e0b;color:#fff}
-table{width:100%;border-collapse:collapse;margin-top:10px}
-th,td{border:1px solid #ddd;padding:6px;text-align:center}
-th{background:#2563eb;color:#fff}
-.flex{display:flex;gap:10px;flex-wrap:wrap}
-.small{font-size:13px;color:#555}
+
+.card{
+  background:#fff;
+  padding:15px;
+  border-radius:8px;
+  margin-bottom:15px;
+}
+
+.dashboard{
+  display:flex;
+  gap:10px;
+}
+.box{
+  flex:1;
+  background:#fff;
+  padding:15px;
+  border-radius:8px;
+  text-align:center;
+}
+.box h3{margin:0;font-size:14px;color:#666}
+.box span{font-size:22px;font-weight:bold}
+
+input,select,button{
+  width:100%;
+  padding:8px;
+  margin-top:6px;
+}
+button{
+  background:#0d6efd;
+  color:#fff;
+  border:none;
+  border-radius:5px;
+  cursor:pointer;
+}
+button:hover{opacity:0.9}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:10px;
+}
+th,td{
+  border:1px solid #ddd;
+  padding:6px;
+  text-align:center;
+}
+th{background:#f1f1f1}
 </style>
 </head>
 
 <body>
 
-<h2>📦 Dashboard Gudang</h2>
+<h2>Sistem Gudang</h2>
 
-<div class="flex">
-  <div class="card" style="flex:1">
-    <h3>Tambah Transaksi</h3>
-    <input id="barang" placeholder="Nama Barang">
-    <select id="jenis">
-      <option value="masuk">Barang Masuk</option>
-      <option value="keluar">Barang Keluar</option>
-    </select>
-    <input id="jumlah" type="number" placeholder="Jumlah">
-    <button class="btn" onclick="tambah()">Simpan</button>
+<!-- DASHBOARD -->
+<div class="dashboard">
+  <div class="box">
+    <h3>Total Stok</h3>
+    <span id="totalStok">0</span>
   </div>
-
-  <div class="card" style="flex:1">
-    <h3>Ringkasan</h3>
-    <p>Masuk: <b id="masuk">0</b></p>
-    <p>Keluar: <b id="keluar">0</b></p>
-    <input type="date" id="filter">
-    <button class="btn-warning" onclick="load()">Filter</button>
-    <button class="btn" onclick="exportExcel()">Export Excel</button>
-    <button class="btn" onclick="window.print()">Print</button>
+  <div class="box">
+    <h3>Masuk</h3>
+    <span id="masuk">0</span>
+  </div>
+  <div class="box">
+    <h3>Keluar</h3>
+    <span id="keluar">0</span>
   </div>
 </div>
 
+<!-- FORM -->
 <div class="card">
-<h3>Riwayat Transaksi</h3>
-<table>
-<thead>
-<tr>
-<th>Tanggal</th>
-<th>Barang</th>
-<th>Jenis</th>
-<th>Jumlah</th>
-<th>Aksi</th>
-</tr>
-</thead>
-<tbody id="riwayat"></tbody>
-</table>
+  <h3>Tambah Transaksi</h3>
+
+  <input id="barang" placeholder="Nama Barang">
+  
+  <select id="jenis">
+    <option value="masuk">Barang Masuk</option>
+    <option value="keluar">Barang Keluar</option>
+  </select>
+
+  <input id="jumlah" type="number" placeholder="Jumlah">
+
+  <button onclick="simpan()">Simpan</button>
+</div>
+
+<!-- RIWAYAT -->
+<div class="card">
+  <h3>Riwayat Transaksi</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Tanggal</th>
+        <th>Barang</th>
+        <th>Jenis</th>
+        <th>Jumlah</th>
+      </tr>
+    </thead>
+    <tbody id="riwayat"></tbody>
+  </table>
 </div>
 
 <!-- FIREBASE -->
@@ -70,103 +119,68 @@ th{background:#2563eb;color:#fff}
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <script>
-/* ================= FIREBASE CONFIG ================= */
 const firebaseConfig = {
-  apiKey: "API_KEY_KAMU",
-  authDomain: "PROJECT.firebaseapp.com",
-  databaseURL: "https://PROJECT.asia-southeast1.firebasedatabase.app",
-  projectId: "PROJECT",
-  storageBucket: "PROJECT.appspot.com",
-  messagingSenderId: "SENDER_ID",
-  appId: "APP_ID"
+  apiKey: "AIzaSyDbf4Nf0J0ELJ3B3R8Un8Ypgi0io-TB30",
+  authDomain: "gudang-sms-4c81c.firebaseapp.com",
+  databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "gudang-sms-4c81c",
+  storageBucket: "gudang-sms-4c81c.firebasestorage.app",
+  messagingSenderId: "598362736106",
+  appId: "1:598362736106:web:c0e2732d6ac7513931de93"
 };
-/* =================================================== */
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-/* TAMBAH DATA */
-function tambah(){
+/* SIMPAN DATA */
+function simpan(){
   const barang = document.getElementById("barang").value;
-  const jenis = document.getElementById("jenis").value;
-  const jumlah = Number(document.getElementById("jumlah").value);
+  const jenis  = document.getElementById("jenis").value;
+  const jumlah = parseInt(document.getElementById("jumlah").value);
 
-  if(!barang || !jumlah) return alert("Lengkapi data");
+  if(!barang || !jumlah){
+    alert("Lengkapi data!");
+    return;
+  }
 
-  firebase.database().ref("riwayat").push({
-    barang, jenis, jumlah,
-    tanggal: new Date().toISOString().slice(0,10)
+  db.ref("riwayat").push({
+    barang: barang,
+    jenis: jenis,
+    jumlah: jumlah,
+    tanggal: new Date().toLocaleString()
   });
 
   document.getElementById("barang").value="";
   document.getElementById("jumlah").value="";
 }
 
-/* LOAD DATA */
-function load(){
-  const filter = document.getElementById("filter").value;
-  firebase.database().ref("riwayat").on("value",snap=>{
-    let html="", masuk=0, keluar=0;
-    snap.forEach(x=>{
-      const d=x.val();
-      if(filter && d.tanggal!==filter) return;
+/* LOAD RIWAYAT + DASHBOARD */
+db.ref("riwayat").on("value", snap=>{
+  let html="";
+  let total=0, m=0, k=0;
 
-      if(d.jenis==="masuk") masuk+=d.jumlah;
-      else keluar+=d.jumlah;
+  snap.forEach(x=>{
+    const d=x.val();
+    if(d.jenis==="masuk"){
+      total+=d.jumlah; m+=d.jumlah;
+    }else{
+      total-=d.jumlah; k+=d.jumlah;
+    }
 
-      html+=`
+    html+=`
       <tr>
         <td>${d.tanggal}</td>
         <td>${d.barang}</td>
         <td>${d.jenis}</td>
         <td>${d.jumlah}</td>
-        <td>
-          <button class="btn-warning" onclick="edit('${x.key}')">Edit</button>
-          <button class="btn-danger" onclick="hapus('${x.key}')">Hapus</button>
-        </td>
       </tr>`;
-    });
-    document.getElementById("riwayat").innerHTML=html;
-    document.getElementById("masuk").innerText=masuk;
-    document.getElementById("keluar").innerText=keluar;
   });
-}
 
-/* EDIT */
-function edit(id){
-  const barang=prompt("Nama Barang:");
-  const jumlah=prompt("Jumlah:");
-  if(!barang||!jumlah) return;
-  firebase.database().ref("riwayat/"+id).update({
-    barang,
-    jumlah:Number(jumlah)
-  });
-}
-
-/* HAPUS */
-function hapus(id){
-  if(confirm("Hapus data?"))
-    firebase.database().ref("riwayat/"+id).remove();
-}
-
-/* EXPORT EXCEL */
-function exportExcel(){
-  let csv="Tanggal,Barang,Jenis,Jumlah\n";
-  document.querySelectorAll("#riwayat tr").forEach(r=>{
-    let row=[];
-    r.querySelectorAll("td").forEach((c,i)=>{
-      if(i<4) row.push(c.innerText);
-    });
-    csv+=row.join(",")+"\n";
-  });
-  const blob=new Blob([csv],{type:"text/csv"});
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);
-  a.download="riwayat-gudang.csv";
-  a.click();
-}
-
-load();
+  document.getElementById("riwayat").innerHTML=html;
+  document.getElementById("totalStok").innerText=total;
+  document.getElementById("masuk").innerText=m;
+  document.getElementById("keluar").innerText=k;
+});
 </script>
 
 </body>
