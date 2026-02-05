@@ -2,53 +2,41 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>SMS GUDANG - TEST KONEKSI</title>
+    <title>GUDANG SMS - DIAGNOSIS SYSTEM</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; background: #eee; }
-        .box { background: white; padding: 20px; border-radius: 10px; max-width: 400px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        input, select { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; }
-        button { width: 100%; padding: 10px; background: blue; color: white; border: none; cursor: pointer; font-weight: bold; }
-        button:hover { background: darkblue; }
-        table { width: 100%; border-collapse: collapse; background: white; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-        h3 { margin-top: 0; border-bottom: 2px solid blue; padding-bottom: 5px; }
+        body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; }
+        .container { max-width: 500px; margin: auto; background: #fff; padding: 20px; border: 2px solid #333; border-radius: 10px; }
+        input { width: 100%; padding: 10px; margin: 10px 0; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; background: #007bff; color: white; border: none; font-weight: bold; cursor: pointer; }
+        .log { margin-top: 20px; padding: 10px; background: #eee; font-size: 12px; border-radius: 5px; height: 100px; overflow-y: scroll; border: 1px solid #ccc; }
+        .status-ok { color: green; font-weight: bold; }
+        .status-fail { color: red; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <h2>Aplikasi SMS GUDANG</h2>
+<div class="container">
+    <h2>Daftar Barang Baru</h2>
+    <p>Status Koneksi: <span id="koneksi">Mengecek...</span></p>
+    
+    <input type="text" id="nama_barang" placeholder="Masukkan Nama Barang (Contoh: SEMEN)">
+    <button onclick="testDaftar()">DAFTARKAN SEKARANG</button>
 
-    <div class="box">
-        <h3>1. Master Barang</h3>
-        <p style="font-size: 12px; color: grey;">Daftarkan nama barang di sini dulu.</p>
-        <input type="text" id="m_nama" placeholder="Contoh: SEMEN">
-        <button onclick="simpanMaster()">DAFTARKAN KE SISTEM</button>
-    </div>
+    <div class="log" id="log_pesan">-- Laporan Sistem --<br></div>
+</div>
 
-    <div class="box">
-        <h3>2. Input Masuk / Keluar</h3>
-        <select id="t_barang"><option value="">-- PILIH BARANG --</option></select>
-        <select id="t_tipe">
-            <option value="IN">MASUK (+)</option>
-            <option value="OUT">KELUAR (-)</option>
-        </select>
-        <input type="number" id="t_qty" placeholder="Jumlah Qty">
-        <button onclick="simpanTransaksi()" style="background: green;">SIMPAN TRANSAKSI</button>
-    </div>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-    <div class="box" style="max-width: 600px;">
-        <h3>3. Laporan Stok</h3>
-        <table id="tblStok">
-            <thead><tr><th>Nama Barang</th><th>Stok Akhir</th></tr></thead>
-            <tbody></tbody>
-        </table>
-    </div>
+<script>
+    // Catat Laporan ke Kotak Abu-abu
+    function tulisLog(teks) {
+        const log = document.getElementById('log_pesan');
+        log.innerHTML += "> " + teks + "<br>";
+        log.scrollTop = log.scrollHeight;
+    }
 
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
-    <script>
-        // Konfigurasi Database Adri
+    try {
         const firebaseConfig = {
             apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
             authDomain: "gudang-sms-4c81c.firebaseapp.com",
@@ -58,88 +46,47 @@
             appId: "1:598362736106:web:c8e2732d6ac7613931de93"
         };
 
-        // Mulai Koneksi
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-
-        // 1. FUNGSI SIMPAN MASTER
-        function simpanMaster() {
-            const nama = document.getElementById('m_nama').value.toUpperCase().trim();
-            if(nama === "") {
-                alert("Ketik dulu nama barangnya!");
-                return;
+        
+        // Cek apakah internet bisa nyambung ke Firebase
+        db.ref(".info/connected").on("value", (snap) => {
+            if (snap.val() === true) {
+                document.getElementById('koneksi').innerHTML = "<span class='status-ok'>TERHUBUNG KE GOOGLE</span>";
+                tulisLog("Koneksi ke server Google Berhasil.");
+            } else {
+                document.getElementById('koneksi').innerHTML = "<span class='status-fail'>TERPUTUS</span>";
+                tulisLog("Mencoba menyambung ke internet...");
             }
-            
-            db.ref("master_barang").push({ nama: nama })
-            .then(() => {
-                alert("BERHASIL: " + nama + " sudah masuk sistem.");
-                document.getElementById('m_nama').value = "";
-            })
-            .catch((e) => {
-                alert("ERROR: " + e.message);
-            });
-        }
-
-        // 2. FUNGSI SIMPAN TRANSAKSI
-        function simpanTransaksi() {
-            const barang = document.getElementById('t_barang').value;
-            const tipe = document.getElementById('t_tipe').value;
-            const qty = parseInt(document.getElementById('t_qty').value);
-
-            if(!barang || isNaN(qty)) {
-                alert("Pilih barang dan isi jumlahnya!");
-                return;
-            }
-
-            db.ref("riwayat").push({
-                barang: barang,
-                tipe: tipe,
-                qty: qty,
-                tgl: new Date().toLocaleDateString()
-            })
-            .then(() => {
-                alert("BERHASIL: Transaksi disimpan.");
-                document.getElementById('t_qty').value = "";
-            })
-            .catch((e) => {
-                alert("ERROR: " + e.message);
-            });
-        }
-
-        // 3. MONITOR DATA (OTOMATIS JALAN)
-        db.ref().on("value", (snapshot) => {
-            const data = snapshot.val() || {};
-            const master = data.master_barang || {};
-            const riwayat = data.riwayat || {};
-
-            // Update Pilihan Barang (Dropdown)
-            let opsi = "<option value=''>-- PILIH BARANG --</option>";
-            for(let id in master) {
-                opsi += <option value="${master[id].nama}">${master[id].nama}</option>;
-            }
-            document.getElementById('t_barang').innerHTML = opsi;
-
-            // Hitung Stok
-            let stok = {};
-            for(let id in riwayat) {
-                const r = riwayat[id];
-                if(r.tipe === "IN") {
-                    stok[r.barang] = (stok[r.barang] || 0) + r.qty;
-                } else {
-                    stok[r.barang] = (stok[r.barang] || 0) - r.qty;
-                }
-            }
-
-            // Update Tabel Stok
-            let baris = "";
-            for(let b in stok) {
-                baris += <tr><td><b>${b}</b></td><td>${stok[b]}</td></tr>;
-            }
-            document.getElementById('tblStok').querySelector('tbody').innerHTML = baris;
-
-        }, (error) => {
-            console.log("Koneksi gagal: ", error);
         });
-    </script>
+
+        function testDaftar() {
+            const nama = document.getElementById('nama_barang').value.trim();
+            if (!nama) {
+                alert("Isi dulu nama barangnya!");
+                return;
+            }
+
+            tulisLog("Mencoba mendaftarkan: " + nama);
+
+            db.ref("master_barang").push({
+                nama: nama.toUpperCase(),
+                waktu: new Date().getTime()
+            })
+            .then(() => {
+                tulisLog("HASIL: Berhasil terdaftar di database!");
+                alert("SUKSES! " + nama + " sudah masuk sistem.");
+                document.getElementById('nama_barang').value = "";
+            })
+            .catch((error) => {
+                tulisLog("HASIL GAGAL: " + error.message);
+                alert("Gagal daftar. Error: " + error.message);
+            });
+        }
+    } catch (e) {
+        tulisLog("SISTEM RUSAK: " + e.message);
+    }
+</script>
+
 </body>
 </html>
