@@ -2,100 +2,79 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>SMS GUDANG v2.2 - FIX</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMS GUDANG v2.3 - FIX SYSTEM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: sans-serif; margin: 0; display: flex; height: 100vh; background: #f4f7f6; }
-        .sidebar { width: 240px; background: #1e40af; color: white; padding: 20px; }
-        .nav-item { padding: 12px; cursor: pointer; border-radius: 8px; margin-bottom: 5px; display: flex; align-items: center; gap: 10px; }
-        .nav-item.active { background: rgba(255,255,255,0.2); font-weight: bold; }
+        :root { --p: #1e40af; --r: #ef4444; --bg: #f8fafc; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        .sidebar { width: 220px; background: var(--p); color: white; display: flex; flex-direction: column; padding: 20px; flex-shrink: 0; }
+        .nav-item { padding: 12px; cursor: pointer; border-radius: 8px; margin-bottom: 8px; transition: 0.3s; display: flex; align-items: center; gap: 10px; }
+        .nav-item:hover { background: rgba(255,255,255,0.1); }
+        .nav-item.active { background: rgba(255,255,255,0.25); font-weight: bold; }
         .content { flex: 1; padding: 30px; overflow-y: auto; }
         .page { display: none; }
         .page.active { display: block; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        input, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; }
-        button { width: 100%; padding: 12px; background: #1e40af; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        table { width: 100%; border-collapse: collapse; background: white; }
-        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; font-size: 13px; }
-        th { background: #fafafa; color: #666; text-transform: uppercase; font-size: 11px; }
+        .card { background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
+        button { width: 100%; padding: 14px; background: var(--p); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; }
+        button:active { transform: scale(0.98); }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; }
+        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+        th { background: #f8fafc; color: #64748b; text-transform: uppercase; font-size: 11px; }
         .badge { padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; }
-        .badge-masuk { background: #dcfce7; color: #166534; }
-        .badge-keluar { background: #fee2e2; color: #991b1b; }
+        .badge-in { background: #dcfce7; color: #166534; }
+        .badge-out { background: #fee2e2; color: #991b1b; }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <h2 style="font-size: 18px;">SMS GUDANG</h2>
-        <div class="nav-item active" onclick="buka('dash', this)"><i class="fas fa-home"></i> Dashboard</div>
-        <div class="nav-item" onclick="buka('mast', this)"><i class="fas fa-box"></i> Master Barang</div>
-        <div class="nav-item" onclick="buka('trans', this)"><i class="fas fa-exchange-alt"></i> Masuk / Keluar</div>
-        <div class="nav-item" onclick="buka('riw', this)"><i class="fas fa-history"></i> Riwayat</div>
+        <h2 style="font-size: 18px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 15px;">SMS GUDANG</h2>
+        <div class="nav-item active" onclick="nav('dash', this)"><i class="fas fa-home"></i> Dashboard</div>
+        <div class="nav-item" onclick="nav('mast', this)"><i class="fas fa-box"></i> Master Barang</div>
+        <div class="nav-item" onclick="nav('trans', this)"><i class="fas fa-plus-minus"></i> Masuk / Keluar</div>
+        <div class="nav-item" onclick="nav('riw', this)"><i class="fas fa-history"></i> Riwayat</div>
     </div>
 
     <div class="content">
         <div id="pg-dash" class="page active">
-            <h1>Dashboard Stok</h1>
-            <div class="card">
-                <table id="tblStok">
-                    <thead><tr><th>Barang</th><th>Stok Fisik</th><th>Status</th></tr></thead>
-                    <tbody></tbody>
-                </table>
-            </div>
+            <h1>Posisi Stok</h1>
+            <div class="card"><table id="tblStok"><thead><tr><th>Nama Barang</th><th>Stok Fisik</th></tr></thead><tbody></tbody></table></div>
         </div>
 
         <div id="pg-mast" class="page">
             <h1>Master Barang</h1>
             <div class="card" style="max-width: 400px;">
                 <label>Nama Barang Baru</label>
-                <input type="text" id="m_nama" placeholder="Contoh: EMPTY CAN 603">
-                <button onclick="simpanMaster()">DAFTARKAN BARANG</button>
+                <input type="text" id="m_nama" placeholder="Masukkan nama barang...">
+                <button onclick="addMaster()">DAFTARKAN BARANG</button>
             </div>
             <div class="card">
-                <table id="tblMaster">
-                    <thead><tr><th>Nama Barang</th><th>Aksi</th></tr></thead>
-                    <tbody></tbody>
-                </table>
+                <table id="tblMaster"><thead><tr><th>Daftar Barang</th><th>Hapus</th></tr></thead><tbody></tbody></table>
             </div>
         </div>
 
         <div id="pg-trans" class="page">
-            <h1>Input Transaksi</h1>
+            <h1>Barang Masuk / Keluar</h1>
             <div class="card" style="max-width: 450px;">
                 <label>Pilih Barang</label>
                 <select id="t_barang"></select>
                 <label>Tipe</label>
                 <select id="t_tipe">
-                    <option value="MASUK">MASUK (+)</option>
-                    <option value="KELUAR">KELUAR (-)</option>
+                    <option value="IN">BARANG MASUK (+)</option>
+                    <option value="OUT">BARANG KELUAR (-)</option>
                 </select>
-                <label>Qty (Jumlah)</label>
-                <input type="number" id="t_qty">
-                <label>Supplier / Dept</label>
-                <input type="text" id="t_supp" placeholder="Contoh: UCC/STOCK">
-                <label>PO / PRS</label>
-                <input type="text" id="t_po" placeholder="-">
-                <button onclick="simpanTransaksi()">SIMPAN DATA</button>
+                <label>Jumlah (Qty)</label>
+                <input type="number" id="t_qty" placeholder="0">
+                <button onclick="addTrans()" id="btnSimpan">SIMPAN DATA</button>
             </div>
         </div>
 
         <div id="pg-riw" class="page">
-            <h1>Riwayat Transaksi</h1>
+            <h1>Jurnal Riwayat</h1>
             <div class="card">
-                <table id="tblRiwayat">
-                    <thead>
-                        <tr>
-                            <th>Tanggal</th>
-                            <th>Barang</th>
-                            <th>Tipe</th>
-                            <th>Qty</th>
-                            <th>Supplier/Dept</th>
-                            <th>PO/PRS</th>
-                            <th>Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+                <table id="tblRiwayat"><thead><tr><th>Tgl</th><th>Barang</th><th>Tipe</th><th>Qty</th><th>Hapus</th></tr></thead><tbody></tbody></table>
             </div>
         </div>
     </div>
@@ -104,7 +83,8 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
-        const config = {
+        // Konfigurasi Database Adri
+        const firebaseConfig = {
             apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
             authDomain: "gudang-sms-4c81c.firebaseapp.com",
             databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -112,80 +92,99 @@
             storageBucket: "gudang-sms-4c81c.appspot.com",
             appId: "1:598362736106:web:c8e2732d6ac7613931de93"
         };
-        firebase.initializeApp(config);
+        firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        function buka(id, el) {
+        function nav(id, el) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById('pg-' + id).classList.add('active');
             el.classList.add('active');
         }
 
-        function simpanMaster() {
+        // Fungsi Simpan Master
+        function addMaster() {
             const nama = document.getElementById('m_nama').value.toUpperCase().trim();
-            if(!nama) return alert("Isi nama barang!");
-            db.ref("master_barang").push({ nama }).then(() => {
-                alert("Tersimpan!");
+            if(!nama) { alert("Isi nama barang!"); return; }
+            
+            db.ref("master_barang").push({ nama: nama })
+            .then(() => {
+                alert("Berhasil!");
                 document.getElementById('m_nama').value = "";
-            });
+            })
+            .catch(err => alert("Gagal Simpan: " + err.message));
         }
 
-        function simpanTransaksi() {
+        // Fungsi Simpan Transaksi
+        function addTrans() {
             const barang = document.getElementById('t_barang').value;
             const tipe = document.getElementById('t_tipe').value;
             const qty = parseInt(document.getElementById('t_qty').value);
-            const supp = document.getElementById('t_supp').value.toUpperCase() || "-";
-            const po = document.getElementById('t_po').value.toUpperCase() || "-";
+            
+            if(!barang || isNaN(qty) || qty <= 0) { alert("Pilih barang & isi jumlah!"); return; }
 
-            if(!barang || isNaN(qty)) return alert("Isi barang & qty!");
+            const btn = document.getElementById('btnSimpan');
+            btn.disabled = true;
+            btn.innerText = "Sedang Menyimpan...";
 
             db.ref("riwayat").push({
-                barang, tipe, qty, supp, po,
-                tgl: new Date().toISOString().slice(0,10)
-            }).then(() => {
-                alert("Data Berhasil Masuk!");
+                barang: barang,
+                tipe: tipe,
+                qty: qty,
+                tgl: new Date().toLocaleDateString('id-ID')
+            })
+            .then(() => {
+                alert("Transaksi Berhasil!");
                 document.getElementById('t_qty').value = "";
+                btn.disabled = false;
+                btn.innerText = "SIMPAN DATA";
+            })
+            .catch(err => {
+                alert("Gagal: " + err.message);
+                btn.disabled = false;
+                btn.innerText = "SIMPAN DATA";
             });
         }
 
+        // Mendengarkan Perubahan Data secara Real-Time
         db.ref().on("value", (snap) => {
-            const d = snap.val() || {};
-            const master = d.master_barang || {};
-            const riwayat = d.riwayat || {};
+            const data = snap.val() || {};
+            const master = data.master_barang || {};
+            const riwayat = data.riwayat || {};
 
-            // Dropdown & Table Master
-            let hMst = "", hOpt = "<option value=''>-- PILIH --</option>";
+            // 1. Update Master & Dropdown
+            let hMst = "", hOpt = "<option value=''>-- PILIH BARANG --</option>";
             for(let id in master) {
-                hMst += <tr><td>${master[id].nama}</td><td><button onclick="db.ref('master_barang/${id}').remove()" style="background:none; border:none; color:red; cursor:pointer;"><i class="fas fa-trash"></i></button></td></tr>;
+                hMst += <tr><td>${master[id].nama}</td><td><button style="background:red; padding:5px;" onclick="if(confirm('Hapus?')) firebase.database().ref('master_barang/${id}').remove()">X</button></td></tr>;
                 hOpt += <option value="${master[id].nama}">${master[id].nama}</option>;
             }
             document.getElementById('tblMaster').querySelector('tbody').innerHTML = hMst;
             document.getElementById('t_barang').innerHTML = hOpt;
 
-            // Hitung Stok & Riwayat
-            let stok = {}; let hRiw = "";
-            Object.keys(riwayat).reverse().forEach(id => {
+            // 2. Hitung Stok & Riwayat
+            let stok = {};
+            let hRiw = "";
+            const keys = Object.keys(riwayat).reverse(); // Data terbaru di atas
+
+            keys.forEach(id => {
                 const r = riwayat[id];
-                const q = parseInt(r.qty);
-                if(r.tipe === "MASUK") stok[r.barang] = (stok[r.barang] || 0) + q;
-                else stok[r.barang] = (stok[r.barang] || 0) - q;
+                if(r.tipe === "IN") stok[r.barang] = (stok[r.barang] || 0) + r.qty;
+                else stok[r.barang] = (stok[r.barang] || 0) - r.qty;
 
                 hRiw += `<tr>
                     <td>${r.tgl}</td>
                     <td><b>${r.barang}</b></td>
-                    <td><span class="badge badge-${r.tipe.toLowerCase()}">${r.tipe}</span></td>
+                    <td><span class="badge ${r.tipe === 'IN' ? 'badge-in' : 'badge-out'}">${r.tipe}</span></td>
                     <td>${r.qty}</td>
-                    <td>${r.supp}</td>
-                    <td>${r.po}</td>
-                    <td><button onclick="db.ref('riwayat/${id}').remove()" style="background:none; border:none; color:red; cursor:pointer;"><i class="fas fa-trash"></i></button></td>
+                    <td><button style="background:none; color:red; border:none; cursor:pointer;" onclick="if(confirm('Hapus riwayat?')) firebase.database().ref('riwayat/${id}').remove()"><i class="fas fa-trash"></i></button></td>
                 </tr>`;
             });
             document.getElementById('tblRiwayat').querySelector('tbody').innerHTML = hRiw;
 
+            // 3. Update Dashboard
             let hDash = "";
             for(let b in stok) {
-                hDash += <tr><td><b>${b}</b></td><td>${stok[b]}</td><td>${stok[b] < 5 ? '🔴 LOW' : '🟢 OK'}</td></tr>;
+                hDash += <tr><td><b>${b}</b></td><td>${stok[b]} Unit</td></tr>;
             }
             document.getElementById('tblStok').querySelector('tbody').innerHTML = hDash;
         });
