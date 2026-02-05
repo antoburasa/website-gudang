@@ -2,133 +2,124 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SMS GUDANG v3.5 - FINAL</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>SMS GUDANG FINAL - ADRI</title>
     <style>
-        :root { --p: #1e40af; --s: #64748b; --bg: #f8fafc; }
-        body { font-family: sans-serif; background: var(--bg); margin: 0; display: flex; height: 100vh; overflow: hidden; }
-        .sidebar { width: 220px; background: #0f172a; color: white; padding: 20px; flex-shrink: 0; }
-        .nav-item { padding: 12px; cursor: pointer; border-radius: 8px; margin-bottom: 5px; display: flex; align-items: center; gap: 10px; color: #94a3b8; }
-        .nav-item:hover { background: rgba(255,255,255,0.05); color: white; }
-        .nav-item.active { background: var(--p); color: white; font-weight: bold; }
-        .main { flex: 1; padding: 30px; overflow-y: auto; }
+        body { font-family: Arial, sans-serif; margin: 0; display: flex; background: #f4f4f4; }
+        .sidebar { width: 200px; background: #000080; color: white; height: 100vh; padding: 20px; position: fixed; }
+        .main { margin-left: 240px; padding: 20px; width: 100%; }
+        .menu-btn { display: block; width: 100%; padding: 15px; margin-bottom: 10px; background: #3333cc; color: white; border: none; cursor: pointer; text-align: left; font-weight: bold; border-radius: 5px; }
+        .menu-btn:hover { background: #5555ff; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
         .page { display: none; }
-        .page.active { display: block; }
-        .card { background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background: var(--p); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        table { width: 100%; border-collapse: collapse; background: white; }
-        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
-        th { background: #f8fafc; color: #64748b; font-size: 11px; text-transform: uppercase; }
-        .badge { padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; }
-        .bg-in { background: #dcfce7; color: #166534; }
-        .bg-out { background: #fee2e2; color: #991b1b; }
+        .active { display: block; }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #ccc; border-radius: 5px; font-size: 16px; }
+        .btn-aksi { width: 100%; padding: 15px; background: #008000; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 18px; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background: #eee; }
+        .merah { color: red; font-weight: bold; }
+        .hijau { color: green; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div class="sidebar">
-        <h2 style="color: #38bdf8; font-size: 18px;">SMS GUDANG</h2>
-        <div class="nav-item active" onclick="nav('dash', this)"><i class="fas fa-home"></i> Dashboard</div>
-        <div class="nav-item" onclick="nav('mast', this)"><i class="fas fa-box"></i> Master Barang</div>
-        <div class="nav-item" onclick="nav('trans', this)"><i class="fas fa-exchange"></i> Masuk / Keluar</div>
-        <div class="nav-item" onclick="nav('riw', this)"><i class="fas fa-history"></i> Riwayat</div>
+<div class="sidebar">
+    <h2>GUDANG</h2>
+    <button class="menu-btn" onclick="nav('hal-dash')">DASHBOARD</button>
+    <button class="menu-btn" onclick="nav('hal-mast')">MASTER BARANG</button>
+    <button class="menu-btn" onclick="nav('hal-trans')">MASUK / KELUAR</button>
+</div>
+
+<div class="main">
+    <div id="hal-dash" class="page active">
+        <h1>Stok Saat Ini</h1>
+        <div class="card"><table id="tabelStok"><thead><tr><th>Barang</th><th>Stok</th></tr></thead><tbody></tbody></table></div>
     </div>
 
-    <div class="main">
-        <div id="pg-dash" class="page active">
-            <h1>Posisi Stok</h1>
-            <div class="card">
-                <table id="tblStok">
-                    <thead><tr><th>Barang</th><th>Jumlah Stok</th><th>Status</th></tr></thead>
-                    <tbody></tbody>
-                </table>
-            </div>
+    <div id="hal-mast" class="page">
+        <h1>Tambah Barang Baru</h1>
+        <div class="card" style="max-width: 400px;">
+            <input type="text" id="inp_master" placeholder="Ketik Nama Barang...">
+            <button class="btn-aksi" onclick="simpanMaster()">DAFTARKAN</button>
         </div>
-
-        <div id="pg-mast" class="page">
-            <h1>Master Barang</h1>
-            <div class="card" style="max-width: 400px;">
-                <label>Nama Barang Baru</label>
-                <input type="text" id="m_nama" placeholder="Contoh: SEMEN">
-                <button onclick="addMaster()">DAFTARKAN</button>
-            </div>
-            <div class="card">
-                <table id="tblMaster">
-                    <thead><tr><th>Nama Barang</th><th>Hapus</th></tr></thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-        </div>
-
-        <div id="pg-trans" class="page">
-            <h1>Masuk / Keluar</h1>
-            <div class="card" style="max-width: 400px;">
-                <label>Pilih Barang</label>
-                <select id="t_barang"></select>
-                <label>Tipe</label>
-                <select id="t_tipe">
-                    <option value="IN">MASUK (+)</option>
-                    <option value="OUT">KELUAR (-)</option>
-                </select>
-                <label>Jumlah (Qty)</label>
-                <input type="number" id="t_qty" placeholder="0">
-                <button onclick="addTrans()" id="btnSimpan">SIMPAN DATA</button>
-            </div>
-        </div>
-
-        <div id="pg-riw" class="page">
-            <h1>Laporan Riwayat</h1>
-            <div class="card">
-                <table id="tblRiwayat">
-                    <thead><tr><th>Tanggal</th><th>Barang</th><th>Tipe</th><th>Qty</th><th>Aksi</th></tr></thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-        </div>
+        <div class="card"><table id="tabelMaster"><thead><tr><th>Nama Barang</th><th>Aksi</th></tr></thead><tbody></tbody></table></div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <div id="hal-trans" class="page">
+        <h1>Barang Masuk / Keluar</h1>
+        <div class="card" style="max-width: 400px;">
+            <label>Pilih Barang:</label>
+            <select id="sel_barang"></select>
+            <label>Tipe:</label>
+            <select id="sel_tipe"><option value="IN">MASUK (+)</option><option value="OUT">KELUAR (-)</option></select>
+            <label>Jumlah:</label>
+            <input type="number" id="inp_qty" placeholder="0">
+            <button class="btn-aksi" style="background: #000080;" onclick="simpanTransaksi()">SIMPAN DATA</button>
+        </div>
+    </div>
+</div>
 
-    <script>
-        const config = {
-            apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
-            authDomain: "gudang-sms-4c81c.firebaseapp.com",
-            databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "gudang-sms-4c81c",
-            storageBucket: "gudang-sms-4c81c.appspot.com",
-            appId: "1:598362736106:web:c8e2732d6ac7613931de93"
-        };
-        firebase.initializeApp(config);
-        const db = firebase.database();
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-        function nav(id, el) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById('pg-' + id).classList.add('active');
-            el.classList.add('active');
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
+        authDomain: "gudang-sms-4c81c.firebaseapp.com",
+        databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "gudang-sms-4c81c",
+        storageBucket: "gudang-sms-4c81c.appspot.com",
+        appId: "1:598362736106:web:c8e2732d6ac7613931de93"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    function nav(id) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
+
+    function simpanMaster() {
+        const nama = document.getElementById('inp_master').value.toUpperCase().trim();
+        if(!nama) return alert("Ketik nama barang!");
+        
+        db.ref("master_barang").push({ nama: nama })
+        .then(() => {
+            alert("Berhasil Daftar!");
+            document.getElementById('inp_master').value = "";
+        }).catch(e => alert("Error: " + e.message));
+    }
+
+    function simpanTransaksi() {
+        const barang = document.getElementById('sel_barang').value;
+        const tipe = document.getElementById('sel_tipe').value;
+        const qty = parseInt(document.getElementById('inp_qty').value);
+        if(!barang || isNaN(qty)) return alert("Isi data dengan lengkap!");
+
+        db.ref("riwayat").push({
+            barang: barang, tipe: tipe, qty: qty,
+            tgl: new Date().toLocaleDateString()
+        }).then(() => {
+            alert("Data Masuk!");
+            document.getElementById('inp_qty').value = "";
+        }).catch(e => alert("Error: " + e.message));
+    }
+
+    db.ref().on("value", (snap) => {
+        const data = snap.val() || {};
+        const master = data.master_barang || {};
+        const riwayat = data.riwayat || {};
+
+        let hMst = "", hOpt = "<option value=''>-- PILIH --</option>";
+        for(let id in master) {
+            hMst += <tr><td>${master[id].nama}</td><td><button onclick="db.ref('master_barang/${id}').remove()">Hapus</button></td></tr>;
+            hOpt += <option value="${master[id].nama}">${master[id].nama}</option>;
         }
+        document.getElementById('tabelMaster').querySelector('tbody').innerHTML = hMst;
+        document.getElementById('sel_barang').innerHTML = hOpt;
 
-        function addMaster() {
-            const nama = document.getElementById('m_nama').value.toUpperCase().trim();
-            if(!nama) return alert("Isi nama barang!");
-            db.ref("master_barang").push({ nama }).then(() => {
-                alert("Tersimpan!");
-                document.getElementById('m_nama').value = "";
-            });
-        }
-
-        function addTrans() {
-            const barang = document.getElementById('t_barang').value;
-            const tipe = document.getElementById('t_tipe').value;
-            const qty = parseInt(document.getElementById('t_qty').value);
-            if(!barang || isNaN(qty)) return alert("Isi data!");
-
-            db.ref("riwayat").push({
-                barang, tipe, qty,
-                tgl: new Date().toLocaleDateString('id-ID')
-            }).then(() => {
-                alert("Sukses!");
-                document.getElementById('t_
+        let stok = {};
+        for(let id in riwayat) {
+            const r = riwayat[id];
+            if(r.tipe === "IN") stok[r.barang
