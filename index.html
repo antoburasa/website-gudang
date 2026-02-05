@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+[17.34, 5/2/2026] Anthoe Arzachel: <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
@@ -9,46 +9,77 @@
         .box { background: white; padding: 20px; border-radius: 10px; max-width: 600px; margin: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-top: 5px solid #1a237e; }
         h2 { color: #1a237e; font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-top: 20px; }
         input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background: #1a237e; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-bottom: 5px; }
+        button { width: 100%; padding: 12px; background: #1a237e; colo…
+[17.36, 5/2/2026] Anthoe Arzachel: <!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMS GUDANG PRO - ADRI</title>
+    <style>
+        :root { --biru: #1a237e; --hijau: #2e7d32; --merah: #d32f2f; }
+        body { font-family: sans-serif; background: #f4f7f6; margin: 0; padding: 15px; }
+        .wadah { background: white; max-width: 600px; margin: auto; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-top: 6px solid var(--biru); }
+        h1 { text-align: center; color: var(--biru); margin-top: 0; font-size: 22px; }
+        h2 { font-size: 15px; color: var(--biru); border-bottom: 2px solid #eee; padding-bottom: 5px; margin-top: 20px; text-transform: uppercase; }
+        
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
+        button { width: 100%; padding: 12px; background: var(--biru); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; margin-top: 5px; }
+        button:active { transform: scale(0.98); }
+
         table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
         th, td { border: 1px solid #eee; padding: 10px; text-align: left; }
-        th { background: #f8f9fa; }
-        .kritis { background: #ffebee; color: #c62828; font-weight: bold; }
-        .filter { background: #e3f2fd; padding: 10px; border-radius: 6px; margin-bottom: 10px; }
+        th { background: #f8f9fa; color: #666; }
+
+        /* Status Stok Kritis */
+        .limit-merah { background-color: #ffebee; color: var(--merah); font-weight: bold; }
+        .status-beli { color: var(--merah); font-weight: 800; font-size: 11px; }
+        
+        .filter-area { background: #e3f2fd; padding: 10px; border-radius: 8px; margin-top: 15px; }
+        .badge { padding: 3px 6px; border-radius: 4px; color: white; font-size: 10px; font-weight: bold; }
+        .bg-in { background: var(--hijau); }
+        .bg-out { background: var(--merah); }
+        .btn-del { background: #ff5252; padding: 4px 8px; width: auto; font-size: 10px; }
     </style>
 </head>
 <body>
 
-<div class="box">
-    <h1 style="text-align:center; color:#1a237e; margin:0;">SMS GUDANG</h1>
+<div class="wadah">
+    <h1>SMS GUDANG PRO</h1>
     
-    <h2>1. DAFTAR BARANG</h2>
-    <input type="text" id="m" placeholder="Nama Barang Baru">
-    <input type="number" id="min" placeholder="Stok Minimum">
-    <button onclick="addM()">+ TAMBAH BARANG</button>
+    <h2>1. Tambah Master Barang</h2>
+    <input type="text" id="inp_nama" placeholder="Nama Barang (Contoh: SEMEN)">
+    <input type="number" id="inp_min" placeholder="Stok Minimum (Warning)">
+    <button onclick="simpanBarang()">+ DAFTARKAN BARANG</button>
 
-    <h2>2. TRANSAKSI</h2>
-    <select id="p_list"></select>
-    <select id="tipe">
-        <option value="IN">MASUK (+)</option>
-        <option value="OUT">KELUAR (-)</option>
-    </select>
-    <input type="number" id="qty" placeholder="Jumlah">
-    <button onclick="addT()" style="background:#2e7d32">💾 SIMPAN</button>
+    <h2>2. Input Transaksi</h2>
+    <select id="sel_barang"><option value="">-- Pilih Barang --</option></select>
+    <div style="display:flex; gap:10px;">
+        <select id="sel_tipe" style="flex:1;">
+            <option value="IN">MASUK (+)</option>
+            <option value="OUT">KELUAR (-)</option>
+        </select>
+        <input type="number" id="inp_qty" placeholder="Jumlah" style="flex:1;">
+    </div>
+    <button onclick="simpanTransaksi()" style="background:var(--hijau)">💾 SIMPAN TRANSAKSI</button>
 
-    <h2>3. LAPORAN STOK</h2>
+    <h2>3. Laporan Stok Realtime</h2>
     <table>
-        <thead><tr><th>Barang</th><th>Min</th><th>Sisa</th><th>Status</th></tr></thead>
-        <tbody id="b_stok"></tbody>
+        <thead>
+            <tr><th>Barang</th><th>Min</th><th>Stok</th><th>Ket</th></tr>
+        </thead>
+        <tbody id="body_stok"></tbody>
     </table>
 
-    <h2>4. RIWAYAT</h2>
-    <div class="filter">
-        <input type="text" id="cari" onkeyup="render()" placeholder="Cari barang...">
+    <h2>4. Riwayat & Filter</h2>
+    <div class="filter-area">
+        <input type="text" id="cari" onkeyup="renderData()" placeholder="Cari nama barang...">
     </div>
-    <table id="tbl_r">
-        <thead><tr><th>Waktu</th><th>Barang</th><th>Qty</th><th>Aksi</th></tr></thead>
-        <tbody id="b_riw"></tbody>
+    <table>
+        <thead>
+            <tr><th>Waktu</th><th>Barang</th><th>Qty</th><th>Hapus</th></tr>
+        </thead>
+        <tbody id="body_riwayat"></tbody>
     </table>
 </div>
 
@@ -56,79 +87,54 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
-    const cfg = {
+    // Konfigurasi Firebase Adri
+    const firebaseConfig = {
         apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
         authDomain: "gudang-sms-4c81c.firebaseapp.com",
         databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
         projectId: "gudang-sms-4c81c",
         appId: "1:598362736106:web:c8e2732d6ac7613931de93"
     };
-    firebase.initializeApp(cfg);
+    firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    function addM() {
-        let n = document.getElementById('m').value.toUpperCase();
-        let l = parseInt(document.getElementById('min').value) || 0;
-        if(!n) return alert("Isi nama!");
-        db.ref("master_barang").push({ nama: n, limit: l }).then(() => {
-            document.getElementById('m').value = "";
-            document.getElementById('min').value = "";
+    // Fungsi Tambah Barang ke Master
+    function simpanBarang() {
+        const nama = document.getElementById('inp_nama').value.toUpperCase().trim();
+        const min = parseInt(document.getElementById('inp_min').value) || 0;
+        if (!nama) return alert("Isi nama barang!");
+        db.ref("master_barang").push({ nama: nama, limit: min });
+        document.getElementById('inp_nama').value = "";
+        document.getElementById('inp_min').value = "";
+    }
+
+    // Fungsi Simpan Transaksi
+    function simpanTransaksi() {
+        const barang = document.getElementById('sel_barang').value;
+        const tipe = document.getElementById('sel_tipe').value;
+        const qty = parseInt(document.getElementById('inp_qty').value);
+        const tgl = new Date().toLocaleString('id-ID', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'});
+        
+        if (!barang || !qty) return alert("Pilih barang & isi jumlah!");
+        db.ref("riwayat").push({
+            barang: barang,
+            tipe: tipe,
+            qty: qty,
+            waktu: tgl,
+            ts: Date.now()
+        }).then(() => {
+            document.getElementById('inp_qty').value = "";
+            alert("Berhasil!");
         });
     }
 
-    function addT() {
-        let b = document.getElementById('p_list').value;
-        let t = document.getElementById('tipe').value;
-        let q = parseInt(document.getElementById('qty').value);
-        let w = new Date().toLocaleString('id-ID', {hour:'2-digit', minute:'2-digit', day:'numeric', month:'short'});
-        if(!b || !q) return alert("Lengkapi!");
-        db.ref("riwayat").push({ barang: b, tipe: t, qty: q, waktu: w, ts: Date.now() });
-        document.getElementById('qty').value = "";
-    }
-
+    // Ambil Data Realtime
     db.ref().on("value", snap => {
-        window.raw = snap.val() || {};
-        render();
+        window.fullData = snap.val() || {};
+        renderData();
     });
 
-    function render() {
-        let d = window.raw;
-        let mst = d.master_barang || {};
-        let riw = d.riwayat || {};
-        let cari = document.getElementById('cari').value.toUpperCase();
-
-        let opt = "<option value=''>-- PILIH --</option>";
-        let limits = {};
-        for(let id in mst) {
-            opt += <option value="${mst[id].nama}">${mst[id].nama}</option>;
-            limits[mst[id].nama] = mst[id].limit || 0;
-        }
-        document.getElementById('p_list').innerHTML = opt;
-
-        let stok = {};
-        let h_riw = "";
-        let urut = Object.keys(riw).sort((a,b) => riw[b].ts - riw[a].ts);
-        
-        urut.forEach(id => {
-            let r = riw[id];
-            if(r.tipe === "IN") stok[r.barang] = (stok[r.barang] || 0) + r.qty;
-            else stok[r.barang] = (stok[r.barang] || 0) - r.qty;
-
-            if(r.barang.includes(cari)) {
-                h_riw += <tr><td>${r.waktu}</td><td>${r.barang}</td><td>${r.tipe}:${r.qty}</td><td><button style="width:auto;padding:2px 5px;background:red" onclick="db.ref('riwayat/${id}').remove()">X</button></td></tr>;
-            }
-        });
-        document.getElementById('b_riw').innerHTML = h_riw;
-
-        let h_stok = "";
-        for(let n in limits) {
-            let s = stok[n] || 0;
-            let m = limits[n];
-            let k = s <= m ? "kritis" : "";
-            h_stok += <tr class="${k}"><td>${n}</td><td>${m}</td><td>${s}</td><td>${s<=m?'BELI':'OK'}</td></tr>;
-        }
-        document.getElementById('b_stok').innerHTML = h_stok;
-    }
-</script>
-</body>
-</html>
+    function renderData() {
+        const data = window.fullData;
+        const master = data.master_barang || {};
+        const riwayat = data.
