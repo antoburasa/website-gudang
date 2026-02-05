@@ -1,138 +1,129 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GUDANG ADRI FIX</title>
+    <title>SMS GUDANG ADRI</title>
     <style>
-        body { font-family: sans-serif; background: #eef2f5; padding: 10px; margin: 0; }
-        .container { background: white; max-width: 500px; margin: 20px auto; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-top: 6px solid #1a237e; }
-        h2 { font-size: 14px; color: #1a237e; text-transform: uppercase; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-top: 20px; }
-        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
-        button { width: 100%; padding: 12px; background: #1a237e; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 5px; }
-        button:active { background: #000; }
+        body { font-family: sans-serif; background: #f0f2f5; padding: 15px; }
+        .kotak { background: #fff; max-width: 500px; margin: auto; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-top: 6px solid #1a237e; }
+        h2 { font-size: 14px; color: #1a237e; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #1a237e; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
-        th, td { border: 1px solid #eee; padding: 10px; text-align: left; }
-        .merah { background: #ffebee; color: #c62828; font-weight: bold; }
-        .filter-box { background: #fff9c4; padding: 10px; border-radius: 8px; margin-top: 15px; }
+        th, td { border: 1px solid #eee; padding: 8px; text-align: left; }
+        .bg-merah { background: #ffebee; color: #c62828; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1 style="text-align:center; color:#1a237e; margin:0; font-size:24px;">SMS GUDANG</h1>
-    
-    <h2>1. Tambah Barang</h2>
-    <input type="text" id="nama_brg" placeholder="Nama Barang">
-    <input type="number" id="stok_min" placeholder="Stok Minimal">
-    <button onclick="simpanMaster()">TAMBAH KE DAFTAR</button>
+<div class="kotak">
+    <h1 style="text-align:center; color:#1a237e;">SMS GUDANG</h1>
 
-    <h2>2. Transaksi</h2>
-    <select id="pilih_brg"></select>
-    <select id="tipe_trans">
+    <h2>1. INPUT BARANG</h2>
+    <input type="text" id="n_brg" placeholder="Nama Barang">
+    <input type="number" id="l_brg" placeholder="Stok Minimum">
+    <button onclick="aksiMaster()">TAMBAH KE MASTER</button>
+
+    <h2>2. TRANSAKSI</h2>
+    <select id="s_brg"></select>
+    <select id="s_tipe">
         <option value="IN">MASUK (+)</option>
         <option value="OUT">KELUAR (-)</option>
     </select>
-    <input type="number" id="qty_trans" placeholder="Jumlah">
-    <button onclick="simpanTransaksi()" style="background:#2e7d32">SIMPAN TRANSAKSI</button>
+    <input type="number" id="q_brg" placeholder="Jumlah">
+    <button onclick="aksiTrans()" style="background:#2e7d32;">SIMPAN TRANSAKSI</button>
 
-    <h2>3. Stok Realtime</h2>
-    <table>
-        <thead><tr><th>Barang</th><th>Min</th><th>Stok</th><th>Ket</th></tr></thead>
-        <tbody id="tabel_stok"></tbody>
+    <h2>3. STOK & RIWAYAT</h2>
+    <table id="t_stok">
+        <thead><tr><th>Barang</th><th>Min</th><th>Sisa</th><th>Status</th></tr></thead>
+        <tbody></tbody>
     </table>
-
-    <h2>4. Riwayat</h2>
-    <div class="filter-box">
-        <input type="text" id="cari" onkeyup="tampilData()" placeholder="Cari barang...">
-    </div>
-    <table>
+    
+    <input type="text" id="cari" onkeyup="render()" placeholder="Cari riwayat..." style="margin-top:20px;">
+    <table id="t_riw">
         <thead><tr><th>Waktu</th><th>Barang</th><th>Qty</th><th>Aksi</th></tr></thead>
-        <tbody id="tabel_riwayat"></tbody>
+        <tbody></tbody>
     </table>
 </div>
- 
+
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
-    // Konfigurasi Database Adri
-    const firebaseConfig = {
+    // Koneksi Database Adri
+    var config = {
         apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
         authDomain: "gudang-sms-4c81c.firebaseapp.com",
         databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
         projectId: "gudang-sms-4c81c",
         appId: "1:598362736106:web:c8e2732d6ac7613931de93"
     };
-    firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
+    firebase.initializeApp(config);
+    var database = firebase.database();
 
-    // Fungsi Tambah Master
-    function simpanMaster() {
-        const n = document.getElementById('nama_brg').value.toUpperCase().trim();
-        const m = parseInt(document.getElementById('stok_min').value) || 0;
-        if(!n) return alert("Isi nama barang!");
-        database.ref("master_barang").push({ nama: n, limit: m });
-        document.getElementById('nama_brg').value = "";
-        document.getElementById('stok_min').value = "";
+    function aksiMaster() {
+        var n = document.getElementById('n_brg').value.toUpperCase().trim();
+        var l = parseInt(document.getElementById('l_brg').value) || 0;
+        if(n === "") return alert("Nama kosong!");
+        database.ref("master_barang").push({ nama: n, limit: l });
+        document.getElementById('n_brg').value = "";
+        document.getElementById('l_brg').value = "";
     }
 
-    // Fungsi Transaksi
-    function simpanTransaksi() {
-        const b = document.getElementById('pilih_brg').value;
-        const t = document.getElementById('tipe_trans').value;
-        const q = parseInt(document.getElementById('qty_trans').value);
-        const w = new Date().toLocaleString('id-ID', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'});
-        if(!b || !q) return alert("Lengkapi data!");
+    function aksiTrans() {
+        var b = document.getElementById('s_brg').value;
+        var t = document.getElementById('s_tipe').value;
+        var q = parseInt(document.getElementById('q_brg').value);
+        var w = new Date().toLocaleString('id-ID', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'});
+        if(!b || isNaN(q)) return alert("Data tidak lengkap!");
         database.ref("riwayat").push({ barang: b, tipe: t, qty: q, waktu: w, ts: Date.now() });
-        document.getElementById('qty_trans').value = "";
+        document.getElementById('q_brg').value = "";
     }
 
-    // Ambil Data
-    database.ref().on("value", (snapshot) => {
-        window.semuaData = snapshot.val() || {};
-        tampilData();
+    database.ref().on("value", function(snap) {
+        window.dataCache = snap.val() || {};
+        render();
     });
 
-    function tampilData() {
-        const data = window.semuaData;
-        const master = data.master_barang || {};
-        const riwayat = data.riwayat || {};
-        const filter = document.getElementById('cari').value.toUpperCase();
+    function render() {
+        var d = window.dataCache;
+        var mst = d.master_barang || {};
+        var riw = d.riwayat || {};
+        var cari = document.getElementById('cari').value.toUpperCase();
 
-        let listOpt = "<option value=''>-- Pilih Barang --</option>";
-        let limits = {};
-        for(let id in master) {
-            listOpt += <option value="${master[id].nama}">${master[id].nama}</option>;
-            limits[master[id].nama] = master[id].limit || 0;
+        var opt = "<option value=''>-- Pilih Barang --</option>";
+        var lim = {};
+        for(var id in mst) {
+            opt += "<option value='"+mst[id].nama+"'>"+mst[id].nama+"</option>";
+            lim[mst[id].nama] = mst[id].limit || 0;
         }
-        document.getElementById('pilih_brg').innerHTML = listOpt;
+        document.getElementById('s_brg').innerHTML = opt;
 
-        let stokHitung = {};
-        let htmlRiw = "";
-        const urutRiwayat = Object.keys(riwayat).sort((a,b) => riwayat[b].ts - riwayat[a].ts);
+        var stok = {};
+        var h_riw = "";
+        var urut = Object.keys(riw).sort(function(a,b){ return riw[b].ts - riw[a].ts });
 
-        urutRiwayat.forEach(id => {
-            const r = riwayat[id];
-            if(r.tipe === "IN") stokHitung[r.barang] = (stokHitung[r.barang] || 0) + r.qty;
-            else stokHitung[r.barang] = (stokHitung[r.barang] || 0) - r.qty;
+        urut.forEach(function(id) {
+            var r = riw[id];
+            if(r.tipe === "IN") stok[r.barang] = (stok[r.barang] || 0) + r.qty;
+            else stok[r.barang] = (stok[r.barang] || 0) - r.qty;
 
-            if(r.barang.includes(filter)) {
-                htmlRiw += <tr><td>${r.waktu}</td><td>${r.barang}</td><td>${r.tipe}:${r.qty}</td><td><button style="width:auto;padding:2px 5px;background:red;margin:0" onclick="database.ref('riwayat/${id}').remove()">X</button></td></tr>;
+            if(r.barang.includes(cari)) {
+                h_riw += "<tr><td>"+r.waktu+"</td><td>"+r.barang+"</td><td>"+r.tipe+":"+r.qty+"</td><td><button style='padding:2px; background:red; font-size:10px;' onclick='database.ref(\"riwayat/"+id+"\").remove()'>X</button></td></tr>";
             }
         });
-        document.getElementById('tabel_riwayat').innerHTML = htmlRiw;
+        document.getElementById('t_riw').querySelector('tbody').innerHTML = h_riw;
 
-        let htmlStok = "";
-        for(let nama in limits) {
-            const s = stokHitung[nama] || 0;
-            const m = limits[nama];
-            const isKritis = s <= m;
-            htmlStok += <tr class="${isKritis ? 'merah' : ''}"><td>${nama}</td><td>${m}</td><td>${s}</td><td>${isKritis?'BELI':'OK'}</td></tr>;
+        var h_stok = "";
+        for(var n in lim) {
+            var s = stok[n] || 0;
+            var m = lim[n];
+            var k = s <= m ? "bg-merah" : "";
+            h_stok += "<tr class='"+k+"'><td>"+n+"</td><td>"+m+"</td><td>"+s+"</td><td>"+(s<=m?'BELI':'OK')+"</td></tr>";
         }
-        document.getElementById('tabel_stok').innerHTML = htmlStok;
+        document.getElementById('t_stok').querySelector('tbody').innerHTML = h_stok;
     }
 </script>
 </body>
 </html>
-
