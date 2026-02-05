@@ -3,165 +3,163 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Gudang SMS v1.2 - Fix Data Muncul</title>
+    <title>GUDANG SMS - KONEKSI STABIL</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f4f7fa; margin: 0; padding: 20px; color: #333; }
-        h2 { text-align: center; color: #1e3a8a; font-weight: 800; text-transform: uppercase; }
-        .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-        .box { padding: 20px; border-radius: 12px; color: white; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f0f4f8; padding: 20px; margin: 0; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; max-width: 500px; margin-left: auto; margin-right: auto; }
+        h2 { text-align: center; color: #1e3a8a; }
+        .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .box { padding: 15px; border-radius: 10px; color: white; text-align: center; font-weight: bold; }
         .box-blue { background: #007bff; }
         .box-cyan { background: #17a2b8; }
-        .box span { font-size: 32px; font-weight: 800; display: block; margin-top: 5px; }
-        .card { background: white; padding: 25px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
-        h3 { font-size: 16px; margin: 0 0 15px 0; color: #1e3a8a; font-weight: 800; border-left: 4px solid #007bff; padding-left: 10px; }
-        input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #cbd5e1; box-sizing: border-box; }
-        button { background: #007bff; color: white; border: none; font-weight: bold; cursor: pointer; text-transform: uppercase; }
-        button:disabled { background: #ccc; }
-        .btn-danger { background: #dc3545; width: auto; padding: 5px 10px; font-size: 11px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
-        th, td { padding: 12px; text-align: center; border-bottom: 1px solid #f1f5f9; }
+        input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; }
+        button { background: #1e3a8a; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 16px; }
+        button:disabled { background: #999; }
         .stok-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee; font-weight: bold; }
-        @media print { .no-print { display: none !important; } }
+        .riwayat-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+        .riwayat-table th, .riwayat-table td { border: 1px solid #ddd; padding: 8px; text-align: center; }
     </style>
 </head>
 <body>
 
-    <h2>📦 Sistem Gudang v1.2</h2>
-
-    <div class="dashboard">
-        <div class="box box-blue">Total Stok Fisik<br><span id="totalStok">0</span></div>
-        <div class="box box-cyan">Jenis Barang<br><span id="totalJenis">0</span></div>
-    </div>
-
-    <div class="card no-print">
-        <h3>➕ INPUT TRANSAKSI</h3>
-        <input type="text" id="barang" placeholder="NAMA BARANG">
-        <select id="jenis">
-            <option value="masuk">BARANG MASUK (+)</option>
-            <option value="keluar">BARANG KELUAR (-)</option>
-        </select>
-        <input type="number" id="jumlah" placeholder="JUMLAH UNIT">
-        <button type="button" id="btnSimpan" onclick="prosesSimpan()">SIMPAN DATA</button>
-    </div>
-
     <div class="card">
-        <h3>📦 STOK SAAT INI (REALTIME)</h3>
-        <div id="ringkasanStok">Memuat data...</div>
-    </div>
-
-    <div class="card">
-        <h3>📜 RIWAYAT TRANSAKSI</h3>
-        <div style="overflow-x: auto;">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Tanggal</th>
-                        <th>Barang</th>
-                        <th>Jenis</th>
-                        <th>Jumlah</th>
-                        <th class="no-print">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody id="riwayatBody"></tbody>
-            </table>
+        <h2>📦 GUDANG SMS v1.3</h2>
+        <div class="dashboard">
+            <div class="box box-blue">STOK TOTAL<br><span id="totalStok" style="font-size:24px">0</span></div>
+            <div class="box box-cyan">JENIS BARANG<br><span id="totalJenis" style="font-size:24px">0</span></div>
         </div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <div class="card">
+        <h3>➕ Input Data</h3>
+        <input type="text" id="barang" placeholder="NAMA BARANG">
+        <select id="jenis">
+            <option value="masuk">MASUK (+)</option>
+            <option value="keluar">KELUAR (-)</option>
+        </select>
+        <input type="number" id="jumlah" placeholder="JUMLAH">
+        <button id="btnSimpan">SIMPAN DATA</button>
+    </div>
 
-    <script>
-        // Konfigurasi Database Adri
-        const firebaseConfig = {
-            apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
-            authDomain: "gudang-sms-4c81c.firebaseapp.com",
-            databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "gudang-sms-4c81c",
-            appId: "1:598362736106:web:c8e2732d6ac7613931de93"
-        };
+    <div class="card">
+        <h3>📊 Stok Saat Ini</h3>
+        <div id="ringkasanStok">Menunggu koneksi database...</div>
+    </div>
 
+    <div class="card">
+        <h3>📜 Riwayat</h3>
+        <table class="riwayat-table">
+            <thead>
+                <tr>
+                    <th>Barang</th>
+                    <th>Qty</th>
+                    <th>Tipe</th>
+                </tr>
+            </thead>
+            <tbody id="riwayatBody"></tbody>
+        </table>
+    </div>
+
+<script>
+    // 2. KONFIGURASI DATABASE
+    const firebaseConfig = {
+        apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
+        authDomain: "gudang-sms-4c81c.firebaseapp.com",
+        databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "gudang-sms-4c81c",
+        appId: "1:598362736106:web:c8e2732d6ac7613931de93"
+    };
+
+    // 3. INISIALISASI DENGAN PROTEKSI
+    try {
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // Fungsi Simpan
-        function prosesSimpan() {
-            const b = document.getElementById("barang");
-            const j = document.getElementById("jumlah");
-            const btn = document.getElementById("btnSimpan");
-            
-            if(!b.value || !j.value) return alert("Isi data dulu!");
-
-            btn.disabled = true;
-            btn.innerText = "MENYIMPAN...";
-
-            database.ref("riwayat").push({
-                barang: b.value.toUpperCase().trim(),
-                jumlah: parseInt(j.value),
-                jenis: document.getElementById("jenis").value,
-                tanggal: new Date().toISOString().slice(0, 10),
-                ts: Date.now()
-            }).then(() => {
-                b.value = ""; j.value = "";
-                btn.disabled = false;
-                btn.innerText = "SIMPAN DATA";
-            });
-        }
-
-        // Fungsi Tampil (Kunci Perbaikan)
+        // FUNGSI TAMPIL REALTIME
         database.ref("riwayat").on("value", (snapshot) => {
-            let petaStok = {};
-            let totalUnit = 0;
-            let barisTabel = "";
+            let total = 0;
+            let stokPeta = {};
+            let htmlRiwayat = "";
             let listData = [];
 
             if (!snapshot.exists()) {
-                document.getElementById("ringkasanStok").innerHTML = "Belum ada data.";
-                document.getElementById("riwayatBody").innerHTML = "<td>-</td>";
+                document.getElementById("ringkasanStok").innerText = "Database masih kosong.";
                 return;
             }
 
             snapshot.forEach((child) => {
                 const d = child.val();
-                listData.push({ id: child.key, ...d });
-
-                // Hitung Stok
-                let qty = parseInt(d.jumlah) || 0;
+                listData.push(d);
+                let q = parseInt(d.jumlah) || 0;
+                
                 if (d.jenis === "masuk") {
-                    petaStok[d.barang] = (petaStok[d.barang] || 0) + qty;
-                    totalUnit += qty;
+                    stokPeta[d.barang] = (stokPeta[d.barang] || 0) + q;
+                    total += q;
                 } else {
-                    petaStok[d.barang] = (petaStok[d.barang] || 0) - qty;
-                    totalUnit -= qty;
+                    stokPeta[d.barang] = (stokPeta[d.barang] || 0) - q;
+                    total -= q;
                 }
             });
 
-            // Urutkan Riwayat (Terbaru di atas)
-            listData.reverse().forEach(d => {
-                barisTabel += `<tr>
-                    <td>${d.tanggal}</td>
-                    <td><b>${d.barang}</b></td>
-                    <td style="color:${d.jenis === 'masuk' ? 'green' : 'red'}">${d.jenis.toUpperCase()}</td>
-                    <td>${d.jumlah}</td>
-                    <td class="no-print"><button class="btn-danger" onclick="hapus('${d.id}')">X</button></td>
-                </tr>`;
-            });
+            // Update Angka
+            document.getElementById("totalStok").innerText = total;
+            document.getElementById("totalJenis").innerText = Object.keys(stokPeta).length;
 
-            // Update Dashboard
-            document.getElementById("totalStok").innerText = totalUnit;
-            document.getElementById("totalJenis").innerText = Object.keys(petaStok).length;
-            document.getElementById("riwayatBody").innerHTML = barisTabel;
-
-            let ringkasan = "";
-            for (let item in petaStok) {
-                ringkasan += <div class="stok-item"><span>${item}</span><b>${petaStok[item]} UNIT</b></div>;
+            // List Stok
+            let htmlStok = "";
+            for (let b in stokPeta) {
+                htmlStok += <div class="stok-item"><span>${b}</span><span>${stokPeta[b]} Unit</span></div>;
             }
-            document.getElementById("ringkasanStok").innerHTML = ringkasan;
+            document.getElementById("ringkasanStok").innerHTML = htmlStok;
+
+            // Riwayat Singkat (5 terakhir)
+            listData.reverse().slice(0, 5).forEach(d => {
+                htmlRiwayat += <tr><td>${d.barang}</td><td>${d.jumlah}</td><td>${d.jenis}</td></tr>;
+            });
+            document.getElementById("riwayatBody").innerHTML = htmlRiwayat;
+
+        }, (error) => {
+            document.getElementById("ringkasanStok").innerText = "Gagal memuat: " + error.message;
         });
 
-        function hapus(id) {
-            if(confirm("Hapus data ini?")) database.ref("riwayat/" + id).remove();
-        }
-    </script>
+        // FUNGSI TOMBOL SIMPAN
+        document.getElementById("btnSimpan").onclick = function() {
+            const b = document.getElementById("barang").value.toUpperCase().trim();
+            const j = document.getElementById("jumlah").value;
+            const t = document.getElementById("jenis").value;
+
+            if (!b || !j) return alert("Mohon isi data!");
+
+            this.disabled = true;
+            this.innerText = "MENYIMPAN...";
+
+            database.ref("riwayat").push({
+                barang: b,
+                jumlah: parseInt(j),
+                jenis: t,
+                tanggal: new Date().toISOString().slice(0, 10)
+            }).then(() => {
+                document.getElementById("barang").value = "";
+                document.getElementById("jumlah").value = "";
+                this.disabled = false;
+                this.innerText = "SIMPAN DATA";
+                alert("Berhasil!");
+            }).catch(e => {
+                alert("Error: " + e.message);
+                this.disabled = false;
+                this.innerText = "SIMPAN DATA";
+            });
+        };
+
+    } catch (e) {
+        alert("Firebase Gagal Load: " + e.message);
+    }
+</script>
+
 </body>
 </html>
