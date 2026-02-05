@@ -48,7 +48,7 @@
         .card { background: white; padding: 25px; border-radius: 20px; border: 1px solid #e2e8f0; margin-bottom: 20px; }
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 13px; color: var(--secondary); }
-        input, select { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; font-family: inherit; font-size: 14px; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; font-family: inherit; font-size: 14px; box-sizing: border-box; }
         
         button { 
             width: 100%; padding: 14px; border: none; border-radius: 10px; 
@@ -130,7 +130,7 @@
                     <label>Stok Minimum (Alarm)</label>
                     <input type="number" id="in_min" placeholder="Peringatan jika stok dibawah angka ini">
                 </div>
-                <div class="stats-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 0;">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px">
                     <div class="form-group">
                         <label>Supplier</label>
                         <input type="text" id="in_supplier" placeholder="Nama PT/Toko">
@@ -140,7 +140,7 @@
                         <input type="text" id="in_dept" placeholder="Tujuan Dept">
                     </div>
                 </div>
-                <div class="stats-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 15px;">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px">
                     <div class="form-group">
                         <label>No. PO</label>
                         <input type="text" id="in_po" placeholder="Purchase Order">
@@ -164,8 +164,8 @@
             <h1>Input Barang Keluar</h1>
             <div class="card" style="max-width: 600px;">
                 <div class="form-group">
-                    <label>Nama Barang</label>
-                    <input type="text" id="out_barang" placeholder="Cari barang yang tersedia...">
+                    <label>Pilih Barang (Dari Stok)</label>
+                    <select id="out_barang" style="background:#fffbeb; border:1px solid #fde68a"></select>
                 </div>
                 <div class="form-group">
                     <label>Jumlah Unit Keluar</label>
@@ -235,7 +235,6 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // NAVIGASI HALAMAN
         function showPage(pageId, element) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -243,13 +242,12 @@
             element.classList.add('active');
         }
 
-        // SIMPAN DATA
         function simpanData(tipe) {
             const prefix = tipe === 'masuk' ? 'in_' : 'out_';
             const barang = document.getElementById(prefix + 'barang').value.trim().toUpperCase();
             const jumlah = parseInt(document.getElementById(prefix + 'jumlah').value);
             
-            if (!barang || isNaN(jumlah)) return alert("Mohon lengkapi Nama Barang dan Jumlah!");
+            if (!barang || isNaN(jumlah)) return alert("Mohon pilih Nama Barang dan isi Jumlah!");
 
             const payload = {
                 barang: barang,
@@ -264,36 +262,45 @@
             };
 
             database.ref("riwayat").push(payload).then(() => {
-                alert("Data Berhasil Disimpan!");
-                // Clear inputs
+                alert("Berhasil!");
                 document.querySelectorAll('input').forEach(i => i.value = "");
-                muatData();
             });
         }
 
-        // MUAT DATA REALTIME
         function muatData() {
             const tglAwal = document.getElementById("tglAwal").value;
             const tglAkhir = document.getElementById("tglAkhir").value;
 
             database.ref("riwayat").on("value", (snapshot) => {
                 let html = ""; let stok = {}; let limit = {}; let total = 0;
-                
+                let dataArray = [];
+
                 snapshot.forEach((snap) => {
                     const d = snap.val();
-                    if (tglAwal && d.tanggal < tglAwal) return;
-                    if (tglAkhir && d.tanggal > tglAkhir) return;
-
-                    const q = parseInt(d.jumlah);
+                    const key = snap.key;
+                    
                     if (d.jenis === "masuk") {
-                        stok[d.barang] = (stok[d.barang] || 0) + q;
-                        total += q;
-                        if(d.stok_min) limit[d.barang] = d.stok_min; 
+                        stok[d.barang] = (stok[d.barang] || 0) + parseInt(d.jumlah);
+                        if(d.stok_min) limit[d.barang] = d.stok_min;
                     } else {
-                        stok[d.barang] = (stok[d.barang] || 0) - q;
-                        total -= q;
+                        stok[d.barang] = (stok[d.barang] || 0) - parseInt(d.jumlah);
                     }
 
+                    if (tglAwal && d.tanggal < tglAwal) return;
+                    if (tglAkhir && d.tanggal > tglAkhir) return;
+                    
+                    dataArray.unshift({id: key, ...d});
+                });
+
+                // UPDATE DROPDOWN BARANG KELUAR
+                let opts = "<option value=''>-- PILIH BARANG --</option>";
+                for(let b in stok) {
+                    opts += <option value="${b}">${b} (Sisa: ${stok[b]})</option>;
+                }
+                document.getElementById('out_barang').innerHTML = opts;
+
+                // UPDATE TABEL
+                dataArray.forEach(d => {
                     html += `<tr>
                         <td>${d.tanggal}</td>
                         <td><b>${d.barang}</b></td>
@@ -301,17 +308,17 @@
                         <td><b>${d.jumlah}</b></td>
                         <td><small>${d.supplier} / ${d.dept}</small></td>
                         <td><small>${d.no_po} | ${d.no_prs}</small></td>
-                        <td class="no-print"><button class="btn-primary" style="background:var(--danger); width:auto; padding:5px 10px" onclick="hapus('${snap.key}')"><i class="fas fa-trash"></i></button></td>
+                        <td class="no-print"><button class="btn-primary" style="background:var(--danger); width:auto; padding:5px 10px; height:auto" onclick="hapus('${d.id}')"><i class="fas fa-trash"></i></button></td>
                     </tr>`;
                 });
 
                 document.getElementById("riwayatBody").innerHTML = html;
-                document.getElementById("totalStok").innerText = total;
-                document.getElementById("totalJenis").innerText = Object.keys(stok).length;
-
-                // TAMPILAN STOK DI DASHBOARD
+                
+                // DASHBOARD
                 let sHtml = "";
+                let totalUnit = 0;
                 for (let key in stok) {
+                    totalUnit += stok[key];
                     let isLow = limit[key] && stok[key] <= limit[key];
                     sHtml += `
                         <div class="alert-low">
@@ -319,14 +326,16 @@
                                 <span style="font-weight:800; color:#1e293b">${key}</span><br>
                                 <span style="font-size:12px; color:var(--secondary)">Sisa Stok: <b>${stok[key]} Unit</b></span>
                             </div>
-                            <div class="warning-text">${isLow ? '⚠️ STOK KRITIS (Min: '+limit[key]+')' : '✅ AMAN'}</div>
+                            <div class="warning-text">${isLow ? '⚠️ KRITIS (Batas: '+limit[key]+')' : '✅ AMAN'}</div>
                         </div>`;
                 }
-                document.getElementById("ringkasanStok").innerHTML = sHtml || "Belum ada data barang.";
+                document.getElementById("totalStok").innerText = totalUnit;
+                document.getElementById("totalJenis").innerText = Object.keys(stok).length;
+                document.getElementById("ringkasanStok").innerHTML = sHtml || "Belum ada data.";
             });
         }
 
-        function hapus(id) { if (confirm("Hapus data ini secara permanen?")) database.ref("riwayat/" + id).remove(); }
+        function hapus(id) { if (confirm("Hapus data?")) database.ref("riwayat/" + id).remove(); }
         
         function eksporExcel() { 
             const table = document.getElementById("tabelRiwayat");
