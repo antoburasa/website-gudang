@@ -1,54 +1,39 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Gudang SMS v1.0 - Berfungsi</title>
+    <title>Sistem Gudang SMS v1.1 - Perbaikan Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f4f7fa; margin: 0; padding: 20px; color: #333; }
         h2 { text-align: center; color: #1e3a8a; font-weight: 800; margin-bottom: 25px; text-transform: uppercase; }
-        
-        /* Dashboard Stats */
         .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
         .box { padding: 20px; border-radius: 12px; color: white; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .box-blue { background: #007bff; }
         .box-cyan { background: #17a2b8; }
         .box span { font-size: 32px; font-weight: 800; display: block; margin-top: 5px; }
-
-        /* Card Style */
         .card { background: white; padding: 25px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         h3 { font-size: 16px; margin: 0 0 15px 0; color: #1e3a8a; font-weight: 800; border-left: 4px solid #007bff; padding-left: 10px; }
-
-        /* Form Elements */
         input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #cbd5e1; box-sizing: border-box; font-size: 14px; }
-        input:focus { border-color: #007bff; outline: none; box-shadow: 0 0 0 2px rgba(0,123,255,0.2); }
-        
         button { background: #007bff; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; text-transform: uppercase; }
         button:hover { background: #0056b3; }
         button:disabled { background: #ccc; cursor: not-allowed; }
-        
         .btn-filter { background: #f39c12; }
         .btn-excel { background: #28a745; }
-        .btn-pdf { background: #6c757d; }
         .btn-danger { background: #dc3545; width: auto; padding: 5px 10px; font-size: 11px; margin: 0; }
-
-        /* Table */
         table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
         th, td { padding: 12px; text-align: center; border-bottom: 1px solid #f1f5f9; }
         th { background: #f8fafc; font-weight: bold; color: #64748b; }
-        
         .stok-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee; font-weight: bold; }
         .stok-item b { color: #007bff; }
-
         @media print { .no-print { display: none !important; } }
     </style>
 </head>
 <body>
 
-    <h2>📦 Sistem Gudang v1.0</h2>
+    <h2>📦 Sistem Gudang v1.1</h2>
 
     <div class="dashboard">
         <div class="box box-blue">Total Stok Fisik<br><span id="totalStok">0</span></div>
@@ -107,20 +92,17 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
     <script>
-        // 1. KONFIGURASI FIREBASE (FIXED)
         const firebaseConfig = {
             apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
             authDomain: "gudang-sms-4c81c.firebaseapp.com",
             databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
             projectId: "gudang-sms-4c81c",
-            storageBucket: "gudang-sms-4c81c.appspot.com",
             appId: "1:598362736106:web:c8e2732d6ac7613931de93"
         };
 
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // 2. FUNGSI SIMPAN DATA (KUNCI UTAMA)
         function prosesSimpan() {
             const barangInput = document.getElementById("barang");
             const jumlahInput = document.getElementById("jumlah");
@@ -131,30 +113,27 @@
             const jumlahNilai = parseInt(jumlahInput.value);
             const jenisAksi = jenisInput.value;
 
-            // Validasi
             if (barangNama === "" || isNaN(jumlahNilai) || jumlahNilai <= 0) {
                 alert("Mohon isi nama barang dan jumlah dengan benar!");
                 return;
             }
 
-            // Kunci tombol agar tidak dobel klik
             btn.disabled = true;
             btn.innerText = "SEDANG MENYIMPAN...";
 
-            // Kirim ke Firebase
             database.ref("riwayat").push({
                 barang: barangNama,
                 jumlah: jumlahNilai,
                 jenis: jenisAksi,
-                tanggal: new Date().toISOString().slice(0, 10)
+                tanggal: new Date().toISOString().slice(0, 10),
+                timestamp: Date.now() // Tambahkan timestamp untuk pengurutan
             })
             .then(() => {
-                alert("Data Berhasil Disimpan ke Firebase!");
-                // Reset form
                 barangInput.value = "";
                 jumlahInput.value = "";
                 btn.disabled = false;
                 btn.innerText = "SIMPAN DATA KE DATABASE";
+                // Alert dihilangkan agar user bisa input cepat, data akan muncul otomatis
             })
             .catch((error) => {
                 alert("Gagal Simpan: " + error.message);
@@ -163,24 +142,20 @@
             });
         }
 
-        // 3. FUNGSI MUAT DATA SECARA REALTIME
         function muatData() {
             const tglAwal = document.getElementById("tglAwal").value;
             const tglAkhir = document.getElementById("tglAkhir").value;
 
             database.ref("riwayat").on("value", (snapshot) => {
-                let htmlTabel = "";
                 let petaStok = {};
                 let totalUnit = 0;
+                let dataList = [];
 
                 snapshot.forEach((childSnapshot) => {
                     const data = childSnapshot.val();
+                    const key = childSnapshot.key;
 
-                    // Filter Tanggal
-                    if (tglAwal && data.tanggal < tglAwal) return;
-                    if (tglAkhir && data.tanggal > tglAkhir) return;
-
-                    // Hitung Stok
+                    // Logika Perhitungan Stok Fisik (Selalu dihitung tanpa filter tanggal)
                     if (data.jenis === "masuk") {
                         petaStok[data.barang] = (petaStok[data.barang] || 0) + data.jumlah;
                         totalUnit += data.jumlah;
@@ -189,22 +164,36 @@
                         totalUnit -= data.jumlah;
                     }
 
-                    // Buat Baris Tabel
+                    // Filter Tanggal hanya untuk Tampilan Tabel Riwayat
+                    let lolosFilter = true;
+                    if (tglAwal && data.tanggal < tglAwal) lolosFilter = false;
+                    if (tglAkhir && data.tanggal > tglAkhir) lolosFilter = false;
+
+                    if (lolosFilter) {
+                        dataList.push({ id: key, ...data });
+                    }
+                });
+
+                // Urutkan data: Terbaru di atas
+                dataList.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+                // Render Tabel Riwayat
+                let htmlTabel = "";
+                dataList.forEach(d => {
                     htmlTabel += `<tr>
-                        <td>${data.tanggal}</td>
-                        <td style="text-align:left"><b>${data.barang}</b></td>
-                        <td style="color:${data.jenis === 'masuk' ? '#28a745' : '#dc3545'}"><b>${data.jenis.toUpperCase()}</b></td>
-                        <td>${data.jumlah}</td>
-                        <td class="no-print"><button class="btn-danger" onclick="hapusData('${childSnapshot.key}')">HAPUS</button></td>
+                        <td>${d.tanggal}</td>
+                        <td style="text-align:left"><b>${d.barang}</b></td>
+                        <td style="color:${d.jenis === 'masuk' ? '#28a745' : '#dc3545'}"><b>${d.jenis.toUpperCase()}</b></td>
+                        <td>${d.jumlah}</td>
+                        <td class="no-print"><button class="btn-danger" onclick="hapusData('${d.id}')">HAPUS</button></td>
                     </tr>`;
                 });
 
-                // Tampilkan ke Dashboard
                 document.getElementById("riwayatBody").innerHTML = htmlTabel || "<tr><td colspan='5'>Tidak ada data.</td></tr>";
                 document.getElementById("totalStok").innerText = totalUnit;
                 document.getElementById("totalJenis").innerText = Object.keys(petaStok).length;
 
-                // Tampilkan Ringkasan Stok Per Item
+                // Render Ringkasan Stok (Dashboard Tengah)
                 let ringkasanHtml = "";
                 for (let namaBarang in petaStok) {
                     ringkasanHtml += `
@@ -217,22 +206,20 @@
             });
         }
 
-        // 4. FUNGSI HAPUS
         function hapusData(id) {
             if (confirm("Hapus data transaksi ini?")) {
                 database.ref("riwayat/" + id).remove();
             }
         }
 
-        // 5. FUNGSI EKSPOR EXCEL
         function eksporExcel() {
             const table = document.getElementById("tabelRiwayat");
             const wb = XLSX.utils.table_to_book(table);
             XLSX.writeFile(wb, "Laporan_Gudang_SMS.xlsx");
         }
 
-        // Jalankan fungsi muat data saat pertama kali buka
-        window.onload = muatData;
+        // Jalankan muatData
+        muatData();
     </script>
 </body>
 </html>
