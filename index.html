@@ -1,130 +1,196 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>GUDANG SMS - FIX TOTAL</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMS GUDANG - DASHBOARD v4.0</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: sans-serif; margin: 0; background: #eee; }
-        .nav { background: #1a237e; color: white; padding: 15px; text-align: center; }
-        .container { padding: 20px; max-width: 500px; margin: auto; }
-        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-        button { width: 100%; padding: 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; font-size: 16px; }
-        .btn-blue { background: #1a237e; }
-        .btn-green { background: #2e7d32; }
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; }
-        th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
-        th { background: #f5f5f5; }
+        :root { --primary: #1e40af; --secondary: #0f172a; --bg: #f8fafc; --text: #1e293b; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); color: var(--text); }
+        
+        /* SIDEBAR */
+        .sidebar { width: 250px; background: var(--secondary); color: white; display: flex; flex-direction: column; padding: 20px; flex-shrink: 0; }
+        .logo { font-size: 20px; font-weight: 800; color: #38bdf8; margin-bottom: 30px; display: flex; align-items: center; gap: 10px; }
+        .nav-item { padding: 12px 15px; border-radius: 8px; cursor: pointer; margin-bottom: 5px; display: flex; align-items: center; gap: 12px; color: #94a3b8; transition: 0.3s; }
+        .nav-item:hover { background: rgba(255,255,255,0.05); color: white; }
+        .nav-item.active { background: var(--primary); color: white; }
+
+        /* MAIN CONTENT */
+        .main { flex: 1; overflow-y: auto; padding: 30px; }
+        .page { display: none; }
+        .page.active { display: block; }
+
+        /* CARDS & TABLES */
+        .card { background: white; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 20px; }
+        .stat-box { background: white; padding: 20px; border-radius: 12px; border-left: 5px solid var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
+        button { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        button:hover { opacity: 0.9; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { text-align: left; padding: 12px; background: #f1f5f9; color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+        td { padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+        
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+        .bg-in { background: #dcfce7; color: #166534; }
+        .bg-out { background: #fee2e2; color: #991b1b; }
+        .btn-del { color: #ef4444; cursor: pointer; background: none; border: none; }
     </style>
 </head>
 <body>
 
-<div class="nav">
-    <h1>SMS GUDANG</h1>
-</div>
-
-<div class="container">
-    <div class="card">
-        <h3>1. DAFTAR BARANG BARU</h3>
-        <input type="text" id="m_nama" placeholder="Ketik Nama (Contoh: BESI)">
-        <button class="btn-blue" id="btn_master">KLIK UNTUK DAFTAR</button>
+    <div class="sidebar">
+        <div class="logo"><i class="fas fa-warehouse"></i> SMS GUDANG</div>
+        <div class="nav-item active" onclick="buka('dash', this)"><i class="fas fa-th-large"></i> Dashboard</div>
+        <div class="nav-item" onclick="buka('mast', this)"><i class="fas fa-box"></i> Master Barang</div>
+        <div class="nav-item" onclick="buka('trans', this)"><i class="fas fa-right-left"></i> Masuk / Keluar</div>
+        <div class="nav-item" onclick="buka('riw', this)"><i class="fas fa-history"></i> Riwayat</div>
     </div>
 
-    <div class="card">
-        <h3>2. INPUT STOK</h3>
-        <select id="t_pilih"><option value="">-- PILIH BARANG --</option></select>
-        <select id="t_tipe"><option value="IN">MASUK (+)</option><option value="OUT">KELUAR (-)</option></select>
-        <input type="number" id="t_qty" placeholder="Jumlah Qty">
-        <button class="btn-green" id="btn_transaksi">SIMPAN TRANSAKSI</button>
+    <div class="main">
+        <div id="pg-dash" class="page active">
+            <h2>Ringkasan Stok</h2>
+            <div class="grid">
+                <div class="stat-box"><small>Total Jenis Barang</small><div id="sum-jenis" style="font-size: 24px; font-weight: bold;">0</div></div>
+                <div class="stat-box"><small>Total Barang Fisik</small><div id="sum-total" style="font-size: 24px; font-weight: bold;">0</div></div>
+            </div>
+            <div class="card">
+                <table>
+                    <thead><tr><th>Nama Barang</th><th>Stok</th><th>Status</th></tr></thead>
+                    <tbody id="tbl-stok"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="pg-mast" class="page">
+            <h2>Master Barang</h2>
+            <div class="card" style="max-width: 400px;">
+                <label>Nama Barang Baru</label>
+                <input type="text" id="m_nama" placeholder="Contoh: SEMEN">
+                <button onclick="simpanMaster()">TAMBAHKAN BARANG</button>
+            </div>
+            <div class="card">
+                <table id="tbl-master">
+                    <thead><tr><th>Nama Barang</th><th>Hapus</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="pg-trans" class="page">
+            <h2>Input Masuk / Keluar</h2>
+            <div class="card" style="max-width: 400px;">
+                <label>Pilih Barang</label>
+                <select id="t_barang"></select>
+                <label>Jenis</label>
+                <select id="t_tipe">
+                    <option value="IN">BARANG MASUK (+)</option>
+                    <option value="OUT">BARANG KELUAR (-)</option>
+                </select>
+                <label>Jumlah (Qty)</label>
+                <input type="number" id="t_qty" placeholder="0">
+                <button onclick="simpanTransaksi()" style="background: #059669;">SIMPAN DATA</button>
+            </div>
+        </div>
+
+        <div id="pg-riw" class="page">
+            <h2>Riwayat Transaksi</h2>
+            <div class="card">
+                <table id="tbl-riwayat">
+                    <thead><tr><th>Tanggal</th><th>Barang</th><th>Tipe</th><th>Qty</th><th>Aksi</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
-    <h3>STOK GUDANG SAAT INI</h3>
-    <table id="tblStok">
-        <thead><tr><th>Nama Barang</th><th>Stok Akhir</th></tr></thead>
-        <tbody></tbody>
-    </table>
-</div>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script>
+        const config = {
+            apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
+            authDomain: "gudang-sms-4c81c.firebaseapp.com",
+            databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "gudang-sms-4c81c",
+            storageBucket: "gudang-sms-4c81c.appspot.com",
+            appId: "1:598362736106:web:c8e2732d6ac7613931de93"
+        };
+        firebase.initializeApp(config);
+        const db = firebase.database();
 
-<script>
-    // Konfigurasi Milik Adri
-    const config = {
-        apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
-        authDomain: "gudang-sms-4c81c.firebaseapp.com",
-        databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
-        projectId: "gudang-sms-4c81c",
-        storageBucket: "gudang-sms-4c81c.appspot.com",
-        appId: "1:598362736106:web:c8e2732d6ac7613931de93"
-    };
-
-    // Jalankan Firebase
-    firebase.initializeApp(config);
-    const database = firebase.database();
-
-    // TOMBOL DAFTAR BARANG
-    document.getElementById('btn_master').onclick = function() {
-        const nama = document.getElementById('m_nama').value.toUpperCase().trim();
-        if(!nama) return alert("Ketik nama barang dulu!");
-
-        database.ref("master_barang").push({ nama: nama })
-        .then(() => {
-            alert("SUKSES: " + nama + " Terdaftar!");
-            document.getElementById('m_nama').value = "";
-        })
-        .catch((e) => alert("GAGAL: " + e.message));
-    };
-
-    // TOMBOL SIMPAN TRANSAKSI
-    document.getElementById('btn_transaksi').onclick = function() {
-        const barang = document.getElementById('t_pilih').value;
-        const tipe = document.getElementById('t_tipe').value;
-        const qty = parseInt(document.getElementById('t_qty').value);
-
-        if(!barang || isNaN(qty)) return alert("Isi barang & jumlah!");
-
-        database.ref("riwayat").push({
-            barang: barang,
-            tipe: tipe,
-            qty: qty
-        })
-        .then(() => {
-            alert("SUKSES: Data Masuk!");
-            document.getElementById('t_qty').value = "";
-        })
-        .catch((e) => alert("GAGAL: " + e.message));
-    };
-
-    // TAMPILKAN DATA SECARA OTOMATIS
-    database.ref().on("value", function(snap) {
-        const data = snap.val() || {};
-        const master = data.master_barang || {};
-        const riwayat = data.riwayat || {};
-
-        // Dropdown
-        let opsi = "<option value=''>-- PILIH BARANG --</option>";
-        for(let id in master) {
-            opsi += "<option value='"+master[id].nama+"'>"+master[id].nama+"</option>";
-        }
-        document.getElementById('t_pilih').innerHTML = opsi;
-
-        // Hitung Stok
-        let stok = {};
-        for(let id in riwayat) {
-            let r = riwayat[id];
-            if(r.tipe === "IN") stok[r.barang] = (stok[r.barang] || 0) + r.qty;
-            else stok[r.barang] = (stok[r.barang] || 0) - r.qty;
+        function buka(id, el) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById('pg-' + id).classList.add('active');
+            el.classList.add('active');
         }
 
-        // Tabel
-        let baris = "";
-        for(let b in stok) {
-            baris += "<tr><td><b>"+b+"</b></td><td>"+stok[b]+"</td></tr>";
+        function simpanMaster() {
+            const nama = document.getElementById('m_nama').value.toUpperCase().trim();
+            if(!nama) return alert("Isi nama!");
+            db.ref("master_barang").push({ nama }).then(() => {
+                alert("Berhasil!");
+                document.getElementById('m_nama').value = "";
+            });
         }
-        document.getElementById('tblStok').querySelector('tbody').innerHTML = baris;
-    });
-</script>
 
+        function simpanTransaksi() {
+            const barang = document.getElementById('t_barang').value;
+            const tipe = document.getElementById('t_tipe').value;
+            const qty = parseInt(document.getElementById('t_qty').value);
+            if(!barang || isNaN(qty)) return alert("Isi data!");
+
+            db.ref("riwayat").push({
+                barang, tipe, qty,
+                tgl: new Date().toLocaleDateString('id-ID')
+            }).then(() => {
+                alert("Tersimpan!");
+                document.getElementById('t_qty').value = "";
+            });
+        }
+
+        db.ref().on("value", (snap) => {
+            const data = snap.val() || {};
+            const master = data.master_barang || {};
+            const riwayat = data.riwayat || {};
+
+            // Render Master & Dropdown
+            let hMst = "", hOpt = "<option value=''>-- PILIH --</option>";
+            for(let id in master) {
+                hMst += <tr><td><b>${master[id].nama}</b></td><td><button class="btn-del" onclick="db.ref('master_barang/${id}').remove()"><i class="fas fa-trash"></i></button></td></tr>;
+                hOpt += <option value="${master[id].nama}">${master[id].nama}</option>;
+            }
+            document.getElementById('tbl-master').querySelector('tbody').innerHTML = hMst;
+            document.getElementById('t_barang').innerHTML = hOpt;
+
+            // Hitung Stok & Riwayat
+            let stok = {}; let hRiw = ""; let totalFisik = 0;
+            const rKeys = Object.keys(riwayat).reverse();
+            rKeys.forEach(id => {
+                const r = riwayat[id];
+                if(r.tipe === "IN") {
+                    stok[r.barang] = (stok[r.barang] || 0) + r.qty;
+                    totalFisik += r.qty;
+                } else {
+                    stok[r.barang] = (stok[r.barang] || 0) - r.qty;
+                    totalFisik -= r.qty;
+                }
+                hRiw += <tr><td>${r.tgl}</td><td><b>${r.barang}</b></td><td><span class="badge ${r.tipe==='IN'?'bg-in':'bg-out'}">${r.tipe}</span></td><td>${r.qty}</td><td><button class="btn-del" onclick="db.ref('riwayat/${id}').remove()"><i class="fas fa-trash"></i></button></td></tr>;
+            });
+            document.getElementById('tbl-riwayat').querySelector('tbody').innerHTML = hRiw;
+
+            let hDash = "";
+            for(let b in stok) {
+                hDash += <tr><td><b>${b}</b></td><td>${stok[b]} Unit</td><td><span class="badge" style="background:#dcfce7; color:#166534">TERSEDIA</span></td></tr>;
+            }
+            document.getElementById('tbl-stok').innerHTML = hDash;
+            document.getElementById('sum-total').innerText = totalFisik;
+            document.getElementById('sum-jenis').innerText = Object.keys(stok).length;
+        });
+    </script>
 </body>
 </html>
