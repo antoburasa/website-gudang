@@ -2,121 +2,44 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>GUDANG ADRI - FINAL PRO</title>
+    <title>GUDANG ADRI PRO - v2.0</title>
     <style>
         body { font-family: sans-serif; padding: 20px; background: #f0f2f5; }
-        .kotak { background: white; padding: 20px; border-radius: 10px; max-width: 600px; margin: auto; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-top: 5px solid #1a237e; }
+        .kotak { background: white; padding: 20px; border-radius: 10px; max-width: 800px; margin: auto; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-top: 5px solid #1a237e; }
         h2 { color: #1a237e; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 25px; font-size: 18px; }
         input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-        /* Style tambahan agar teks input otomatis besar */
-        .uppercase { text-transform: uppercase; }
         button { width: 100%; padding: 12px; background: #1a237e; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        button:active { background: #0d1440; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
-        th, td { border-bottom: 1px solid #eee; padding: 10px; text-align: left; }
-        th { background: #f8f9fa; color: #666; font-size: 12px; }
-        .btn-x { background: #ff4444; padding: 4px 8px; font-size: 10px; width: auto; margin: 0; border-radius: 3px; }
-        .stok-qty { font-weight: bold; color: #1a237e; font-size: 16px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+        th, td { border: 1px solid #eee; padding: 10px; text-align: left; }
+        th { background: #f8f9fa; color: #666; }
+        
+        /* Warna Peringatan Stok */
+        .stok-aman { color: #2e7d32; font-weight: bold; }
+        .stok-kritis { background: #ffebee; color: #c62828; font-weight: bold; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0.7; } }
+
+        .btn-x { background: #ff4444; padding: 5px; font-size: 10px; width: auto; }
+        .filter-box { background: #e3f2fd; padding: 15px; border-radius: 5px; margin-top: 10px; }
     </style>
 </head>
 <body>
 
 <div class="kotak">
-    <h1 style="text-align:center; color:#1a237e; margin-bottom:0;">SMS GUDANG</h1>
-    <p style="text-align:center; margin-top:5px; color:#666;">Sistem Kontrol Stok Realtime</p>
+    <h1 style="text-align:center; color:#1a237e; margin:0;">SMS GUDANG PRO</h1>
+    <p style="text-align:center; color:#666; font-size:12px;">Monitoring Stok & Transaksi Realtime</p>
     
-    <h2>1. DAFTAR BARANG</h2>
-    <input type="text" id="m" class="uppercase" placeholder="Nama Barang Baru (Contoh: BESI)">
-    <button onclick="fM()">+ TAMBAHKAN KE MASTER</button>
-    <table>
-        <thead><tr><th>Nama Barang</th><th>Aksi</th></tr></thead>
-        <tbody id="tblMaster"></tbody>
-    </table>
+    <h2>1. DAFTAR BARANG & LIMIT</h2>
+    <div style="display: flex; gap: 10px;">
+        <input type="text" id="m" placeholder="Nama Barang..." style="flex: 2;">
+        <input type="number" id="min" placeholder="Min. Stok" style="flex: 1;">
+    </div>
+    <button onclick="fM()">+ DAFTARKAN BARANG</button>
 
     <h2>2. INPUT TRANSAKSI</h2>
     <select id="p"></select>
-    <select id="t">
-        <option value="IN">MASUK (+)</option>
-        <option value="OUT">KELUAR (-)</option>
-    </select>
-    <input type="number" id="q" placeholder="Jumlah (Qty)">
-    <button onclick="fT()" style="background: #2e7d32;">💾 SIMPAN TRANSAKSI</button>
-
-    <h2>3. LAPORAN STOK</h2>
-    <table>
-        <thead><tr><th>Nama Barang</th><th>Stok Akhir</th></tr></thead>
-        <tbody id="tblStok"></tbody>
-    </table>
-
-    <h2>4. RIWAYAT (HAPUS JIKA SALAH)</h2>
-    <table>
-        <thead><tr><th>Barang</th><th>Tipe</th><th>Qty</th><th>Aksi</th></tr></thead>
-        <tbody id="bodyRiw"></tbody>
-    </table>
-</div>
-
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
-<script>
-    var config = {
-        apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
-        authDomain: "gudang-sms-4c81c.firebaseapp.com",
-        databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
-        projectId: "gudang-sms-4c81c",
-        appId: "1:598362736106:web:c8e2732d6ac7613931de93"
-    };
-    firebase.initializeApp(config);
-    var db = firebase.database();
-
-    function fM() {
-        var n = document.getElementById('m').value.toUpperCase().trim();
-        if(!n) return alert("Isi nama barang!");
-        db.ref("master_barang").push({ nama: n }).then(() => { 
-            document.getElementById('m').value = ""; 
-        });
-    }
-
-    function fT() {
-        var b = document.getElementById('p').value;
-        var t = document.getElementById('t').value;
-        var q = parseInt(document.getElementById('q').value);
-        if(!b || isNaN(q)) return alert("Lengkapi data!");
-        db.ref("riwayat").push({ barang: b, tipe: t, qty: q }).then(() => { 
-            alert("Data Disimpan!");
-            document.getElementById('q').value = ""; 
-        });
-    }
-
-    db.ref().on("value", function(snap) {
-        var d = snap.val() || {};
-        var mst = d.master_barang || {};
-        var riw = d.riwayat || {};
-
-        var htmlMst = ""; var opt = "<option value=''>-- PILIH BARANG --</option>";
-        for(var id in mst) {
-            htmlMst += "<tr><td>"+mst[id].nama+"</td><td><button class='btn-x' onclick='if(confirm(\"Hapus barang?\")) db.ref(\"master_barang/"+id+"\").remove()'>Hapus</button></td></tr>";
-            opt += "<option value='"+mst[id].nama+"'>"+mst[id].nama+"</option>";
-        }
-        document.getElementById('tblMaster').innerHTML = htmlMst;
-        document.getElementById('p').innerHTML = opt;
-
-        var stok = {}; var htmlRiw = "";
-        var keys = Object.keys(riw).reverse();
-        keys.forEach(function(id) {
-            var r = riw[id];
-            if(r.tipe === "IN") stok[r.barang] = (stok[r.barang] || 0) + r.qty;
-            else stok[r.barang] = (stok[r.barang] || 0) - r.qty;
-            htmlRiw += "<tr><td>"+r.barang+"</td><td>"+r.tipe+"</td><td>"+r.qty+"</td><td><button class='btn-x' onclick='db.ref(\"riwayat/"+id+"\").remove()'>X</button></td></tr>";
-        });
-        document.getElementById('bodyRiw').innerHTML = htmlRiw;
-
-        var htmlStok = "";
-        for(var b in stok) {
-            htmlStok += "<tr><td><b>"+b+"</b></td><td class='stok-qty'>"+stok[b]+"</td></tr>";
-        }
-        document.getElementById('tblStok').innerHTML = htmlStok;
-    });
-</script>
-</body>
-</html>
+    <div style="display: flex; gap: 10px;">
+        <select id="t" style="flex: 1;">
+            <option value="IN">MASUK (+)</option>
+            <option value="OUT">KELUAR (-)</option>
+        </select>
+        <input type="number" id="q" placeholder="
