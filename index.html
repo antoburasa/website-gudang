@@ -3,179 +3,116 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sistem Gudang</title>
+<title>Aplikasi Gudang</title>
 
-<style>
-body{font-family:Arial;background:#f4f6f8;margin:0;padding:12px}
-h2,h3{margin:10px 0}
-.card{background:#fff;padding:12px;border-radius:10px;margin-bottom:12px}
-.dashboard{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-.box{background:#0d6efd;color:#fff;padding:14px;border-radius:10px;text-align:center}
-.box span{font-size:22px;font-weight:bold}
-input,select,button{width:100%;padding:10px;margin-top:6px;border-radius:6px;border:1px solid #ccc}
-button{background:#0d6efd;color:#fff;border:none}
-button.danger{background:#dc3545}
-button.warn{background:#ffc107;color:#000}
-table{width:100%;border-collapse:collapse;font-size:13px}
-th,td{border:1px solid #ddd;padding:6px;text-align:center}
-th{background:#eee}
-.stok-item{display:flex;justify-content:space-between;padding:6px;border-bottom:1px solid #eee}
-@media print{button,input,select{display:none}}
-</style>
-</head>
-
-<body>
-
-<h2>📦 Sistem Gudang</h2>
-
-<div class="dashboard">
-  <div class="box">Total Stok<br><span id="total">0</span></div>
-  <div class="box">Jumlah Barang<br><span id="jenisBarang">0</span></div>
-</div>
-
-<div class="card">
-  <h3>➕ Input Transaksi</h3>
-  <input id="barang" placeholder="Nama Barang">
-  <select id="jenis">
-    <option value="masuk">Masuk</option>
-    <option value="keluar">Keluar</option>
-  </select>
-  <input id="jumlah" type="number" placeholder="Jumlah">
-  <input id="editId" type="hidden">
-  <button type="button" onclick="simpan()">SIMPAN</button>
-</div>
-
-<div class="card">
-  <h3>📅 Filter & Laporan</h3>
-  <input type="date" id="tglAwal">
-  <input type="date" id="tglAkhir">
-  <button type="button" onclick="loadData()">Filter</button>
-  <button type="button" onclick="exportExcel()">Export Excel</button>
-  <button type="button" onclick="window.print()">Print</button>
-</div>
-
-<div class="card">
-  <h3>📊 Stok per Barang</h3>
-  <div id="stokBarang"></div>
-</div>
-
-<div class="card">
-  <h3>📜 Riwayat Transaksi</h3>
-  <table>
-    <thead>
-      <tr>
-        <th>Tanggal</th>
-        <th>Barang</th>
-        <th>Jenis</th>
-        <th>Jumlah</th>
-        <th>Aksi</th>
-      </tr>
-    </thead>
-    <tbody id="data"></tbody>
-  </table>
-</div>
-
-<!-- FIREBASE v8 (STABIL) -->
+<!-- Firebase v8 -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-<!-- EXCEL -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+body{font-family:Arial;background:#f2f4f7;margin:0;padding:15px}
+h2{margin-top:0}
+.card{background:#fff;padding:15px;border-radius:8px;margin-bottom:15px}
+input,button{width:100%;padding:10px;margin-top:8px}
+button{background:#2563eb;color:#fff;border:none;border-radius:6px}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{border:1px solid #ddd;padding:8px;text-align:center}
+th{background:#eee}
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h2>📦 Master Barang</h2>
+  <input id="namaBarang" placeholder="Nama barang">
+  <button onclick="simpanBarang()">Simpan</button>
+</div>
+
+<div class="card">
+  <h2>📊 Daftar Barang</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Nama</th>
+        <th>Stok</th>
+        <th>Aksi</th>
+      </tr>
+    </thead>
+    <tbody id="listBarang"></tbody>
+  </table>
+</div>
 
 <script>
-/* FIREBASE CONFIG */
-var firebaseConfig = {
-  apiKey: "AIzaSyDbf4Nf0J0ELJ3B3R8Un8Ypgi0io-TB30",
-  authDomain: "gudang-sms-4c81c.firebaseapp.com",
-  databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "gudang-sms-4c81c",
-  storageBucket: "gudang-sms-4c81c.appspot.com",
-  messagingSenderId: "598362736106",
-  appId: "1:598362736106:web:c0e2732d6ac7513931de93"
+/* =============================
+   FIREBASE CONFIG (GANTI INI)
+   ============================= */
+const firebaseConfig = {
+  apiKey: "ISI_API_KEY",
+  authDomain: "ISI_AUTH_DOMAIN",
+  databaseURL: "ISI_DATABASE_URL",
+  projectId: "ISI_PROJECT_ID",
+  storageBucket: "ISI_STORAGE_BUCKET",
+  messagingSenderId: "ISI_SENDER_ID",
+  appId: "ISI_APP_ID"
 };
 
+/* =============================
+   INIT FIREBASE
+   ============================= */
 firebase.initializeApp(firebaseConfig);
-var db = firebase.database();
+const db = firebase.database();
 
-/* SIMPAN DATA */
-function simpan(){
-  var barang = document.getElementById("barang").value.trim();
-  var jenis  = document.getElementById("jenis").value;
-  var jumlah = parseInt(document.getElementById("jumlah").value);
-
-  console.log("SIMPAN:", barang, jenis, jumlah);
-
-  if(barang === "" || isNaN(jumlah) || jumlah <= 0){
-    alert("Data belum lengkap");
+/* =============================
+   SIMPAN BARANG (FIX 100%)
+   ============================= */
+function simpanBarang(){
+  const nama = document.getElementById("namaBarang").value.trim();
+  if(nama === ""){
+    alert("Nama barang wajib diisi");
     return;
   }
 
-  db.ref("riwayat").push({
-    barang: barang,
-    jenis: jenis,
-    jumlah: jumlah,
-    tanggal: new Date().toISOString().slice(0,10)
-  }, function(error){
-    if(error){
-      alert("Gagal simpan");
-      console.error(error);
-    }else{
-      document.getElementById("barang").value="";
-      document.getElementById("jumlah").value="";
-      loadData();
-    }
+  db.ref("barang/" + nama).set({
+    stok: 0
+  }).then(()=>{
+    alert("Barang tersimpan");
+    document.getElementById("namaBarang").value = "";
+  }).catch(err=>{
+    alert("Error: " + err.message);
   });
 }
 
-/* LOAD DATA */
-function loadData(){
-  db.ref("riwayat").once("value", function(snapshot){
-    var html="", stok={}, total=0;
-    snapshot.forEach(function(child){
-      var d = child.val();
-      stok[d.barang] = (stok[d.barang]||0) + (d.jenis==="masuk"?d.jumlah:-d.jumlah);
-      total += (d.jenis==="masuk"?d.jumlah:-d.jumlah);
+/* =============================
+   LOAD BARANG REALTIME
+   ============================= */
+db.ref("barang").on("value", snapshot=>{
+  const tbody = document.getElementById("listBarang");
+  tbody.innerHTML = "";
 
-      html += `<tr>
-        <td>${d.tanggal}</td>
-        <td>${d.barang}</td>
-        <td>${d.jenis}</td>
-        <td>${d.jumlah}</td>
+  snapshot.forEach(child=>{
+    const nama = child.key;
+    const stok = child.val().stok || 0;
+
+    tbody.innerHTML += `
+      <tr>
+        <td>${nama}</td>
+        <td>${stok}</td>
         <td>
-          <button class="danger" onclick="hapus('${child.key}')">Hapus</button>
+          <button onclick="hapusBarang('${nama}')">Hapus</button>
         </td>
-      </tr>`;
-    });
-
-    document.getElementById("data").innerHTML = html;
-    document.getElementById("total").innerText = total;
-    document.getElementById("jenisBarang").innerText = Object.keys(stok).length;
-
-    var sHtml="";
-    for(var b in stok){
-      sHtml += <div class="stok-item"><span>${b}</span><b>${stok[b]}</b></div>;
-    }
-    document.getElementById("stokBarang").innerHTML = sHtml;
+      </tr>
+    `;
   });
-}
+});
 
-function hapus(id){
-  if(confirm("Hapus transaksi?")){
-    db.ref("riwayat/"+id).remove(loadData);
+/* =============================
+   HAPUS BARANG
+   ============================= */
+function hapusBarang(nama){
+  if(confirm("Hapus barang " + nama + "?")){
+    db.ref("barang/" + nama).remove();
   }
 }
-
-function exportExcel(){
-  var rows=[["Tanggal","Barang","Jenis","Jumlah"]];
-  document.querySelectorAll("#data tr").forEach(r=>{
-    rows.push([...r.children].slice(0,4).map(td=>td.innerText));
-  });
-  var wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),"Laporan");
-  XLSX.writeFile(wb,"laporan_gudang.xlsx");
-}
-
-loadData();
 </script>
 
 </body>
