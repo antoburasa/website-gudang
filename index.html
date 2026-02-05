@@ -1,4 +1,25 @@
-<!DOCTYPE html>
+[10.20, 5/2/2026] Anthoe Arzachel: <!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Stok Barang</title>
+
+<!-- XLSX -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<style>
+body{font-family:Arial;background:#f4f6f8;margin:0}
+header{background:#0d6efd;color:#fff;padding:15px;text-align:center}
+.container{padding:15px}
+.card{background:#fff;border-radius:10px;padding:15px;margin-bottom:15px}
+input,button{width:100%;padding:10px;margin-top:8px}
+button{background:#0d6efd;color:#fff;border:none;border-radius:6px}
+button.red{background:#dc3545}
+button.gray{background:#6c757d}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{border:1px solid …
+[10.28, 5/2/2026] Anthoe Arzachel: <!DOCTYPE html>
 <html lang="id">
 <head>
 <meta charset="UTF-8">
@@ -12,6 +33,30 @@ body{margin:0;font-family:Arial;background:#f4f6f8}
 header{background:#0d6efd;color:#fff;padding:15px;text-align:center}
 nav{display:flex;background:#fff;border-bottom:1px solid #ddd}
 nav button{flex:1;padding:10px;border:none;background:#fff}
+nav button.active{background:#0d6efd;color:#fff}
+.container{padding:15px}
+.card{background:#fff;padding:15px;border-radius:10px;margin-bottom:15px}
+input,select,button{width:100%;padding:10px;margin-top:8px}
+button.primary{background:#0d6efd;color:#fff;border:no…
+[10.33, 5/2/2026] Anthoe Arzachel: <!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aplikasi Gudang</title>
+
+<!-- XLSX -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<!-- Firebase v8 -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<style>
+body{margin:0;font-family:Arial;background:#f4f6f8}
+header{background:#0d6efd;color:#fff;padding:15px;text-align:center}
+nav{display:flex;flex-wrap:wrap;background:#fff;border-bottom:1px solid #ddd}
+nav button{flex:1;padding:10px;border:none;background:#fff;cursor:pointer}
 nav button.active{background:#0d6efd;color:#fff}
 .container{padding:15px}
 .card{background:#fff;padding:15px;border-radius:10px;margin-bottom:15px}
@@ -32,12 +77,12 @@ th{background:#f1f1f1}
 </header>
 
 <nav>
-  <button onclick="show('dash')" class="active">Dashboard</button>
-  <button onclick="show('master')">Master</button>
-  <button onclick="show('masuk')">Masuk</button>
-  <button onclick="show('keluar')">Keluar</button>
-  <button onclick="show('stok')">Stok</button>
-  <button onclick="show('riwayat')">Riwayat</button>
+  <button onclick="showPage('dash')" class="active">Dashboard</button>
+  <button onclick="showPage('master')">Master</button>
+  <button onclick="showPage('masuk')">Masuk</button>
+  <button onclick="showPage('keluar')">Keluar</button>
+  <button onclick="showPage('stok')">Stok</button>
+  <button onclick="showPage('riwayat')">Riwayat</button>
 </nav>
 
 <div class="container">
@@ -56,12 +101,14 @@ th{background:#f1f1f1}
   <input id="mbNama" placeholder="Nama Barang">
   <button class="primary" onclick="tambahBarang()">Tambah Barang</button>
   <table>
-    <thead><tr><th>Barang</th><th>Aksi</th></tr></thead>
+    <thead>
+      <tr><th>Barang</th><th>Aksi</th></tr>
+    </thead>
     <tbody id="listBarang"></tbody>
   </table>
 </div>
 
-<!-- BARANG MASUK -->
+<!-- MASUK -->
 <div id="masuk" class="card hide">
   <h3>➕ Barang Masuk</h3>
   <select id="bmBarang"></select>
@@ -69,7 +116,7 @@ th{background:#f1f1f1}
   <button class="primary" onclick="barangMasuk()">Simpan</button>
 </div>
 
-<!-- BARANG KELUAR -->
+<!-- KELUAR -->
 <div id="keluar" class="card hide">
   <h3>➖ Barang Keluar</h3>
   <select id="bkBarang"></select>
@@ -81,7 +128,9 @@ th{background:#f1f1f1}
 <div id="stok" class="card hide">
   <h3>📦 Stok Barang</h3>
   <table>
-    <thead><tr><th>Barang</th><th>Stok</th></tr></thead>
+    <thead>
+      <tr><th>Barang</th><th>Stok</th></tr>
+    </thead>
     <tbody id="listStok"></tbody>
   </table>
 </div>
@@ -91,73 +140,80 @@ th{background:#f1f1f1}
   <h3>🧾 Riwayat Transaksi</h3>
   <button onclick="exportExcel()">Export Excel</button>
   <table>
-    <thead><tr><th>Barang</th><th>Jenis</th><th>Jumlah</th><th>Waktu</th><th>Aksi</th></tr></thead>
+    <thead>
+      <tr><th>Barang</th><th>Jenis</th><th>Jumlah</th><th>Waktu</th><th>Aksi</th></tr>
+    </thead>
     <tbody id="listRiwayat"></tbody>
   </table>
 </div>
 
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
 <script>
-var firebaseConfig={
-  apiKey:"AIzaSyDbf4Nf0J0ELJ3B3R8Un8Ypgi0io-TB30",
-  authDomain:"gudang-sms-4c81c.firebaseapp.com",
-  databaseURL:"https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId:"gudang-sms-4c81c"
+/* FIREBASE CONFIG */
+const firebaseConfig = {
+  apiKey: "GANTI_DENGAN_APIKEY",
+  authDomain: "GANTI.firebaseapp.com",
+  databaseURL: "https://GANTI.firebaseio.com",
+  projectId: "GANTI"
 };
 firebase.initializeApp(firebaseConfig);
-var db=firebase.database();
+const db = firebase.database();
 
-function show(id){
-  document.querySelectorAll('.container .card').forEach(c=>c.classList.add('hide'));
+/* NAV */
+function showPage(id){
+  document.querySelectorAll('.card').forEach(c=>c.classList.add('hide'));
   document.getElementById(id).classList.remove('hide');
   document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
-  event.target.classList.add('active');
+  [...document.querySelectorAll('nav button')].find(b=>b.innerText.toLowerCase().includes(id))?.classList.add('active');
 }
 
-/* MASTER BARANG */
+/* MASTER */
 function tambahBarang(){
-  let n=mbNama.value.trim();
-  if(!n)return;
+  const n = mbNama.value.trim();
+  if(!n) return alert("Isi nama barang");
   db.ref('barang/'+n).set({stok:0});
   mbNama.value="";
 }
+
 function hapusBarang(n){
-  if(confirm("Hapus barang?")) db.ref('barang/'+n).remove();
+  if(confirm("Hapus barang?")){
+    db.ref('barang/'+n).remove();
+  }
 }
 
-/* BARANG MASUK */
+/* MASUK */
 function barangMasuk(){
-  let b=bmBarang.value,j=Number(bmJumlah.value);
-  if(!b||!j)return;
-  db.ref('barang/'+b+'/stok').transaction(s=> (s||0)+j);
+  const b=bmBarang.value;
+  const j=parseInt(bmJumlah.value);
+  if(!b||!j) return alert("Lengkapi data");
+  db.ref('barang/'+b+'/stok').transaction(s=>(s||0)+j);
   db.ref('transaksi').push({barang:b,jenis:"Masuk",jumlah:j,waktu:new Date().toLocaleString()});
   bmJumlah.value="";
 }
 
-/* BARANG KELUAR */
+/* KELUAR */
 function barangKeluar(){
-  let b=bkBarang.value,j=Number(bkJumlah.value);
+  const b=bkBarang.value;
+  const j=parseInt(bkJumlah.value);
+  if(!b||!j) return alert("Lengkapi data");
   db.ref('barang/'+b+'/stok').once('value',s=>{
-    if(s.val()<j)return alert("Stok tidak cukup");
+    if((s.val()||0)<j) return alert("Stok kurang");
     db.ref('barang/'+b+'/stok').transaction(x=>x-j);
     db.ref('transaksi').push({barang:b,jenis:"Keluar",jumlah:j,waktu:new Date().toLocaleString()});
     bkJumlah.value="";
   });
 }
 
-/* LOAD */
+/* LOAD BARANG */
 db.ref('barang').on('value',s=>{
-  let html="",opt="",stokHtml="",totalStok=0;
-  let count=0;
+  let html="",opt="",stokHtml="",totalStok=0,count=0;
   s.forEach(c=>{
     count++;
-    let d=c.val(); totalStok+=d.stok;
+    const d=c.val();
+    totalStok+=d.stok;
     html+=<tr><td>${c.key}</td><td><button onclick="hapusBarang('${c.key}')">Hapus</button></td></tr>;
-    opt+=<option>${c.key}</option>;
+    opt+=<option value="${c.key}">${c.key}</option>;
     stokHtml+=<tr><td>${c.key}</td><td>${d.stok}</td></tr>;
   });
   listBarang.innerHTML=html;
@@ -167,24 +223,31 @@ db.ref('barang').on('value',s=>{
   dStok.innerText=totalStok;
 });
 
+/* LOAD TRANSAKSI */
+let excelData=[];
 db.ref('transaksi').on('value',s=>{
-  let html="",arr=[],count=0;
+  let html="",count=0;
+  excelData=[];
   s.forEach(c=>{
     count++;
-    let d=c.val();
-    html+=`<tr><td>${d.barang}</td><td>${d.jenis}</td><td>${d.jumlah}</td><td>${d.waktu}</td>
-    <td><button onclick="db.ref('transaksi/${c.key}').remove()">Hapus</button></td></tr>`;
-    arr.push(d);
+    const d=c.val();
+    excelData.push(d);
+    html+=`<tr>
+      <td>${d.barang}</td>
+      <td>${d.jenis}</td>
+      <td>${d.jumlah}</td>
+      <td>${d.waktu}</td>
+      <td><button onclick="db.ref('transaksi/${c.key}').remove()">Hapus</button></td>
+    </tr>`;
   });
   listRiwayat.innerHTML=html;
   dTrans.innerText=count;
-  window.dataExcel=arr;
 });
 
 /* EXPORT */
 function exportExcel(){
-  let ws=XLSX.utils.json_to_sheet(window.dataExcel||[]);
-  let wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.json_to_sheet(excelData);
+  const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,"Riwayat");
   XLSX.writeFile(wb,"laporan-gudang.xlsx");
 }
