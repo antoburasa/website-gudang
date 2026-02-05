@@ -1,137 +1,117 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
     <meta charset="UTF-8">
-    <title>SMS GUDANG - SISTEM STOK</title>
+    <title>GUDANG ADRI - FINAL PRO</title>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 20px; }
-        .container { max-width: 700px; margin: auto; }
-        .header { background: #1e40af; color: white; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px; }
-        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; border-top: 4px solid #1e40af; }
-        h2 { color: #1e40af; margin-top: 0; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-        button { width: 100%; padding: 14px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; transition: 0.2s; }
-        .btn-blue { background: #1e40af; }
-        .btn-green { background: #10b981; }
-        .btn-red { background: #ef4444; width: auto; padding: 5px 10px; font-size: 12px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
-        th { background: #f8fafc; color: #64748b; font-size: 12px; }
-        .stok-badge { font-weight: bold; color: #1e40af; font-size: 16px; }
+        body { font-family: sans-serif; padding: 20px; background: #f0f2f5; }
+        .kotak { background: white; padding: 20px; border-radius: 10px; max-width: 600px; margin: auto; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-top: 5px solid #1a237e; }
+        h2 { color: #1a237e; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 25px; font-size: 18px; }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #1a237e; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+        th, td { border-bottom: 1px solid #eee; padding: 10px; text-align: left; }
+        th { background: #f8f9fa; color: #666; font-size: 12px; }
+        .btn-x { background: #ff4444; padding: 4px 8px; font-size: 10px; width: auto; margin: 0; }
+        .stok-qty { font-weight: bold; color: #1a237e; font-size: 16px; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header">
-        <h1>SMS GUDANG</h1>
-        <p>Sistem Kontrol Stok Realtime</p>
-    </div>
+<div class="kotak">
+    <h1 style="text-align:center; color:#1a237e; margin-bottom:0;">SMS GUDANG</h1>
+    <p style="text-align:center; margin-top:5px; color:#666;">Sistem Kontrol Stok Realtime</p>
+    
+    <h2>1. DAFTAR BARANG</h2>
+    <input type="text" id="m" placeholder="Nama Barang Baru (Contoh: BESI)">
+    <button onclick="fM()">+ TAMBAHKAN KE MASTER</button>
+    <table>
+        <thead><tr><th>Nama Barang</th><th>Aksi</th></tr></thead>
+        <tbody id="tblMaster"></tbody>
+    </table>
 
-    <div class="card">
-        <h2>📊 STOK TERSEDIA</h2>
-        <table id="tabelStok">
-            <thead><tr><th>NAMA BARANG</th><th>STOK</th></tr></thead>
-            <tbody></tbody>
-        </table>
-    </div>
+    <h2>2. INPUT TRANSAKSI</h2>
+    <select id="p"></select>
+    <select id="t">
+        <option value="IN">MASUK (+)</option>
+        <option value="OUT">KELUAR (-)</option>
+    </select>
+    <input type="number" id="q" placeholder="Jumlah (Qty)">
+    <button onclick="fT()" style="background: #2e7d32;">💾 SIMPAN TRANSAKSI</button>
 
-    <div class="card">
-        <h2>📦 MASTER BARANG (DAFTAR BARU)</h2>
-        <input type="text" id="namaBarang" placeholder="Ketik Nama Barang Baru...">
-        <button class="btn-blue" onclick="simpanMaster()">DAFTARKAN BARANG</button>
-        <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
-        <table id="tabelMaster">
-            <thead><tr><th>DAFTAR NAMA</th><th>AKSI</th></tr></thead>
-            <tbody></tbody>
-        </table>
-    </div>
+    <h2>3. LAPORAN STOK</h2>
+    <table>
+        <thead><tr><th>Nama Barang</th><th>Stok Akhir</th></tr></thead>
+        <tbody id="tblStok"></tbody>
+    </table>
 
-    <div class="card">
-        <h2>🔄 INPUT MASUK / KELUAR</h2>
-        <select id="pilihBarang"></select>
-        <select id="jenisTrans">
-            <option value="IN">BARANG MASUK (+)</option>
-            <option value="OUT">BARANG KELUAR (-)</option>
-        </select>
-        <input type="number" id="jumlahBarang" placeholder="Jumlah (Qty)">
-        <button class="btn-green" onclick="simpanTrans()">SIMPAN TRANSAKSI</button>
-    </div>
+    <h2>4. RIWAYAT (HAPUS JIKA SALAH)</h2>
+    <table>
+        <thead><tr><th>Barang</th><th>Tipe</th><th>Qty</th><th>Aksi</th></tr></thead>
+        <tbody id="bodyRiw"></tbody>
+    </table>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
-    // Config Firebase Adri
-    const firebaseConfig = {
+    var config = {
         apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
         authDomain: "gudang-sms-4c81c.firebaseapp.com",
         databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
         projectId: "gudang-sms-4c81c",
-        storageBucket: "gudang-sms-4c81c.appspot.com",
         appId: "1:598362736106:web:c8e2732d6ac7613931de93"
     };
+    firebase.initializeApp(config);
+    var db = firebase.database();
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    // Fungsi Simpan Nama Barang
-    function simpanMaster() {
-        const nama = document.getElementById('namaBarang').value.toUpperCase().trim();
-        if(!nama) return alert("Isi nama barang!");
-        db.ref("master_barang").push({ nama }).then(() => {
-            alert("Berhasil Terdaftar!");
-            document.getElementById('namaBarang').value = "";
-        });
+    function fM() {
+        var n = document.getElementById('m').value.toUpperCase().trim();
+        if(!n) return alert("Isi nama barang!");
+        db.ref("master_barang").push({ nama: n }).then(() => { document.getElementById('m').value = ""; });
     }
 
-    // Fungsi Simpan Transaksi
-    function simpanTrans() {
-        const brg = document.getElementById('pilihBarang').value;
-        const tipe = document.getElementById('jenisTrans').value;
-        const qty = parseInt(document.getElementById('jumlahBarang').value);
-        if(!brg || isNaN(qty)) return alert("Lengkapi data!");
-
-        db.ref("riwayat").push({
-            barang: brg, tipe: tipe, qty: qty,
-            tgl: new Date().toLocaleDateString()
-        }).then(() => {
+    function fT() {
+        var b = document.getElementById('p').value;
+        var t = document.getElementById('t').value;
+        var q = parseInt(document.getElementById('q').value);
+        if(!b || isNaN(q)) return alert("Lengkapi data!");
+        db.ref("riwayat").push({ barang: b, tipe: t, qty: q }).then(() => { 
             alert("Data Disimpan!");
-            document.getElementById('jumlahBarang').value = "";
+            document.getElementById('q').value = ""; 
         });
     }
 
-    // Update Data Otomatis
-    db.ref().on("value", (snapshot) => {
-        const data = snapshot.val() || {};
-        const master = data.master_barang || {};
-        const riwayat = data.riwayat || {};
+    db.ref().on("value", function(snap) {
+        var d = snap.val() || {};
+        var mst = d.master_barang || {};
+        var riw = d.riwayat || {};
 
-        // Update Dropdown & Daftar Master
-        let htmlMst = "", htmlOpt = "<option value=''>-- PILIH BARANG --</option>";
-        for(let id in master) {
-            htmlMst += <tr><td>${master[id].nama}</td><td><button class="btn-red" onclick="db.ref('master_barang/${id}').remove()">Hapus</button></td></tr>;
-            htmlOpt += <option value="${master[id].nama}">${master[id].nama}</option>;
+        var htmlMst = ""; var opt = "<option value=''>-- PILIH BARANG --</option>";
+        for(var id in mst) {
+            htmlMst += "<tr><td>"+mst[id].nama+"</td><td><button class='btn-x' onclick='if(confirm(\"Hapus barang?\")) db.ref(\"master_barang/"+id+"\").remove()'>Hapus</button></td></tr>";
+            opt += "<option value='"+mst[id].nama+"'>"+mst[id].nama+"</option>";
         }
-        document.getElementById('tabelMaster').querySelector('tbody').innerHTML = htmlMst;
-        document.getElementById('pilihBarang').innerHTML = htmlOpt;
+        document.getElementById('tblMaster').innerHTML = htmlMst;
+        document.getElementById('p').innerHTML = opt;
 
-        // Hitung Stok
-        let stok = {};
-        for(let id in riwayat) {
-            const r = riwayat[id];
+        var stok = {}; var htmlRiw = "";
+        var keys = Object.keys(riw).reverse();
+        keys.forEach(function(id) {
+            var r = riw[id];
             if(r.tipe === "IN") stok[r.barang] = (stok[r.barang] || 0) + r.qty;
             else stok[r.barang] = (stok[r.barang] || 0) - r.qty;
-        }
+            htmlRiw += "<tr><td>"+r.barang+"</td><td>"+r.tipe+"</td><td>"+r.qty+"</td><td><button class='btn-x' onclick='db.ref(\"riwayat/"+id+"\").remove()'>X</button></td></tr>";
+        });
+        document.getElementById('bodyRiw').innerHTML = htmlRiw;
 
-        let htmlStok = "";
-        for(let n in stok) {
-            htmlStok += <tr><td><b>${n}</b></td><td class="stok-badge">${stok[n]}</td></tr>;
+        var htmlStok = "";
+        for(var b in stok) {
+            htmlStok += "<tr><td><b>"+b+"</b></td><td class='stok-qty'>"+stok[b]+"</td></tr>";
         }
-        document.getElementById('tabelStok').querySelector('tbody').innerHTML = htmlStok;
+        document.getElementById('tblStok').innerHTML = htmlStok;
     });
 </script>
-
 </body>
 </html>
