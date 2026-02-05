@@ -1,90 +1,89 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Gudang - Berfungsi</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistem Gudang</title>
 
-    <style>
-        body{font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:#f4f6f8; margin:0; padding:12px; color: #333;}
-        h2,h3{margin:10px 0}
-        .card{background:#fff; padding:15px; border-radius:10px; margin-bottom:12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1)}
-        .dashboard{display:grid; grid-template-columns:repeat(2,1fr); gap:10px}
-        .box{background:#0d6efd; color:#fff; padding:14px; border-radius:10px; text-align:center}
-        .box span{font-size:24px; font-weight:bold; display:block}
-        input,select,button{width:100%; padding:10px; margin-top:8px; border-radius:6px; border:1px solid #ccc; box-sizing: border-box;}
-        button{background:#0d6efd; color:#fff; border:none; cursor:pointer; font-weight:bold}
-        button:hover{opacity:0.9}
-        button.danger{background:#dc3545}
-        button.warn{background:#ffc107; color:#000}
-        table{width:100%; border-collapse:collapse; font-size:13px; margin-top:10px}
-        th,td{border:1px solid #ddd; padding:8px; text-align:center}
-        th{background:#f8f9fa}
-        .stok-item{display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee}
-        @media print{button,input,select,.card:nth-child(2),.card:nth-child(3){display:none}}
-    </style>
+<style>
+body{font-family:Arial;background:#f4f6f8;margin:0;padding:12px}
+h2,h3{margin:10px 0}
+.card{background:#fff;padding:12px;border-radius:10px;margin-bottom:12px}
+.dashboard{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.box{background:#0d6efd;color:#fff;padding:14px;border-radius:10px;text-align:center}
+.box span{font-size:22px;font-weight:bold}
+input,select,button{width:100%;padding:10px;margin-top:6px;border-radius:6px;border:1px solid #ccc}
+button{background:#0d6efd;color:#fff;border:none}
+button.danger{background:#dc3545}
+button.warn{background:#ffc107;color:#000}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{border:1px solid #ddd;padding:6px;text-align:center}
+th{background:#eee}
+.stok-item{display:flex;justify-content:space-between;padding:6px;border-bottom:1px solid #eee}
+@media print{button,input,select{display:none}}
+</style>
 </head>
 
 <body>
 
-<h2>📦 Sistem Gudang v1.0</h2>
+<h2>📦 Sistem Gudang</h2>
 
 <div class="dashboard">
-  <div class="box">Total Stok Fisik<br><span id="total">0</span></div>
-  <div class="box">Jenis Barang<br><span id="jenisBarang">0</span></div>
+  <div class="box">Total Stok<br><span id="total">0</span></div>
+  <div class="box">Jumlah Barang<br><span id="jenisBarang">0</span></div>
 </div>
 
 <div class="card">
   <h3>➕ Input Transaksi</h3>
-  <input id="barang" placeholder="Nama Barang (Contoh: Semen)">
+  <input id="barang" placeholder="Nama Barang">
   <select id="jenis">
-    <option value="masuk">Barang Masuk (+)</option>
-    <option value="keluar">Barang Keluar (-)</option>
+    <option value="masuk">Masuk</option>
+    <option value="keluar">Keluar</option>
   </select>
-  <input id="jumlah" type="number" placeholder="Jumlah Unit">
-  <button type="button" onclick="simpan()">SIMPAN DATA</button>
+  <input id="jumlah" type="number" placeholder="Jumlah">
+  <input id="editId" type="hidden">
+  <button type="button" onclick="simpan()">SIMPAN</button>
 </div>
 
 <div class="card">
   <h3>📅 Filter & Laporan</h3>
-  <div style="display:flex; gap:5px">
-      <input type="date" id="tglAwal">
-      <input type="date" id="tglAkhir">
-  </div>
-  <button type="button" class="warn" onclick="loadData()">Terapkan Filter</button>
-  <button type="button" style="background:#198754" onclick="exportExcel()">Export Excel</button>
-  <button type="button" style="background:#6c757d" onclick="window.print()">Cetak PDF</button>
+  <input type="date" id="tglAwal">
+  <input type="date" id="tglAkhir">
+  <button type="button" onclick="loadData()">Filter</button>
+  <button type="button" onclick="exportExcel()">Export Excel</button>
+  <button type="button" onclick="window.print()">Print</button>
 </div>
 
 <div class="card">
-  <h3>📊 Ringkasan Stok Saat Ini</h3>
+  <h3>📊 Stok per Barang</h3>
   <div id="stokBarang"></div>
 </div>
 
 <div class="card">
   <h3>📜 Riwayat Transaksi</h3>
-  <div style="overflow-x:auto">
-      <table>
-        <thead>
-          <tr>
-            <th>Tanggal</th>
-            <th>Barang</th>
-            <th>Jenis</th>
-            <th>Jumlah</th>
-            <th>Aksi</th>
-          </tr>
-        </thead>
-        <tbody id="data"></tbody>
-      </table>
-  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Tanggal</th>
+        <th>Barang</th>
+        <th>Jenis</th>
+        <th>Jumlah</th>
+        <th>Aksi</th>
+      </tr>
+    </thead>
+    <tbody id="data"></tbody>
+  </table>
 </div>
 
+<!-- FIREBASE v8 (STABIL) -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<!-- EXCEL -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <script>
-/* KONFIGURASI FIREBASE */
+/* FIREBASE CONFIG */
 var firebaseConfig = {
   apiKey: "AIzaSyDbf4Nf0J0ELJ3B3R8Un8Ypgi0io-TB30",
   authDomain: "gudang-sms-4c81c.firebaseapp.com",
@@ -98,17 +97,16 @@ var firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 var db = firebase.database();
 
-/* FUNGSI SIMPAN */
+/* SIMPAN DATA */
 function simpan(){
-  var barangInput = document.getElementById("barang");
-  var jumlahInput = document.getElementById("jumlah");
-  var jenis = document.getElementById("jenis").value;
-  
-  var barang = barangInput.value.trim().toUpperCase();
-  var jumlah = parseInt(jumlahInput.value);
+  var barang = document.getElementById("barang").value.trim();
+  var jenis  = document.getElementById("jenis").value;
+  var jumlah = parseInt(document.getElementById("jumlah").value);
+
+  console.log("SIMPAN:", barang, jenis, jumlah);
 
   if(barang === "" || isNaN(jumlah) || jumlah <= 0){
-    alert("Mohon isi nama barang dan jumlah dengan benar!");
+    alert("Data belum lengkap");
     return;
   }
 
@@ -119,77 +117,64 @@ function simpan(){
     tanggal: new Date().toISOString().slice(0,10)
   }, function(error){
     if(error){
-      alert("Gagal menyimpan data ke database.");
+      alert("Gagal simpan");
+      console.error(error);
     }else{
-      barangInput.value = "";
-      jumlahInput.value = "";
-      loadData(); // Refresh data setelah simpan
+      document.getElementById("barang").value="";
+      document.getElementById("jumlah").value="";
+      loadData();
     }
   });
 }
 
-/* FUNGSI LOAD & FILTER DATA */
+/* LOAD DATA */
 function loadData(){
-  var tglAwal = document.getElementById("tglAwal").value;
-  var tglAkhir = document.getElementById("tglAkhir").value;
-
   db.ref("riwayat").once("value", function(snapshot){
     var html="", stok={}, total=0;
-    
     snapshot.forEach(function(child){
       var d = child.val();
-      
-      // Logika Filter Tanggal
-      if(tglAwal && d.tanggal < tglAwal) return;
-      if(tglAkhir && d.tanggal > tglAkhir) return;
-
-      // Hitung Stok Per Barang & Total Keseluruhan
-      var perubahan = (d.jenis === "masuk" ? d.jumlah : -d.jumlah);
-      stok[d.barang] = (stok[d.barang] || 0) + perubahan;
-      total += perubahan;
+      stok[d.barang] = (stok[d.barang]||0) + (d.jenis==="masuk"?d.jumlah:-d.jumlah);
+      total += (d.jenis==="masuk"?d.jumlah:-d.jumlah);
 
       html += `<tr>
         <td>${d.tanggal}</td>
         <td>${d.barang}</td>
-        <td style="color:${d.jenis === 'masuk' ? 'green' : 'red'}"><b>${d.jenis.toUpperCase()}</b></td>
+        <td>${d.jenis}</td>
         <td>${d.jumlah}</td>
         <td>
-          <button class="danger" style="padding:4px 8px; width:auto" onclick="hapus('${child.key}')">Hapus</button>
+          <button class="danger" onclick="hapus('${child.key}')">Hapus</button>
         </td>
       </tr>`;
     });
 
-    // Render ke Tabel Riwayat
-    document.getElementById("data").innerHTML = html || "<tr><td colspan='5'>Tidak ada data.</td></tr>";
+    document.getElementById("data").innerHTML = html;
     document.getElementById("total").innerText = total;
     document.getElementById("jenisBarang").innerText = Object.keys(stok).length;
 
-    // Render Ringkasan Stok Per Item
     var sHtml="";
     for(var b in stok){
-      sHtml += <div class="stok-item"><span>${b}</span><b>${stok[b]} Unit</b></div>;
+      sHtml += <div class="stok-item"><span>${b}</span><b>${stok[b]}</b></div>;
     }
-    document.getElementById("stokBarang").innerHTML = sHtml || "Belum ada stok.";
+    document.getElementById("stokBarang").innerHTML = sHtml;
   });
 }
 
-/* FUNGSI HAPUS */
 function hapus(id){
-  if(confirm("Hapus data transaksi ini secara permanen?")){
-    db.ref("riwayat/" + id).remove().then(() => {
-        loadData();
-    });
+  if(confirm("Hapus transaksi?")){
+    db.ref("riwayat/"+id).remove(loadData);
   }
 }
 
-/* FUNGSI EXCEL */
 function exportExcel(){
-  var table = document.querySelector("table");
-  var wb = XLSX.utils.table_to_book(table, {sheet: "Laporan Gudang"});
-  XLSX.writeFile(wb, "Laporan_Gudang_" + new Date().toLocaleDateString() + ".xlsx");
+  var rows=[["Tanggal","Barang","Jenis","Jumlah"]];
+  document.querySelectorAll("#data tr").forEach(r=>{
+    rows.push([...r.children].slice(0,4).map(td=>td.innerText));
+  });
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),"Laporan");
+  XLSX.writeFile(wb,"laporan_gudang.xlsx");
 }
 
-/* JALANKAN SAAT STARTUP */
 loadData();
 </script>
 
