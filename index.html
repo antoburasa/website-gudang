@@ -44,16 +44,18 @@ th{background:#eee}
   </select>
   <input id="jumlah" type="number" placeholder="Jumlah">
   <input id="editId" type="hidden">
-  <button onclick="simpan()">Simpan</button>
+
+  <!-- PENTING: type="button" -->
+  <button type="button" onclick="simpan()">Simpan</button>
 </div>
 
 <div class="card">
   <h3>📅 Filter & Laporan</h3>
   <input type="date" id="tglAwal">
   <input type="date" id="tglAkhir">
-  <button onclick="loadData()">Filter</button>
-  <button onclick="exportExcel()">Export Excel</button>
-  <button onclick="window.print()">Print</button>
+  <button type="button" onclick="loadData()">Filter</button>
+  <button type="button" onclick="exportExcel()">Export Excel</button>
+  <button type="button" onclick="window.print()">Print</button>
 </div>
 
 <div class="card">
@@ -85,7 +87,7 @@ th{background:#eee}
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <script>
-/* ===== FIREBASE ===== */
+/* FIREBASE CONFIG */
 const firebaseConfig = {
   apiKey: "AIzaSyDbf4Nf0J0ELJ3B3R8Un8Ypgi0io-TB30",
   authDomain: "gudang-sms-4c81c.firebaseapp.com",
@@ -99,7 +101,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-/* ===== ELEMENT ===== */
+/* ELEMENT */
 const barangEl = document.getElementById("barang");
 const jenisEl = document.getElementById("jenis");
 const jumlahEl = document.getElementById("jumlah");
@@ -111,14 +113,16 @@ const stokBarangEl = document.getElementById("stokBarang");
 const tglAwalEl = document.getElementById("tglAwal");
 const tglAkhirEl = document.getElementById("tglAkhir");
 
-/* ===== SIMPAN ===== */
+/* SIMPAN */
 function simpan(){
   const barang = barangEl.value.trim();
   const jenis = jenisEl.value;
-  const jumlah = parseInt(jumlahEl.value);
+  const jumlah = Number(jumlahEl.value);
 
-  if(!barang || !jumlah){
-    alert("Lengkapi data");
+  console.log("Klik simpan", barang, jenis, jumlah);
+
+  if(!barang || jumlah <= 0){
+    alert("Data belum lengkap");
     return;
   }
 
@@ -130,27 +134,30 @@ function simpan(){
   };
 
   if(editIdEl.value){
-    db.ref("riwayat/"+editIdEl.value).set(data);
+    db.ref("riwayat/"+editIdEl.value).set(data)
+      .then(()=>resetForm());
   }else{
-    db.ref("riwayat").push(data);
+    db.ref("riwayat").push(data)
+      .then(()=>resetForm());
   }
+}
 
+/* RESET */
+function resetForm(){
   barangEl.value="";
   jumlahEl.value="";
   editIdEl.value="";
 }
 
-/* ===== LOAD DATA ===== */
+/* LOAD */
 function loadData(){
   db.ref("riwayat").on("value",snap=>{
     let html="",stok={},total=0;
-
     snap.forEach(x=>{
       const d=x.val(),id=x.key;
       if((!tglAwalEl.value||d.tanggal>=tglAwalEl.value)&&(!tglAkhirEl.value||d.tanggal<=tglAkhirEl.value)){
-        stok[d.barang]=(stok[d.barang]||0)+(d.jenis=="masuk"?d.jumlah:-d.jumlah);
-        total+=d.jenis=="masuk"?d.jumlah:-d.jumlah;
-
+        stok[d.barang]=(stok[d.barang]||0)+(d.jenis==="masuk"?d.jumlah:-d.jumlah);
+        total+=d.jenis==="masuk"?d.jumlah:-d.jumlah;
         html+=`<tr>
           <td>${d.tanggal}</td>
           <td>${d.barang}</td>
@@ -163,19 +170,13 @@ function loadData(){
         </tr>`;
       }
     });
-
     dataEl.innerHTML=html;
     totalEl.innerText=total;
     jenisBarangEl.innerText=Object.keys(stok).length;
-
-    stokBarangEl.innerHTML="";
-    for(let b in stok){
-      stokBarangEl.innerHTML+=<div class="stok-item"><span>${b}</span><b>${stok[b]}</b></div>;
-    }
+    stokBarangEl.innerHTML=Object.keys(stok).map(b=><div class="stok-item"><span>${b}</span><b>${stok[b]}</b></div>).join("");
   });
 }
 
-/* ===== EDIT & HAPUS ===== */
 function edit(id,b,j,jml){
   editIdEl.value=id;
   barangEl.value=b;
@@ -183,10 +184,9 @@ function edit(id,b,j,jml){
   jumlahEl.value=jml;
 }
 function hapus(id){
-  if(confirm("Hapus transaksi?")) db.ref("riwayat/"+id).remove();
+  if(confirm("Hapus?")) db.ref("riwayat/"+id).remove();
 }
 
-/* ===== EXPORT ===== */
 function exportExcel(){
   const rows=[["Tanggal","Barang","Jenis","Jumlah"]];
   document.querySelectorAll("#data tr").forEach(r=>{
