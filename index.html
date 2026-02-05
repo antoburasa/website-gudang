@@ -3,46 +3,81 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Firebase Gudang – FIX</title>
+<title>Dashboard Stok Barang</title>
+
+<!-- XLSX -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <style>
-body{font-family:Arial;background:#f2f2f2;padding:20px}
-.card{background:#fff;padding:15px;border-radius:8px}
+body{font-family:Arial;background:#f4f6f8;margin:0}
+header{background:#0d6efd;color:#fff;padding:15px;text-align:center}
+.container{padding:15px}
+.card{background:#fff;border-radius:10px;padding:15px;margin-bottom:15px}
 input,button{width:100%;padding:10px;margin-top:8px}
 button{background:#0d6efd;color:#fff;border:none;border-radius:6px}
-table{width:100%;border-collapse:collapse;margin-top:15px}
-td,th{border:1px solid #ccc;padding:6px;text-align:center}
-th{background:#eee}
+button.red{background:#dc3545}
+button.gray{background:#6c757d}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{border:1px solid #ddd;padding:6px;font-size:14px;text-align:center}
+th{background:#f1f1f1}
+.flex{display:flex;gap:10px}
+.flex button{flex:1}
+.small{font-size:12px;color:#666}
 </style>
 </head>
 
 <body>
 
-<h2>✅ Firebase Gudang (Versi PASTI JALAN)</h2>
+<header>
+  <h2>📦 Dashboard Stok Barang</h2>
+</header>
 
+<div class="container">
+
+<!-- INPUT -->
 <div class="card">
+  <h3>➕ Tambah Transaksi</h3>
   <input id="barang" placeholder="Nama Barang">
-  <input id="jumlah" type="number" placeholder="Jumlah">
-  <button type="button" onclick="simpan()">SIMPAN DATA</button>
+  <input id="jumlah" type="number" placeholder="Jumlah (+ masuk / - keluar)">
+  <button onclick="simpan()">Simpan</button>
 </div>
 
-<table>
-  <thead>
-    <tr>
-      <th>Barang</th>
-      <th>Jumlah</th>
-      <th>Waktu</th>
-    </tr>
-  </thead>
-  <tbody id="list"></tbody>
-</table>
+<!-- STOK -->
+<div class="card">
+  <h3>📊 Stok Per Barang</h3>
+  <table>
+    <thead><tr><th>Barang</th><th>Stok</th></tr></thead>
+    <tbody id="stok"></tbody>
+  </table>
+</div>
 
-<!-- FIREBASE v8 (PALING STABIL) -->
+<!-- RIWAYAT -->
+<div class="card">
+  <h3>🧾 Riwayat Transaksi</h3>
+  <div class="flex">
+    <button class="gray" onclick="exportExcel()">Export Excel</button>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Barang</th>
+        <th>Jumlah</th>
+        <th>Waktu</th>
+        <th>Aksi</th>
+      </tr>
+    </thead>
+    <tbody id="riwayat"></tbody>
+  </table>
+</div>
+
+</div>
+
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
-/* 🔥 FIREBASE CONFIG – SUDAH BENAR */
+/* 🔥 GANTI JIKA PERLU */
 var firebaseConfig = {
   apiKey: "AIzaSyDbf4Nf0J0ELJ3B3R8Un8Ypgi0io-TB30",
   authDomain: "gudang-sms-4c81c.firebaseapp.com",
@@ -56,48 +91,69 @@ var firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 var db = firebase.database();
 
-/* SIMPAN DATA */
+/* SIMPAN */
 function simpan(){
-  var barang = document.getElementById("barang").value.trim();
-  var jumlah = document.getElementById("jumlah").value;
+  let barang=document.getElementById("barang").value.trim();
+  let jumlah=parseInt(document.getElementById("jumlah").value);
+  if(!barang || isNaN(jumlah)) return alert("Isi data!");
 
-  console.log("Klik simpan:", barang, jumlah);
-
-  if(barang === "" || jumlah === ""){
-    alert("Isi data dulu");
-    return;
-  }
-
-  db.ref("gudang").push({
-    barang: barang,
-    jumlah: jumlah,
-    waktu: new Date().toString()
-  }, function(error){
-    if(error){
-      alert("❌ GAGAL SIMPAN");
-      console.error(error);
-    } else {
-      alert("✅ DATA TERSIMPAN");
-      document.getElementById("barang").value="";
-      document.getElementById("jumlah").value="";
-    }
+  db.ref("transaksi").push({
+    barang, jumlah,
+    waktu:new Date().toLocaleString()
   });
+
+  document.getElementById("barang").value="";
+  document.getElementById("jumlah").value="";
 }
 
-/* LOAD DATA */
-db.ref("gudang").on("value", function(snapshot){
-  var html="";
-  snapshot.forEach(function(child){
-    var d = child.val();
-    html += `
-      <tr>
-        <td>${d.barang}</td>
-        <td>${d.jumlah}</td>
-        <td>${d.waktu}</td>
-      </tr>`;
+/* LOAD */
+db.ref("transaksi").on("value", snap=>{
+  let stok={}, html="", excel=[];
+  snap.forEach(c=>{
+    let d=c.val(), id=c.key;
+    stok[d.barang]=(stok[d.barang]||0)+Number(d.jumlah);
+    html+=`
+    <tr>
+      <td>${d.barang}</td>
+      <td>${d.jumlah}</td>
+      <td>${d.waktu}</td>
+      <td>
+        <button class="gray" onclick="edit('${id}','${d.barang}',${d.jumlah})">Edit</button>
+        <button class="red" onclick="hapus('${id}')">Hapus</button>
+      </td>
+    </tr>`;
+    excel.push(d);
   });
-  document.getElementById("list").innerHTML = html;
+  document.getElementById("riwayat").innerHTML=html;
+
+  let shtml="";
+  for(let b in stok){
+    shtml+=<tr><td>${b}</td><td>${stok[b]}</td></tr>;
+  }
+  document.getElementById("stok").innerHTML=shtml;
+
+  window.dataExcel=excel;
 });
+
+/* EDIT */
+function edit(id,barang,jumlah){
+  let nb=prompt("Nama Barang",barang);
+  let nj=prompt("Jumlah",jumlah);
+  if(nb&&nj) db.ref("transaksi/"+id).update({barang:nb,jumlah:Number(nj)});
+}
+
+/* HAPUS */
+function hapus(id){
+  if(confirm("Hapus transaksi?")) db.ref("transaksi/"+id).remove();
+}
+
+/* EXPORT */
+function exportExcel(){
+  let ws=XLSX.utils.json_to_sheet(window.dataExcel||[]);
+  let wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"Transaksi");
+  XLSX.writeFile(wb,"laporan-stok.xlsx");
+}
 </script>
 
 </body>
