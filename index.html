@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GUDANG SMS v1.5 - SINGAPORE SERVER</title>
+    <title>GUDANG SMS v1.6 - FIX SINGAPORE</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -15,15 +15,15 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); margin: 0; padding: 20px; }
         .container { max-width: 500px; margin: auto; }
         h2 { text-align: center; color: var(--primary); font-weight: 800; }
-        .status-bar { text-align: center; font-size: 12px; padding: 5px; border-radius: 20px; margin-bottom: 15px; background: #fff; border: 1px solid #ddd; }
+        .status-bar { text-align: center; font-size: 12px; padding: 8px; border-radius: 10px; margin-bottom: 15px; background: #fff; border: 1px solid #ddd; font-weight: bold; }
         .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
         .box { padding: 20px; border-radius: 12px; color: white; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .box-blue { background: #007bff; }
         .box-cyan { background: #17a2b8; }
         .box b { font-size: 30px; display: block; }
         .card { background: white; padding: 20px; border-radius: 15px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #cbd5e1; box-sizing: border-box; font-size: 14px; font-family: inherit; }
-        button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
+        input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #cbd5e1; box-sizing: border-box; font-size: 14px; }
+        button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; text-transform: uppercase; }
         button:disabled { background: #ccc; }
         .stok-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; font-weight: 600; }
         table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
@@ -33,8 +33,8 @@
 <body>
 
 <div class="container">
-    <h2>📦 GUDANG SMS v1.5</h2>
-    <div id="status" class="status-bar">🛰️ Mencoba terhubung ke Singapore Server...</div>
+    <h2>📦 GUDANG SMS v1.6</h2>
+    <div id="status" class="status-bar" style="color: orange;">🛰️ Menghubungkan ke Server Singapore...</div>
 
     <div class="dashboard">
         <div class="box box-blue">STOK TOTAL<br><b id="totalStok">0</b></div>
@@ -42,6 +42,7 @@
     </div>
 
     <div class="card">
+        <h3 style="margin:0; font-size:14px; color:var(--primary);">➕ INPUT TRANSAKSI</h3>
         <input type="text" id="barang" placeholder="Nama Barang">
         <select id="jenis">
             <option value="masuk">BARANG MASUK (+)</option>
@@ -52,12 +53,12 @@
     </div>
 
     <div class="card">
-        <h3 style="margin:0; font-size:14px; color:#1e3a8a;">📊 DAFTAR STOK</h3>
+        <h3 style="margin:0; font-size:14px; color:var(--primary);">📊 RINGKASAN STOK</h3>
         <div id="listStok" style="margin-top:10px;">Menunggu data...</div>
     </div>
 
     <div class="card">
-        <h3 style="margin:0; font-size:14px; color:#1e3a8a;">📜 RIWAYAT</h3>
+        <h3 style="margin:0; font-size:14px; color:var(--primary);">📜 RIWAYAT TERAKHIR</h3>
         <table id="riwayat">
             <thead><tr><th>Barang</th><th>Tipe</th><th>Qty</th></tr></thead>
             <tbody id="bodyRiwayat"></tbody>
@@ -66,10 +67,11 @@
 </div>
 
 <script>
-    // KONFIGURASI KHUSUS SINGAPORE (Disesuaikan foto database kamu)
+    // --- KONFIGURASI KHUSUS SINGAPORE (Disesuaikan foto database kamu) ---
     const firebaseConfig = {
         apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
         authDomain: "gudang-sms-4c81c.firebaseapp.com",
+        // Alamat di bawah ini HARUS SAMA dengan foto database kamu agar tidak macet
         databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
         projectId: "gudang-sms-4c81c",
         appId: "1:598362736106:web:c8e2732d6ac7613931de93"
@@ -78,17 +80,20 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // Fungsi Ambil Data
-    function muat() {
+    // Fungsi Ambil Data Realtime
+    function muatData() {
         db.ref("riwayat").on("value", (snap) => {
-            document.getElementById("status").innerHTML = "✅ Terhubung ke Database Singapore";
+            document.getElementById("status").innerHTML = "✅ SERVER SINGAPORE CONNECTED";
             document.getElementById("status").style.color = "green";
             
-            let total = 0; let peta = {}; let riwayatHtml = "";
+            let total = 0; 
+            let peta = {}; 
+            let riwayatHtml = "";
             let arr = [];
 
             if (!snap.exists()) {
-                document.getElementById("listStok").innerHTML = "Belum ada data.";
+                document.getElementById("listStok").innerHTML = "Database kosong.";
+                document.getElementById("bodyRiwayat").innerHTML = "<tr><td colspan='3' style='text-align:center'>Tidak ada transaksi</td></tr>";
                 return;
             }
 
@@ -96,6 +101,8 @@
                 const d = child.val();
                 arr.push(d);
                 let q = parseInt(d.jumlah) || 0;
+                
+                // Logika Hitung
                 if (d.jenis === "masuk") {
                     peta[d.barang] = (peta[d.barang] || 0) + q;
                     total += q;
@@ -105,6 +112,7 @@
                 }
             });
 
+            // Update UI
             document.getElementById("totalStok").innerText = total;
             document.getElementById("totalJenis").innerText = Object.keys(peta).length;
 
@@ -114,10 +122,14 @@
             }
             document.getElementById("listStok").innerHTML = stokHtml;
 
+            // Tampilkan 5 terakhir
             arr.reverse().slice(0, 5).forEach(r => {
-                riwayatHtml += <tr><td>${r.barang}</td><td>${r.jenis.toUpperCase()}</td><td>${r.jumlah}</td></tr>;
+                riwayatHtml += <tr><td>${r.barang}</td><td style="color:${r.jenis==='masuk'?'green':'red'}">${r.jenis.toUpperCase()}</td><td>${r.jumlah}</td></tr>;
             });
             document.getElementById("bodyRiwayat").innerHTML = riwayatHtml;
+        }, (err) => {
+            document.getElementById("status").innerHTML = "❌ ERROR: " + err.message;
+            document.getElementById("status").style.color = "red";
         });
     }
 
@@ -127,27 +139,30 @@
         const j = document.getElementById("jumlah");
         const btn = document.getElementById("btnSimpan");
 
-        if(!b.value || !j.value) return alert("Isi nama dan jumlah!");
+        if(!b.value || !j.value) return alert("Mohon isi nama barang dan jumlah!");
 
         btn.disabled = true;
-        btn.innerText = "PROSES...";
+        btn.innerText = "MENYIMPAN...";
 
         db.ref("riwayat").push({
             barang: b.value.toUpperCase().trim(),
             jumlah: parseInt(j.value),
             jenis: document.getElementById("jenis").value,
-            tgl: new Date().toISOString().slice(0,10)
+            waktu: new Date().toLocaleString()
         }).then(() => {
-            b.value = ""; j.value = "";
+            b.value = ""; 
+            j.value = "";
             btn.disabled = false;
             btn.innerText = "SIMPAN DATA";
         }).catch(err => {
-            alert("Gagal: " + err.message);
+            alert("Gagal simpan: " + err.message);
             btn.disabled = false;
+            btn.innerText = "SIMPAN DATA";
         });
     }
 
-    muat();
+    // Jalankan
+    muatData();
 </script>
 </body>
 </html>
