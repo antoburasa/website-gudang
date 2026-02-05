@@ -95,4 +95,227 @@
         .badge { 
             padding: 3px 8px; 
             border-radius: 5px; 
-            font-size:
+            font-size: 11px; 
+            color: white; 
+            font-weight: bold; 
+        }
+        .bg-in { background: var(--success); }
+        .bg-out { background: var(--danger); }
+
+        .filter-box { 
+            background: #eef2f7; 
+            padding: 15px; 
+            border-radius: 10px; 
+            margin: 15px 0; 
+        }
+
+        .btn-del { 
+            background: #ff5252; 
+            padding: 5px 10px; 
+            font-size: 11px; 
+            width: auto; 
+            display: inline-block;
+        }
+
+        @media (max-width: 600px) {
+            .input-group { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>SMS GUDANG PRO</h1>
+    <p class="subtitle">Sistem Monitoring Stok Realtime - User: Adri</p>
+
+    <h2>1. Daftarkan Barang Baru</h2>
+    <div class="input-group">
+        <input type="text" id="m_nama" placeholder="Nama Barang (BESI, SEMEN, dll)" style="text-transform: uppercase;">
+        <input type="number" id="m_min" placeholder="Batas Stok Minimum">
+    </div>
+    <button onclick="simpanMaster()">+ TAMBAHKAN KE MASTER</button>
+
+    <h2>2. Input Barang Masuk / Keluar</h2>
+    <select id="t_pilih_barang">
+        <option value="">-- PILIH BARANG --</option>
+    </select>
+    <div class="input-group" style="margin-top: 10px;">
+        <select id="t_tipe">
+            <option value="IN">BARANG MASUK (+)</option>
+            <option value="OUT">BARANG KELUAR (-)</option>
+        </select>
+        <input type="number" id="t_qty" placeholder="Jumlah (Qty)">
+    </div>
+    <button class="btn-save" onclick="simpanTransaksi()">💾 SIMPAN TRANSAKSI</button>
+
+    <h2>3. Status Stok & Warning</h2>
+    <div class="table-container">
+        <table id="tblStok">
+            <thead>
+                <tr>
+                    <th>Nama Barang</th>
+                    <th>Batas Min</th>
+                    <th>Stok Saat Ini</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <h2>4. Riwayat Transaksi</h2>
+    <div class="filter-box">
+        <label style="font-size: 12px; font-weight: bold;">🔍 CARI TRANSAKSI:</label>
+        <input type="text" id="pencarian" onkeyup="renderData()" placeholder="Ketik nama barang...">
+    </div>
+    <div class="table-container">
+        <table id="tblRiwayat">
+            <thead>
+                <tr>
+                    <th>Tanggal & Waktu</th>
+                    <th>Barang</th>
+                    <th>Tipe</th>
+                    <th>Qty</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody id="bodyRiwayat"></tbody>
+        </table>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<script>
+    // KONFIGURASI FIREBASE ADRI
+    const firebaseConfig = {
+        apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
+        authDomain: "gudang-sms-4c81c.firebaseapp.com",
+        databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "gudang-sms-4c81c",
+        appId: "1:598362736106:web:c8e2732d6ac7613931de93"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // FUNGSI 1: SIMPAN MASTER BARANG
+    function simpanMaster() {
+        const nama = document.getElementById('m_nama').value.toUpperCase().trim();
+        const min = parseInt(document.getElementById('m_min').value) || 0;
+        
+        if(!nama) return alert("Nama barang tidak boleh kosong!");
+        
+        db.ref("master_barang").push({ 
+            nama: nama, 
+            limit: min 
+        }).then(() => {
+            document.getElementById('m_nama').value = "";
+            document.getElementById('m_min').value = "";
+            alert("Barang berhasil didaftarkan!");
+        });
+    }
+
+    // FUNGSI 2: SIMPAN TRANSAKSI
+    function simpanTransaksi() {
+        const barang = document.getElementById('t_pilih_barang').value;
+        const tipe = document.getElementById('t_tipe').value;
+        const qty = parseInt(document.getElementById('t_qty').value);
+        const waktu = new Date().toLocaleString('id-ID', { 
+            dateStyle: 'medium', 
+            timeStyle: 'short' 
+        });
+
+        if(!barang || isNaN(qty)) return alert("Lengkapi data transaksi!");
+
+        db.ref("riwayat").push({
+            barang: barang,
+            tipe: tipe,
+            qty: qty,
+            waktu: waktu,
+            timestamp: Date.now()
+        }).then(() => {
+            document.getElementById('t_qty').value = "";
+            alert("Transaksi Berhasil!");
+        });
+    }
+
+    // FUNGSI 3: RENDER DATA (REALTIME)
+    db.ref().on("value", function(snap) {
+        const data = snap.val() || {};
+        const master = data.master_barang || {};
+        const riwayat = data.riwayat || {};
+        
+        // Update Dropdown
+        let htmlDropdown = "<option value=''>-- PILIH BARANG --</option>";
+        let limits = {};
+        for(let id in master) {
+            htmlDropdown += <option value="${master[id].nama}">${master[id].nama}</option>;
+            limits[master[id].nama] = master[id].limit || 0;
+        }
+        document.getElementById('t_pilih_barang').innerHTML = htmlDropdown;
+
+        window.fullMaster = limits;
+        window.fullRiwayat = riwayat;
+        renderData();
+    });
+
+    function renderData() {
+        const limits = window.fullMaster || {};
+        const riwayat = window.fullRiwayat || {};
+        const cari = document.getElementById('pencarian').value.toUpperCase();
+
+        let hitungStok = {};
+        let htmlRiw = "";
+        
+        // Urutkan riwayat terbaru di atas
+        const urutan = Object.keys(riwayat).sort((a,b) => riwayat[b].timestamp - riwayat[a].timestamp);
+
+        urutan.forEach(id => {
+            const r = riwayat[id];
+            // Hitung Stok
+            if(r.tipe === "IN") {
+                hitungStok[r.barang] = (hitungStok[r.barang] || 0) + r.qty;
+            } else {
+                hitungStok[r.barang] = (hitungStok[r.barang] || 0) - r.qty;
+            }
+
+            // Render Riwayat dengan Filter
+            if(r.barang.includes(cari)) {
+                htmlRiw += `<tr>
+                    <td>${r.waktu}</td>
+                    <td><b>${r.barang}</b></td>
+                    <td><span class="badge ${r.tipe === 'IN' ? 'bg-in' : 'bg-out'}">${r.tipe}</span></td>
+                    <td>${r.qty}</td>
+                    <td><button class="btn-del" onclick="hapus('riwayat/${id}')">Hapus</button></td>
+                </tr>`;
+            }
+        });
+        document.getElementById('bodyRiwayat').innerHTML = htmlRiw;
+
+        // Render Tabel Stok & Cek Limit
+        let htmlStok = "";
+        for(let nama in limits) {
+            const sAkhir = hitungStok[nama] || 0;
+            const sMin = limits[nama];
+            const kritis = sAkhir <= sMin;
+
+            htmlStok += `<tr class="${kritis ? 'stok-kritis' : ''}">
+                <td>${nama}</td>
+                <td>${sMin}</td>
+                <td>${sAkhir}</td>
+                <td>${kritis ? '⚠️ RE-STOCK' : '✅ AMAN'}</td>
+            </tr>`;
+        }
+        document.getElementById('tblStok').querySelector('tbody').innerHTML = htmlStok;
+    }
+
+    function hapus(path) {
+        if(confirm("Hapus data ini secara permanen?")) {
+            db.ref(path).remove();
+        }
+    }
+</script>
+
+</body>
+</html>
