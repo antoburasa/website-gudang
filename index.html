@@ -3,40 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Gudang - Berfungsi</title>
+    <title>Sistem Gudang SMS - Berfungsi</title>
 
     <style>
-        body{font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:#f4f6f8; margin:0; padding:12px; color: #333;}
-        h2,h3{margin:10px 0}
-        .card{background:#fff; padding:15px; border-radius:10px; margin-bottom:12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1)}
-        .dashboard{display:grid; grid-template-columns:repeat(2,1fr); gap:10px}
-        .box{background:#0d6efd; color:#fff; padding:14px; border-radius:10px; text-align:center}
-        .box span{font-size:24px; font-weight:bold; display:block}
-        input,select,button{width:100%; padding:10px; margin-top:8px; border-radius:6px; border:1px solid #ccc; box-sizing: border-box;}
-        button{background:#0d6efd; color:#fff; border:none; cursor:pointer; font-weight:bold}
-        button:hover{opacity:0.9}
-        button.danger{background:#dc3545}
-        button.warn{background:#ffc107; color:#000}
-        table{width:100%; border-collapse:collapse; font-size:13px; margin-top:10px}
-        th,td{border:1px solid #ddd; padding:8px; text-align:center}
-        th{background:#f8f9fa}
-        .stok-item{display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee}
-        @media print{button,input,select,.card:nth-child(2),.card:nth-child(3){display:none}}
+        body{font-family:'Plus Jakarta Sans', sans-serif; background:#f0f2f5; margin:0; padding:15px; color: #1a1f36;}
+        h2{text-align:center; color:#1e40af; font-weight:800; text-transform:uppercase; letter-spacing:1px; margin-bottom:20px}
+        h3{margin:0 0 15px 0; font-size:16px; color:#475569; border-left:4px solid #0d6efd; padding-left:10px}
+        
+        .card{background:#fff; padding:20px; border-radius:16px; margin-bottom:15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0}
+        
+        .dashboard{display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:15px}
+        .box{background: linear-gradient(135deg, #0d6efd, #0b5ed7); color:#fff; padding:20px; border-radius:16px; text-align:center; transition: transform 0.2s}
+        .box:hover{transform: translateY(-3px)}
+        .box span{font-size:28px; font-weight:800; display:block; margin-top:5px}
+        
+        input,select,button{width:100%; padding:12px; margin-top:10px; border-radius:10px; border:1px solid #cbd5e1; box-sizing: border-box; font-size:14px; outline:none}
+        input:focus{border-color:#0d6efd; box-shadow: 0 0 0 3px rgba(13,110,253,0.1)}
+        
+        button{background:#0d6efd; color:#fff; border:none; cursor:pointer; font-weight:bold; transition:0.3s; text-transform:uppercase}
+        button:hover{background:#0b5ed7; box-shadow: 0 4px 12px rgba(13,110,253,0.3)}
+        
+        button.danger{background:#ef4444}
+        button.warn{background:#f59e0b; color:#fff}
+        
+        table{width:100%; border-collapse:collapse; font-size:13px; margin-top:10px; background: #fff}
+        th,td{padding:12px; text-align:center; border-bottom:1px solid #f1f5f9}
+        th{background:#f8fafc; color:#64748b; font-weight:700; text-transform:uppercase; font-size:11px}
+        
+        .stok-item{display:flex; justify-content:space-between; padding:12px; border-bottom:1px solid #f1f5f9; font-weight:600}
+        .stok-item:last-child{border:none}
+        .stok-item span{color:#475569}
+        .stok-item b{color:#1e40af; font-size:16px}
+
+        @media print{ button,input,select,.no-print{display:none} .card{box-shadow:none; border:1px solid #ddd} }
     </style>
 </head>
 
 <body>
 
-<h2>📦 Sistem Gudang v1.0</h2>
+<h2>📦 SMS Gudang System</h2>
 
 <div class="dashboard">
   <div class="box">Total Stok Fisik<br><span id="total">0</span></div>
   <div class="box">Jenis Barang<br><span id="jenisBarang">0</span></div>
 </div>
 
-<div class="card">
+<div class="card no-print">
   <h3>➕ Input Transaksi</h3>
-  <input id="barang" placeholder="Nama Barang (Contoh: Semen)">
+  <input id="barang" placeholder="Nama Barang (Contoh: SEMEN)">
   <select id="jenis">
     <option value="masuk">Barang Masuk (+)</option>
     <option value="keluar">Barang Keluar (-)</option>
@@ -45,19 +59,21 @@
   <button type="button" onclick="simpan()">SIMPAN DATA</button>
 </div>
 
-<div class="card">
+<div class="card no-print">
   <h3>📅 Filter & Laporan</h3>
-  <div style="display:flex; gap:5px">
+  <div style="display:flex; gap:10px">
       <input type="date" id="tglAwal">
       <input type="date" id="tglAkhir">
   </div>
   <button type="button" class="warn" onclick="loadData()">Terapkan Filter</button>
-  <button type="button" style="background:#198754" onclick="exportExcel()">Export Excel</button>
-  <button type="button" style="background:#6c757d" onclick="window.print()">Cetak PDF</button>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+    <button type="button" style="background:#10b981" onclick="exportExcel()">Excel</button>
+    <button type="button" style="background:#6366f1" onclick="window.print()">Cetak PDF</button>
+  </div>
 </div>
 
 <div class="card">
-  <h3>📊 Ringkasan Stok Saat Ini</h3>
+  <h3>📊 Ringkasan Stok</h3>
   <div id="stokBarang"></div>
 </div>
 
@@ -71,7 +87,7 @@
             <th>Barang</th>
             <th>Jenis</th>
             <th>Jumlah</th>
-            <th>Aksi</th>
+            <th class="no-print">Aksi</th>
           </tr>
         </thead>
         <tbody id="data"></tbody>
@@ -84,112 +100,89 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <script>
-/* KONFIGURASI FIREBASE */
+/* KONFIGURASI FIREBASE - SESUAIKAN DENGAN MILIK ANDA */
 var firebaseConfig = {
-  apiKey: "AIzaSyDbf4Nf0J0ELJ3B3R8Un8Ypgi0io-TB30",
+  apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
   authDomain: "gudang-sms-4c81c.firebaseapp.com",
   databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "gudang-sms-4c81c",
   storageBucket: "gudang-sms-4c81c.appspot.com",
   messagingSenderId: "598362736106",
-  appId: "1:598362736106:web:c0e2732d6ac7513931de93"
+  appId: "1:598362736106:web:c8e2732d6ac7613931de93"
 };
 
 firebase.initializeApp(firebaseConfig);
 var db = firebase.database();
 
-/* FUNGSI SIMPAN */
 function simpan(){
-  var barangInput = document.getElementById("barang");
-  var jumlahInput = document.getElementById("jumlah");
+  var bInput = document.getElementById("barang");
+  var jInput = document.getElementById("jumlah");
   var jenis = document.getElementById("jenis").value;
-  
-  var barang = barangInput.value.trim().toUpperCase();
-  var jumlah = parseInt(jumlahInput.value);
+  var b = bInput.value.trim().toUpperCase();
+  var j = parseInt(jInput.value);
 
-  if(barang === "" || isNaN(jumlah) || jumlah <= 0){
-    alert("Mohon isi nama barang dan jumlah dengan benar!");
+  if(!b || isNaN(j) || j <= 0){
+    alert("Lengkapi nama barang & jumlah!");
     return;
   }
 
   db.ref("riwayat").push({
-    barang: barang,
+    barang: b,
     jenis: jenis,
-    jumlah: jumlah,
+    jumlah: j,
     tanggal: new Date().toISOString().slice(0,10)
-  }, function(error){
-    if(error){
-      alert("Gagal menyimpan data ke database.");
-    }else{
-      barangInput.value = "";
-      jumlahInput.value = "";
-      loadData(); // Refresh data setelah simpan
-    }
+  }, function(err){
+    if(err) alert("Gagal!");
+    else { bInput.value = ""; jInput.value = ""; loadData(); }
   });
 }
 
-/* FUNGSI LOAD & FILTER DATA */
 function loadData(){
   var tglAwal = document.getElementById("tglAwal").value;
   var tglAkhir = document.getElementById("tglAkhir").value;
 
-  db.ref("riwayat").once("value", function(snapshot){
+  db.ref("riwayat").on("value", function(snap){
     var html="", stok={}, total=0;
-    
-    snapshot.forEach(function(child){
+    snap.forEach(function(child){
       var d = child.val();
-      
-      // Logika Filter Tanggal
       if(tglAwal && d.tanggal < tglAwal) return;
       if(tglAkhir && d.tanggal > tglAkhir) return;
 
-      // Hitung Stok Per Barang & Total Keseluruhan
       var perubahan = (d.jenis === "masuk" ? d.jumlah : -d.jumlah);
       stok[d.barang] = (stok[d.barang] || 0) + perubahan;
       total += perubahan;
 
       html += `<tr>
         <td>${d.tanggal}</td>
-        <td>${d.barang}</td>
-        <td style="color:${d.jenis === 'masuk' ? 'green' : 'red'}"><b>${d.jenis.toUpperCase()}</b></td>
+        <td><b>${d.barang}</b></td>
+        <td style="color:${d.jenis === 'masuk' ? '#10b981' : '#ef4444'}"><b>${d.jenis.toUpperCase()}</b></td>
         <td>${d.jumlah}</td>
-        <td>
-          <button class="danger" style="padding:4px 8px; width:auto" onclick="hapus('${child.key}')">Hapus</button>
-        </td>
+        <td class="no-print"><button class="danger" style="padding:5px 10px; width:auto; font-size:10px" onclick="hapus('${child.key}')">HAPUS</button></td>
       </tr>`;
     });
 
-    // Render ke Tabel Riwayat
-    document.getElementById("data").innerHTML = html || "<tr><td colspan='5'>Tidak ada data.</td></tr>";
+    document.getElementById("data").innerHTML = html || "<tr><td colspan='5'>Kosong</td></tr>";
     document.getElementById("total").innerText = total;
     document.getElementById("jenisBarang").innerText = Object.keys(stok).length;
 
-    // Render Ringkasan Stok Per Item
     var sHtml="";
-    for(var b in stok){
-      sHtml += <div class="stok-item"><span>${b}</span><b>${stok[b]} Unit</b></div>;
+    for(var x in stok){
+      sHtml += <div class="stok-item"><span>${x}</span><b>${stok[x]}</b></div>;
     }
-    document.getElementById("stokBarang").innerHTML = sHtml || "Belum ada stok.";
+    document.getElementById("stokBarang").innerHTML = sHtml || "Kosong";
   });
 }
 
-/* FUNGSI HAPUS */
 function hapus(id){
-  if(confirm("Hapus data transaksi ini secara permanen?")){
-    db.ref("riwayat/" + id).remove().then(() => {
-        loadData();
-    });
-  }
+  if(confirm("Hapus data ini?")) db.ref("riwayat/" + id).remove();
 }
 
-/* FUNGSI EXCEL */
 function exportExcel(){
   var table = document.querySelector("table");
-  var wb = XLSX.utils.table_to_book(table, {sheet: "Laporan Gudang"});
-  XLSX.writeFile(wb, "Laporan_Gudang_" + new Date().toLocaleDateString() + ".xlsx");
+  var wb = XLSX.utils.table_to_book(table);
+  XLSX.writeFile(wb, "Laporan_SMS_Gudang.xlsx");
 }
 
-/* JALANKAN SAAT STARTUP */
 loadData();
 </script>
 
