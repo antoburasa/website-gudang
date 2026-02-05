@@ -47,7 +47,6 @@ th{background:#f1f1f1}
 
 <div class="container">
 
-<!-- DASHBOARD -->
 <div id="dash" class="card">
   <h3>📊 Dashboard</h3>
   <p>Total Barang: <b id="dBarang">0</b></p>
@@ -55,20 +54,16 @@ th{background:#f1f1f1}
   <p>Total Transaksi: <b id="dTrans">0</b></p>
 </div>
 
-<!-- MASTER -->
 <div id="master" class="card hide">
   <h3>📦 Master Barang</h3>
   <input id="mbNama" placeholder="Nama Barang">
   <button class="primary" onclick="tambahBarang()">Tambah Barang</button>
   <table>
-    <thead>
-      <tr><th>Barang</th><th>Aksi</th></tr>
-    </thead>
+    <thead><tr><th>Barang</th><th>Aksi</th></tr></thead>
     <tbody id="listBarang"></tbody>
   </table>
 </div>
 
-<!-- MASUK -->
 <div id="masuk" class="card hide">
   <h3>➕ Barang Masuk</h3>
   <select id="bmBarang"></select>
@@ -76,7 +71,6 @@ th{background:#f1f1f1}
   <button class="primary" onclick="barangMasuk()">Simpan</button>
 </div>
 
-<!-- KELUAR -->
 <div id="keluar" class="card hide">
   <h3>➖ Barang Keluar</h3>
   <select id="bkBarang"></select>
@@ -84,18 +78,14 @@ th{background:#f1f1f1}
   <button class="danger" onclick="barangKeluar()">Simpan</button>
 </div>
 
-<!-- STOK -->
 <div id="stok" class="card hide">
   <h3>📦 Stok Barang</h3>
   <table>
-    <thead>
-      <tr><th>Barang</th><th>Stok</th></tr>
-    </thead>
+    <thead><tr><th>Barang</th><th>Stok</th></tr></thead>
     <tbody id="listStok"></tbody>
   </table>
 </div>
 
-<!-- RIWAYAT -->
 <div id="riwayat" class="card hide">
   <h3>🧾 Riwayat Transaksi</h3>
   <button onclick="exportExcel()">Export Excel</button>
@@ -110,25 +100,22 @@ th{background:#f1f1f1}
 </div>
 
 <script>
-/* FIREBASE CONFIG */
-const firebaseConfig = {
- apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89GpilOio-tTB3o",
-    authDomain: "gudang-sms-4c81c.firebaseapp.com",
-    databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "gudang-sms-4c81c",
-    storageBucket: "gudang-sms-4c81c.firebasestorage.app",
-    messagingSenderId: "598362736106",
-    appId: "1:598362736106:web:c0e2732d6ac7513931de93"
-};
-firebase.initializeApp(firebaseConfig);
+/* FIREBASE */
+firebase.initializeApp({
+  apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89GpilOio-tTB3o",
+  authDomain: "gudang-sms-4c81c.firebaseapp.com",
+  databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "gudang-sms-4c81c",
+  storageBucket: "gudang-sms-4c81c.firebasestorage.app",
+  messagingSenderId: "598362736106",
+  appId: "1:598362736106:web:c0e2732d6ac7513931de93"
+});
 const db = firebase.database();
 
 /* NAV */
 function showPage(id){
   document.querySelectorAll('.card').forEach(c=>c.classList.add('hide'));
   document.getElementById(id).classList.remove('hide');
-  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
-  [...document.querySelectorAll('nav button')].find(b=>b.innerText.toLowerCase().includes(id))?.classList.add('active');
 }
 
 /* MASTER */
@@ -175,7 +162,11 @@ db.ref('barang').on('value',s=>{
     count++;
     const d=c.val();
     totalStok+=d.stok;
-    html+=<tr><td>${c.key}</td><td><button onclick="hapusBarang('${c.key}')">Hapus</button></td></tr>;
+    html+=`
+      <tr>
+        <td>${c.key}</td>
+        <td><button onclick="hapusBarang('${c.key}')">Hapus</button></td>
+      </tr>`;
     opt+=<option value="${c.key}">${c.key}</option>;
     stokHtml+=<tr><td>${c.key}</td><td>${d.stok}</td></tr>;
   });
@@ -186,7 +177,7 @@ db.ref('barang').on('value',s=>{
   dStok.innerText=totalStok;
 });
 
-/* LOAD TRANSAKSI */
+/* RIWAYAT */
 let excelData=[];
 db.ref('transaksi').on('value',s=>{
   let html="",count=0;
@@ -195,13 +186,14 @@ db.ref('transaksi').on('value',s=>{
     count++;
     const d=c.val();
     excelData.push(d);
-    html+=`<tr>
-      <td>${d.barang}</td>
-      <td>${d.jenis}</td>
-      <td>${d.jumlah}</td>
-      <td>${d.waktu}</td>
-      <td><button onclick="db.ref('transaksi/${c.key}').remove()">Hapus</button></td>
-    </tr>`;
+    html+=`
+      <tr>
+        <td>${d.barang}</td>
+        <td>${d.jenis}</td>
+        <td>${d.jumlah}</td>
+        <td>${d.waktu}</td>
+        <td><button onclick="db.ref('transaksi/${c.key}').remove()">Hapus</button></td>
+      </tr>`;
   });
   listRiwayat.innerHTML=html;
   dTrans.innerText=count;
