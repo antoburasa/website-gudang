@@ -1,69 +1,56 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
     <meta charset="UTF-8">
-    <title>SMS GUDANG FINAL - ADRI</title>
+    <title>GUDANG SMS - FIX TOTAL</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; display: flex; background: #f4f4f4; }
-        .sidebar { width: 200px; background: #000080; color: white; height: 100vh; padding: 20px; position: fixed; }
-        .main { margin-left: 240px; padding: 20px; width: 100%; }
-        .menu-btn { display: block; width: 100%; padding: 15px; margin-bottom: 10px; background: #3333cc; color: white; border: none; cursor: pointer; text-align: left; font-weight: bold; border-radius: 5px; }
-        .menu-btn:hover { background: #5555ff; }
-        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .page { display: none; }
-        .active { display: block; }
-        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #ccc; border-radius: 5px; font-size: 16px; }
-        .btn-aksi { width: 100%; padding: 15px; background: #008000; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 18px; font-weight: bold; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-        th { background: #eee; }
-        .merah { color: red; font-weight: bold; }
-        .hijau { color: green; font-weight: bold; }
+        body { font-family: sans-serif; margin: 0; background: #eee; }
+        .nav { background: #1a237e; color: white; padding: 15px; text-align: center; }
+        .container { padding: 20px; max-width: 500px; margin: auto; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; font-size: 16px; }
+        .btn-blue { background: #1a237e; }
+        .btn-green { background: #2e7d32; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; }
+        th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
+        th { background: #f5f5f5; }
     </style>
 </head>
 <body>
 
-<div class="sidebar">
-    <h2>GUDANG</h2>
-    <button class="menu-btn" onclick="nav('hal-dash')">DASHBOARD</button>
-    <button class="menu-btn" onclick="nav('hal-mast')">MASTER BARANG</button>
-    <button class="menu-btn" onclick="nav('hal-trans')">MASUK / KELUAR</button>
+<div class="nav">
+    <h1>SMS GUDANG</h1>
 </div>
 
-<div class="main">
-    <div id="hal-dash" class="page active">
-        <h1>Stok Saat Ini</h1>
-        <div class="card"><table id="tabelStok"><thead><tr><th>Barang</th><th>Stok</th></tr></thead><tbody></tbody></table></div>
+<div class="container">
+    <div class="card">
+        <h3>1. DAFTAR BARANG BARU</h3>
+        <input type="text" id="m_nama" placeholder="Ketik Nama (Contoh: BESI)">
+        <button class="btn-blue" id="btn_master">KLIK UNTUK DAFTAR</button>
     </div>
 
-    <div id="hal-mast" class="page">
-        <h1>Tambah Barang Baru</h1>
-        <div class="card" style="max-width: 400px;">
-            <input type="text" id="inp_master" placeholder="Ketik Nama Barang...">
-            <button class="btn-aksi" onclick="simpanMaster()">DAFTARKAN</button>
-        </div>
-        <div class="card"><table id="tabelMaster"><thead><tr><th>Nama Barang</th><th>Aksi</th></tr></thead><tbody></tbody></table></div>
+    <div class="card">
+        <h3>2. INPUT STOK</h3>
+        <select id="t_pilih"><option value="">-- PILIH BARANG --</option></select>
+        <select id="t_tipe"><option value="IN">MASUK (+)</option><option value="OUT">KELUAR (-)</option></select>
+        <input type="number" id="t_qty" placeholder="Jumlah Qty">
+        <button class="btn-green" id="btn_transaksi">SIMPAN TRANSAKSI</button>
     </div>
 
-    <div id="hal-trans" class="page">
-        <h1>Barang Masuk / Keluar</h1>
-        <div class="card" style="max-width: 400px;">
-            <label>Pilih Barang:</label>
-            <select id="sel_barang"></select>
-            <label>Tipe:</label>
-            <select id="sel_tipe"><option value="IN">MASUK (+)</option><option value="OUT">KELUAR (-)</option></select>
-            <label>Jumlah:</label>
-            <input type="number" id="inp_qty" placeholder="0">
-            <button class="btn-aksi" style="background: #000080;" onclick="simpanTransaksi()">SIMPAN DATA</button>
-        </div>
-    </div>
+    <h3>STOK GUDANG SAAT INI</h3>
+    <table id="tblStok">
+        <thead><tr><th>Nama Barang</th><th>Stok Akhir</th></tr></thead>
+        <tbody></tbody>
+    </table>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
-    const firebaseConfig = {
+    // Konfigurasi Milik Adri
+    const config = {
         apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
         authDomain: "gudang-sms-4c81c.firebaseapp.com",
         databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -72,54 +59,72 @@
         appId: "1:598362736106:web:c8e2732d6ac7613931de93"
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    // Jalankan Firebase
+    firebase.initializeApp(config);
+    const database = firebase.database();
 
-    function nav(id) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-    }
+    // TOMBOL DAFTAR BARANG
+    document.getElementById('btn_master').onclick = function() {
+        const nama = document.getElementById('m_nama').value.toUpperCase().trim();
+        if(!nama) return alert("Ketik nama barang dulu!");
 
-    function simpanMaster() {
-        const nama = document.getElementById('inp_master').value.toUpperCase().trim();
-        if(!nama) return alert("Ketik nama barang!");
-        
-        db.ref("master_barang").push({ nama: nama })
+        database.ref("master_barang").push({ nama: nama })
         .then(() => {
-            alert("Berhasil Daftar!");
-            document.getElementById('inp_master').value = "";
-        }).catch(e => alert("Error: " + e.message));
-    }
+            alert("SUKSES: " + nama + " Terdaftar!");
+            document.getElementById('m_nama').value = "";
+        })
+        .catch((e) => alert("GAGAL: " + e.message));
+    };
 
-    function simpanTransaksi() {
-        const barang = document.getElementById('sel_barang').value;
-        const tipe = document.getElementById('sel_tipe').value;
-        const qty = parseInt(document.getElementById('inp_qty').value);
-        if(!barang || isNaN(qty)) return alert("Isi data dengan lengkap!");
+    // TOMBOL SIMPAN TRANSAKSI
+    document.getElementById('btn_transaksi').onclick = function() {
+        const barang = document.getElementById('t_pilih').value;
+        const tipe = document.getElementById('t_tipe').value;
+        const qty = parseInt(document.getElementById('t_qty').value);
 
-        db.ref("riwayat").push({
-            barang: barang, tipe: tipe, qty: qty,
-            tgl: new Date().toLocaleDateString()
-        }).then(() => {
-            alert("Data Masuk!");
-            document.getElementById('inp_qty').value = "";
-        }).catch(e => alert("Error: " + e.message));
-    }
+        if(!barang || isNaN(qty)) return alert("Isi barang & jumlah!");
 
-    db.ref().on("value", (snap) => {
+        database.ref("riwayat").push({
+            barang: barang,
+            tipe: tipe,
+            qty: qty
+        })
+        .then(() => {
+            alert("SUKSES: Data Masuk!");
+            document.getElementById('t_qty').value = "";
+        })
+        .catch((e) => alert("GAGAL: " + e.message));
+    };
+
+    // TAMPILKAN DATA SECARA OTOMATIS
+    database.ref().on("value", function(snap) {
         const data = snap.val() || {};
         const master = data.master_barang || {};
         const riwayat = data.riwayat || {};
 
-        let hMst = "", hOpt = "<option value=''>-- PILIH --</option>";
+        // Dropdown
+        let opsi = "<option value=''>-- PILIH BARANG --</option>";
         for(let id in master) {
-            hMst += <tr><td>${master[id].nama}</td><td><button onclick="db.ref('master_barang/${id}').remove()">Hapus</button></td></tr>;
-            hOpt += <option value="${master[id].nama}">${master[id].nama}</option>;
+            opsi += "<option value='"+master[id].nama+"'>"+master[id].nama+"</option>";
         }
-        document.getElementById('tabelMaster').querySelector('tbody').innerHTML = hMst;
-        document.getElementById('sel_barang').innerHTML = hOpt;
+        document.getElementById('t_pilih').innerHTML = opsi;
 
+        // Hitung Stok
         let stok = {};
         for(let id in riwayat) {
-            const r = riwayat[id];
-            if(r.tipe === "IN") stok[r.barang
+            let r = riwayat[id];
+            if(r.tipe === "IN") stok[r.barang] = (stok[r.barang] || 0) + r.qty;
+            else stok[r.barang] = (stok[r.barang] || 0) - r.qty;
+        }
+
+        // Tabel
+        let baris = "";
+        for(let b in stok) {
+            baris += "<tr><td><b>"+b+"</b></td><td>"+stok[b]+"</td></tr>";
+        }
+        document.getElementById('tblStok').querySelector('tbody').innerHTML = baris;
+    });
+</script>
+
+</body>
+</html>
