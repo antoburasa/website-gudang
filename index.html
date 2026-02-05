@@ -7,33 +7,33 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; padding: 20px; }
+        body { font-family: sans-serif; background: #f0f2f5; padding: 20px; margin: 0; }
         .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        h1 { color: #1e40af; }
-        .stat-box { display: flex; gap: 20px; margin-bottom: 20px; }
+        h1 { color: #1e40af; text-align: center; }
+        .stat-box { display: flex; gap: 15px; margin-bottom: 20px; }
         .stat { background: #1e40af; color: white; padding: 15px; border-radius: 10px; flex: 1; text-align: center; }
-        table { width: 100%; border-collapse: collapse; background: white; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-        th { background: #f8fafc; }
-        .btn { background: #1e40af; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+        input { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        .btn { background: #1e40af; color: white; border: none; padding: 12px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        .item-list { border-bottom: 1px solid #eee; padding: 10px 0; display: flex; justify-content: space-between; }
     </style>
 </head>
 <body>
     <h1>📦 SMS GUDANG</h1>
     <div class="stat-box">
-        <div class="stat">Total Stok: <br><b id="totalStok">0</b></div>
-        <div class="stat">Jenis Item: <br><b id="totalJenis">0</b></div>
+        <div class="stat">Total Unit<br><b id="totalStok">0</b></div>
+        <div class="stat">Jenis Item<br><b id="totalJenis">0</b></div>
     </div>
     <div class="card">
         <h3>Ringkasan Stok</h3>
         <div id="ringkasanStok">Memuat data...</div>
     </div>
     <div class="card">
-        <h3>Input Data</h3>
+        <h3>Input Barang Masuk</h3>
         <input type="text" id="in_barang" placeholder="Nama Barang">
         <input type="number" id="in_jumlah" placeholder="Jumlah">
-        <button class="btn" onclick="simpan()">SIMPAN</button>
+        <button class="btn" onclick="simpan()">SIMPAN DATA</button>
     </div>
+
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
@@ -46,26 +46,30 @@
         const db = firebase.database();
 
         function simpan() {
-            const b = document.getElementById('in_barang').value.toUpperCase();
+            const b = document.getElementById('in_barang').value.toUpperCase().trim();
             const j = parseInt(document.getElementById('in_jumlah').value);
-            if(!b || !j) return alert("Isi data!");
+            if(!b || !j) return alert("Mohon isi nama barang dan jumlah!");
             db.ref("riwayat").push({ barang: b, jumlah: j, jenis: "masuk", tanggal: new Date().toISOString().slice(0,10) })
-            .then(() => { document.getElementById('in_jumlah').value = ""; });
+            .then(() => { 
+                document.getElementById('in_barang').value = "";
+                document.getElementById('in_jumlah').value = "";
+                alert("Data Berhasil Disimpan!");
+            });
         }
 
         db.ref("riwayat").on("value", (snap) => {
             let stok = {}; let total = 0; let sHtml = "";
             snap.forEach((s) => {
                 const d = s.val();
-                stok[d.barang] = (stok[d.barang] || 0) + parseInt(d.jumlah);
+                stok[d.barang] = (stok[d.barang] || 0) + (parseInt(d.jumlah) || 0);
             });
             for(let x in stok) {
                 total += stok[x];
-                sHtml += <p><b>${x}</b>: ${stok[x]} Unit</p>;
+                sHtml += <div class="item-list"><span><b>${x}</b></span><span>${stok[x]} Unit</span></div>;
             }
             document.getElementById("totalStok").innerText = total;
             document.getElementById("totalJenis").innerText = Object.keys(stok).length;
-            document.getElementById("ringkasanStok").innerHTML = sHtml || "Kosong";
+            document.getElementById("ringkasanStok").innerHTML = sHtml || "Belum ada data.";
         });
     </script>
 </body>
