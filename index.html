@@ -2,159 +2,144 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>SMS GUDANG v3.1 - FINAL REPAIR</title>
+    <title>SMS GUDANG - TEST KONEKSI</title>
     <style>
-        body { font-family: sans-serif; display: flex; margin: 0; background: #f0f2f5; }
-        .sidebar { width: 200px; background: #1a237e; color: white; height: 100vh; padding: 20px; position: fixed; }
-        .main { margin-left: 240px; padding: 20px; width: 100%; }
-        .card { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .nav-btn { display: block; width: 100%; padding: 10px; margin-bottom: 5px; background: none; color: white; border: none; text-align: left; cursor: pointer; border-radius: 4px; }
-        .nav-btn:hover { background: rgba(255,255,255,0.1); }
-        .active-nav { background: #3949ab !important; font-weight: bold; }
-        input, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .btn-save { background: #1a237e; color: white; border: none; padding: 12px; width: 100%; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .page { display: none; }
-        .show { display: block; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { border-bottom: 1px solid #ddd; padding: 12px; text-align: left; }
+        body { font-family: sans-serif; padding: 20px; background: #eee; }
+        .box { background: white; padding: 20px; border-radius: 10px; max-width: 400px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        input, select { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; }
+        button { width: 100%; padding: 10px; background: blue; color: white; border: none; cursor: pointer; font-weight: bold; }
+        button:hover { background: darkblue; }
+        table { width: 100%; border-collapse: collapse; background: white; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        h3 { margin-top: 0; border-bottom: 2px solid blue; padding-bottom: 5px; }
     </style>
 </head>
 <body>
 
-<div class="sidebar">
-    <h3>SMS GUDANG</h3>
-    <button class="nav-btn active-nav" onclick="buka('dash', this)">Dashboard</button>
-    <button class="nav-btn" onclick="buka('mast', this)">Master Barang</button>
-    <button class="nav-btn" onclick="buka('trans', this)">Masuk / Keluar</button>
-</div>
+    <h2>Aplikasi SMS GUDANG</h2>
 
-<div class="main">
-    <div id="dash" class="page show">
-        <h2>Stok Gudang</h2>
-        <div class="card"><table id="tStok"><thead><tr><th>Barang</th><th>Stok</th></tr></thead><tbody></tbody></table></div>
+    <div class="box">
+        <h3>1. Master Barang</h3>
+        <p style="font-size: 12px; color: grey;">Daftarkan nama barang di sini dulu.</p>
+        <input type="text" id="m_nama" placeholder="Contoh: SEMEN">
+        <button onclick="simpanMaster()">DAFTARKAN KE SISTEM</button>
     </div>
 
-    <div id="mast" class="page">
-        <h2>Tambah Barang ke Sistem</h2>
-        <div class="card" style="max-width:400px">
-            <input type="text" id="m_nama" placeholder="Contoh: SEMEN">
-            <button class="btn-save" onclick="saveMaster()">DAFTARKAN BARANG</button>
-        </div>
-        <div class="card">
-            <table id="tMaster"><thead><tr><th>Nama Barang</th><th>Aksi</th></tr></thead><tbody></tbody></table>
-        </div>
+    <div class="box">
+        <h3>2. Input Masuk / Keluar</h3>
+        <select id="t_barang"><option value="">-- PILIH BARANG --</option></select>
+        <select id="t_tipe">
+            <option value="IN">MASUK (+)</option>
+            <option value="OUT">KELUAR (-)</option>
+        </select>
+        <input type="number" id="t_qty" placeholder="Jumlah Qty">
+        <button onclick="simpanTransaksi()" style="background: green;">SIMPAN TRANSAKSI</button>
     </div>
 
-    <div id="trans" class="page">
-        <h2>Input Transaksi</h2>
-        <div class="card" style="max-width:400px">
-            <select id="t_pilih"></select>
-            <select id="t_tipe"><option value="IN">MASUK (+)</option><option value="OUT">KELUAR (-)</option></select>
-            <input type="number" id="t_qty" placeholder="Jumlah">
-            <button class="btn-save" onclick="saveTrans()">SIMPAN DATA</button>
-        </div>
+    <div class="box" style="max-width: 600px;">
+        <h3>3. Laporan Stok</h3>
+        <table id="tblStok">
+            <thead><tr><th>Nama Barang</th><th>Stok Akhir</th></tr></thead>
+            <tbody></tbody>
+        </table>
     </div>
-</div>
 
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-<script>
-    // 1. CONFIGURASI (Pastikan ID ini sama dengan di Firebase Adri)
-    const firebaseConfig = {
-        apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
-        authDomain: "gudang-sms-4c81c.firebaseapp.com",
-        databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
-        projectId: "gudang-sms-4c81c",
-        storageBucket: "gudang-sms-4c81c.appspot.com",
-        appId: "1:598362736106:web:c8e2732d6ac7613931de93"
-    };
-    
-    // Inisialisasi
-    if (!firebase.apps.length) {
+    <script>
+        // Konfigurasi Database Adri
+        const firebaseConfig = {
+            apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
+            authDomain: "gudang-sms-4c81c.firebaseapp.com",
+            databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "gudang-sms-4c81c",
+            storageBucket: "gudang-sms-4c81c.appspot.com",
+            appId: "1:598362736106:web:c8e2732d6ac7613931de93"
+        };
+
+        // Mulai Koneksi
         firebase.initializeApp(firebaseConfig);
-    }
-    const db = firebase.database();
+        const db = firebase.database();
 
-    // Fungsi Navigasi
-    function buka(id, el) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('show'));
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-nav'));
-        document.getElementById(id).classList.add('show');
-        el.classList.add('active-nav');
-    }
+        // 1. FUNGSI SIMPAN MASTER
+        function simpanMaster() {
+            const nama = document.getElementById('m_nama').value.toUpperCase().trim();
+            if(nama === "") {
+                alert("Ketik dulu nama barangnya!");
+                return;
+            }
+            
+            db.ref("master_barang").push({ nama: nama })
+            .then(() => {
+                alert("BERHASIL: " + nama + " sudah masuk sistem.");
+                document.getElementById('m_nama').value = "";
+            })
+            .catch((e) => {
+                alert("ERROR: " + e.message);
+            });
+        }
 
-    // SIMPAN MASTER
-    function saveMaster() {
-        const nama = document.getElementById('m_nama').value.toUpperCase().trim();
-        if(!nama) return alert("Isi nama barang!");
+        // 2. FUNGSI SIMPAN TRANSAKSI
+        function simpanTransaksi() {
+            const barang = document.getElementById('t_barang').value;
+            const tipe = document.getElementById('t_tipe').value;
+            const qty = parseInt(document.getElementById('t_qty').value);
 
-        db.ref("master_barang").push({ nama: nama })
-        .then(() => {
-            alert("Berhasil simpan ke Master!");
-            document.getElementById('m_nama').value = "";
-        })
-        .catch(error => {
-            console.error(error);
-            alert("GAGAL: Database menolak akses. Cek Rules Firebase Anda.");
+            if(!barang || isNaN(qty)) {
+                alert("Pilih barang dan isi jumlahnya!");
+                return;
+            }
+
+            db.ref("riwayat").push({
+                barang: barang,
+                tipe: tipe,
+                qty: qty,
+                tgl: new Date().toLocaleDateString()
+            })
+            .then(() => {
+                alert("BERHASIL: Transaksi disimpan.");
+                document.getElementById('t_qty').value = "";
+            })
+            .catch((e) => {
+                alert("ERROR: " + e.message);
+            });
+        }
+
+        // 3. MONITOR DATA (OTOMATIS JALAN)
+        db.ref().on("value", (snapshot) => {
+            const data = snapshot.val() || {};
+            const master = data.master_barang || {};
+            const riwayat = data.riwayat || {};
+
+            // Update Pilihan Barang (Dropdown)
+            let opsi = "<option value=''>-- PILIH BARANG --</option>";
+            for(let id in master) {
+                opsi += <option value="${master[id].nama}">${master[id].nama}</option>;
+            }
+            document.getElementById('t_barang').innerHTML = opsi;
+
+            // Hitung Stok
+            let stok = {};
+            for(let id in riwayat) {
+                const r = riwayat[id];
+                if(r.tipe === "IN") {
+                    stok[r.barang] = (stok[r.barang] || 0) + r.qty;
+                } else {
+                    stok[r.barang] = (stok[r.barang] || 0) - r.qty;
+                }
+            }
+
+            // Update Tabel Stok
+            let baris = "";
+            for(let b in stok) {
+                baris += <tr><td><b>${b}</b></td><td>${stok[b]}</td></tr>;
+            }
+            document.getElementById('tblStok').querySelector('tbody').innerHTML = baris;
+
+        }, (error) => {
+            console.log("Koneksi gagal: ", error);
         });
-    }
-
-    // SIMPAN TRANSAKSI
-    function saveTrans() {
-        const barang = document.getElementById('t_pilih').value;
-        const tipe = document.getElementById('t_tipe').value;
-        const qty = parseInt(document.getElementById('t_qty').value);
-        if(!barang || isNaN(qty)) return alert("Isi barang & jumlah!");
-
-        db.ref("riwayat").push({
-            barang: barang,
-            tipe: tipe,
-            qty: qty,
-            tgl: new Date().toLocaleDateString()
-        })
-        .then(() => {
-            alert("Transaksi Berhasil!");
-            document.getElementById('t_qty').value = "";
-        })
-        .catch(error => {
-            console.error(error);
-            alert("GAGAL: Tidak bisa simpan transaksi.");
-        });
-    }
-
-    // MONITOR DATA SECARA REALTIME
-    db.ref().on("value", (snap) => {
-        const data = snap.val() || {};
-        const master = data.master_barang || {};
-        const riwayat = data.riwayat || {};
-
-        // Update Tabel Master & Dropdown
-        let hMst = "", hOpt = "<option value=''>-- PILIH --</option>";
-        for(let id in master) {
-            hMst += <tr><td>${master[id].nama}</td><td><button onclick="db.ref('master_barang/${id}').remove()" style="color:red">Hapus</button></td></tr>;
-            hOpt += <option value="${master[id].nama}">${master[id].nama}</option>;
-        }
-        document.getElementById('tMaster').querySelector('tbody').innerHTML = hMst;
-        document.getElementById('t_pilih').innerHTML = hOpt;
-
-        // Hitung Stok
-        let stok = {};
-        for(let id in riwayat) {
-            const r = riwayat[id];
-            if(r.tipe === "IN") stok[r.barang] = (stok[r.barang] || 0) + r.qty;
-            else stok[r.barang] = (stok[r.barang] || 0) - r.qty;
-        }
-
-        let hDash = "";
-        for(let b in stok) {
-            hDash += <tr><td><b>${b}</b></td><td>${stok[b]}</td></tr>;
-        }
-        document.getElementById('tStok').querySelector('tbody').innerHTML = hDash;
-    }, error => {
-        alert("Koneksi Firebase Gagal: " + error.message);
-    });
-</script>
-
+    </script>
 </body>
 </html>
