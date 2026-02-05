@@ -3,96 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Gudang SMS v1.0 - Berfungsi</title>
+    <title>SMS GUDANG v1.1 - PRO</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
-    
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f4f7fa; margin: 0; padding: 20px; color: #333; }
-        h2 { text-align: center; color: #1e3a8a; font-weight: 800; margin-bottom: 25px; text-transform: uppercase; }
-        
-        /* Dashboard Stats */
+        h2 { text-align: center; color: #1e3a8a; font-weight: 800; margin-bottom: 20px; text-transform: uppercase; }
         .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-        .box { padding: 20px; border-radius: 12px; color: white; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .box { padding: 15px; border-radius: 12px; color: white; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .box-blue { background: #007bff; }
         .box-cyan { background: #17a2b8; }
-        .box span { font-size: 32px; font-weight: 800; display: block; margin-top: 5px; }
-
-        /* Card Style */
-        .card { background: white; padding: 25px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        h3 { font-size: 16px; margin: 0 0 15px 0; color: #1e3a8a; font-weight: 800; border-left: 4px solid #007bff; padding-left: 10px; }
-
-        /* Form Elements */
-        input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #cbd5e1; box-sizing: border-box; font-size: 14px; }
-        input:focus { border-color: #007bff; outline: none; box-shadow: 0 0 0 2px rgba(0,123,255,0.2); }
-        
-        button { background: #007bff; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; text-transform: uppercase; }
+        .box span { font-size: 28px; font-weight: 800; display: block; }
+        .card { background: white; padding: 20px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #e2e8f0; }
+        h3 { font-size: 14px; margin: 0 0 15px 0; color: #1e3a8a; font-weight: 800; border-left: 4px solid #007bff; padding-left: 10px; text-transform: uppercase; }
+        input, select, button { width: 100%; padding: 10px; margin-top: 8px; border-radius: 8px; border: 1px solid #cbd5e1; box-sizing: border-box; font-size: 13px; }
+        button { background: #007bff; color: white; border: none; font-weight: bold; cursor: pointer; text-transform: uppercase; }
         button:hover { background: #0056b3; }
-        button:disabled { background: #ccc; cursor: not-allowed; }
-        
         .btn-filter { background: #f39c12; }
         .btn-excel { background: #28a745; }
-        .btn-pdf { background: #6c757d; }
-        .btn-danger { background: #dc3545; width: auto; padding: 5px 10px; font-size: 11px; margin: 0; }
-
-        /* Table */
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
-        th, td { padding: 12px; text-align: center; border-bottom: 1px solid #f1f5f9; }
-        th { background: #f8fafc; font-weight: bold; color: #64748b; }
-        
-        .stok-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee; font-weight: bold; }
-        .stok-item b { color: #007bff; }
-
+        .btn-danger { background: #dc3545; width: auto; padding: 5px 8px; font-size: 10px; }
+        .extra-fields { display: none; background: #f8fafc; padding: 10px; border-radius: 8px; margin-top: 10px; border: 1px dashed #cbd5e1; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }
+        th, td { padding: 8px; text-align: center; border-bottom: 1px solid #f1f5f9; }
+        th { background: #f8fafc; color: #64748b; }
+        .stok-item { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #eee; font-size: 13px; }
+        .warning { color: #dc3545; font-weight: 800; animation: blink 1s infinite; }
+        @keyframes blink { 0% {opacity: 1;} 50% {opacity: 0.5;} 100% {opacity: 1;} }
         @media print { .no-print { display: none !important; } }
     </style>
 </head>
 <body>
 
-    <h2>📦 Sistem Gudang v1.0</h2>
+    <h2>📦 SMS GUDANG v1.1</h2>
 
     <div class="dashboard">
-        <div class="box box-blue">Total Stok Fisik<br><span id="totalStok">0</span></div>
+        <div class="box box-blue">Total Unit<br><span id="totalStok">0</span></div>
         <div class="box box-cyan">Jenis Barang<br><span id="totalJenis">0</span></div>
     </div>
 
     <div class="card no-print">
         <h3>➕ INPUT TRANSAKSI</h3>
-        <input type="text" id="barang" placeholder="NAMA BARANG (CONTOH: SEMEN)">
-        <select id="jenis">
+        <input type="text" id="barang" placeholder="NAMA BARANG">
+        <input type="number" id="stok_min" placeholder="STOK MINIMUM (ALARM)">
+        <select id="jenis" onchange="toggleExtraFields()">
             <option value="masuk">BARANG MASUK (+)</option>
             <option value="keluar">BARANG KELUAR (-)</option>
         </select>
+
+        <div id="fieldMasuk" class="extra-fields" style="display: block;">
+            <input type="text" id="supplier" placeholder="NAMA SUPPLIER">
+            <input type="text" id="dept" placeholder="DEPARTEMEN">
+            <div style="display:flex; gap:5px">
+                <input type="text" id="no_po" placeholder="NO PO">
+                <input type="text" id="no_prs" placeholder="NO PRS">
+            </div>
+        </div>
+
         <input type="number" id="jumlah" placeholder="JUMLAH UNIT">
-        <button type="button" id="btnSimpan" onclick="prosesSimpan()">SIMPAN DATA KE DATABASE</button>
+        <button type="button" id="btnSimpan" onclick="prosesSimpan()">SIMPAN DATA</button>
     </div>
 
     <div class="card no-print">
-        <h3>📊 FILTER & LAPORAN</h3>
-        <div style="display: flex; gap: 10px;">
+        <h3>📊 LAPORAN & EXCEL</h3>
+        <div style="display: flex; gap: 5px;">
             <input type="date" id="tglAwal">
             <input type="date" id="tglAkhir">
         </div>
-        <button type="button" class="btn-filter" onclick="muatData()">TERAPKAN FILTER</button>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
-            <button class="btn-excel" onclick="eksporExcel()">EXCEL</button>
-            <button class="btn-pdf" onclick="window.print()">CETAK PDF</button>
-        </div>
+        <button type="button" class="btn-filter" onclick="muatData()">FILTER TANGGAL</button>
+        <button class="btn-excel" onclick="eksporExcel()" style="margin-top:8px">DOWNLOAD EXCEL (.XLSX)</button>
     </div>
 
     <div class="card">
-        <h3>📦 STOK SAAT INI (REALTIME)</h3>
-        <div id="ringkasanStok">Memuat data...</div>
+        <h3>📦 RINGKASAN STOK & ALARM</h3>
+        <div id="ringkasanStok">Memuat...</div>
     </div>
 
     <div class="card">
-        <h3>📜 RIWAYAT TRANSAKSI</h3>
+        <h3>📜 DETAIL TRANSAKSI</h3>
         <div style="overflow-x: auto;">
             <table id="tabelRiwayat">
                 <thead>
                     <tr>
-                        <th>Tanggal</th>
+                        <th>Tgl</th>
                         <th>Barang</th>
                         <th>Jenis</th>
-                        <th>Jumlah</th>
+                        <th>Qty</th>
+                        <th>Supplier</th>
+                        <th>Dept</th>
+                        <th>PO/PRS</th>
                         <th class="no-print">Aksi</th>
                     </tr>
                 </thead>
@@ -106,7 +103,6 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
     <script>
-        // 1. KONFIGURASI FIREBASE (FIXED)
         const firebaseConfig = {
             apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
             authDomain: "gudang-sms-4c81c.firebaseapp.com",
@@ -115,122 +111,99 @@
             storageBucket: "gudang-sms-4c81c.appspot.com",
             appId: "1:598362736106:web:c8e2732d6ac7613931de93"
         };
-
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // 2. FUNGSI SIMPAN DATA (KUNCI UTAMA)
+        function toggleExtraFields() {
+            const jenis = document.getElementById("jenis").value;
+            document.getElementById("fieldMasuk").style.display = (jenis === "masuk") ? "block" : "none";
+        }
+
         function prosesSimpan() {
-            const barangInput = document.getElementById("barang");
-            const jumlahInput = document.getElementById("jumlah");
-            const jenisInput = document.getElementById("jenis");
+            const barang = document.getElementById("barang").value.trim().toUpperCase();
+            const qty = parseInt(document.getElementById("jumlah").value);
+            const sMin = parseInt(document.getElementById("stok_min").value) || 0;
+            const jenis = document.getElementById("jenis").value;
             const btn = document.getElementById("btnSimpan");
 
-            const barangNama = barangInput.value.trim().toUpperCase();
-            const jumlahNilai = parseInt(jumlahInput.value);
-            const jenisAksi = jenisInput.value;
+            if (!barang || isNaN(qty)) return alert("Isi Nama & Jumlah!");
 
-            // Validasi
-            if (barangNama === "" || isNaN(jumlahNilai) || jumlahNilai <= 0) {
-                alert("Mohon isi nama barang dan jumlah dengan benar!");
-                return;
-            }
-
-            // Kunci tombol agar tidak dobel klik
             btn.disabled = true;
-            btn.innerText = "SEDANG MENYIMPAN...";
+            btn.innerText = "PROSES...";
 
-            // Kirim ke Firebase
-            database.ref("riwayat").push({
-                barang: barangNama,
-                jumlah: jumlahNilai,
-                jenis: jenisAksi,
-                tanggal: new Date().toISOString().slice(0, 10)
-            })
-            .then(() => {
-                alert("Data Berhasil Disimpan ke Firebase!");
-                // Reset form
-                barangInput.value = "";
-                jumlahInput.value = "";
+            const data = {
+                barang: barang,
+                jumlah: qty,
+                jenis: jenis,
+                stok_min: sMin,
+                tanggal: new Date().toISOString().slice(0, 10),
+                supplier: jenis === "masuk" ? document.getElementById("supplier").value.toUpperCase() : "-",
+                dept: jenis === "masuk" ? document.getElementById("dept").value.toUpperCase() : "-",
+                no_po: jenis === "masuk" ? document.getElementById("no_po").value : "-",
+                no_prs: jenis === "masuk" ? document.getElementById("no_prs").value : "-"
+            };
+
+            database.ref("riwayat").push(data).then(() => {
+                alert("Berhasil!");
+                ["barang","jumlah","supplier","dept","no_po","no_prs"].forEach(id => document.getElementById(id).value = "");
                 btn.disabled = false;
-                btn.innerText = "SIMPAN DATA KE DATABASE";
-            })
-            .catch((error) => {
-                alert("Gagal Simpan: " + error.message);
-                btn.disabled = false;
-                btn.innerText = "SIMPAN DATA KE DATABASE";
+                btn.innerText = "SIMPAN DATA";
             });
         }
 
-        // 3. FUNGSI MUAT DATA SECARA REALTIME
         function muatData() {
             const tglAwal = document.getElementById("tglAwal").value;
             const tglAkhir = document.getElementById("tglAkhir").value;
 
             database.ref("riwayat").on("value", (snapshot) => {
-                let htmlTabel = "";
-                let petaStok = {};
-                let totalUnit = 0;
+                let html = ""; let stok = {}; let limit = {}; let total = 0;
+                
+                snapshot.forEach((snap) => {
+                    const d = snap.val();
+                    if (tglAwal && d.tanggal < tglAwal) return;
+                    if (tglAkhir && d.tanggal > tglAkhir) return;
 
-                snapshot.forEach((childSnapshot) => {
-                    const data = childSnapshot.val();
-
-                    // Filter Tanggal
-                    if (tglAwal && data.tanggal < tglAwal) return;
-                    if (tglAkhir && data.tanggal > tglAkhir) return;
-
-                    // Hitung Stok
-                    if (data.jenis === "masuk") {
-                        petaStok[data.barang] = (petaStok[data.barang] || 0) + data.jumlah;
-                        totalUnit += data.jumlah;
+                    const q = parseInt(d.jumlah);
+                    if (d.jenis === "masuk") {
+                        stok[d.barang] = (stok[d.barang] || 0) + q;
+                        total += q;
+                        if(d.stok_min) limit[d.barang] = d.stok_min; 
                     } else {
-                        petaStok[data.barang] = (petaStok[data.barang] || 0) - data.jumlah;
-                        totalUnit -= data.jumlah;
+                        stok[d.barang] = (stok[d.barang] || 0) - q;
+                        total -= q;
                     }
 
-                    // Buat Baris Tabel
-                    htmlTabel += `<tr>
-                        <td>${data.tanggal}</td>
-                        <td style="text-align:left"><b>${data.barang}</b></td>
-                        <td style="color:${data.jenis === 'masuk' ? '#28a745' : '#dc3545'}"><b>${data.jenis.toUpperCase()}</b></td>
-                        <td>${data.jumlah}</td>
-                        <td class="no-print"><button class="btn-danger" onclick="hapusData('${childSnapshot.key}')">HAPUS</button></td>
+                    html += `<tr>
+                        <td>${d.tanggal.slice(5)}</td>
+                        <td><b>${d.barang}</b></td>
+                        <td style="color:${d.jenis==='masuk'?'green':'red'}">${d.jenis.toUpperCase()}</td>
+                        <td>${d.jumlah}</td>
+                        <td>${d.supplier || '-'}</td>
+                        <td>${d.dept || '-'}</td>
+                        <td>${d.no_po}/${d.no_prs}</td>
+                        <td class="no-print"><button class="btn-danger" onclick="hapus('${snap.key}')">X</button></td>
                     </tr>`;
                 });
 
-                // Tampilkan ke Dashboard
-                document.getElementById("riwayatBody").innerHTML = htmlTabel || "<tr><td colspan='5'>Tidak ada data.</td></tr>";
-                document.getElementById("totalStok").innerText = totalUnit;
-                document.getElementById("totalJenis").innerText = Object.keys(petaStok).length;
+                document.getElementById("riwayatBody").innerHTML = html;
+                document.getElementById("totalStok").innerText = total;
+                document.getElementById("totalJenis").innerText = Object.keys(stok).length;
 
-                // Tampilkan Ringkasan Stok Per Item
-                let ringkasanHtml = "";
-                for (let namaBarang in petaStok) {
-                    ringkasanHtml += `
-                        <div class="stok-item">
-                            <span>${namaBarang}</span>
-                            <b>${petaStok[namaBarang]} UNIT</b>
-                        </div>`;
+                let sHtml = "";
+                for (let key in stok) {
+                    let isLow = limit[key] && stok[key] <= limit[key];
+                    sHtml += `<div class="stok-item ${isLow?'warning':''}">
+                        <span>${key} ${isLow?'⚠️ LOW':''}</span>
+                        <b>${stok[key]} UNIT</b>
+                    </div>`;
                 }
-                document.getElementById("ringkasanStok").innerHTML = ringkasanHtml || "Belum ada stok terdaftar.";
+                document.getElementById("ringkasanStok").innerHTML = sHtml || "Kosong";
             });
         }
 
-        // 4. FUNGSI HAPUS
-        function hapusData(id) {
-            if (confirm("Hapus data transaksi ini?")) {
-                database.ref("riwayat/" + id).remove();
-            }
-        }
-
-        // 5. FUNGSI EKSPOR EXCEL
-        function eksporExcel() {
-            const table = document.getElementById("tabelRiwayat");
-            const wb = XLSX.utils.table_to_book(table);
-            XLSX.writeFile(wb, "Laporan_Gudang_SMS.xlsx");
-        }
-
-        // Jalankan fungsi muat data saat pertama kali buka
+        function hapus(id) { if (confirm("Hapus?")) database.ref("riwayat/" + id).remove(); }
+        function eksporExcel() { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById("tabelRiwayat")), "Laporan_Gudang_SMS.xlsx"); }
+        
         window.onload = muatData;
     </script>
 </body>
