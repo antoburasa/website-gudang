@@ -1,146 +1,119 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Gudang App</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aplikasi Gudang</title>
 
-  <!-- Firebase v8 (WAJIB) -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<!-- Firebase v8 -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f6f8;
-      margin: 0;
-      padding: 16px;
-    }
-    h2 { margin-top: 0 }
-    .card {
-      background: #fff;
-      padding: 16px;
-      border-radius: 8px;
-      margin-bottom: 16px;
-      box-shadow: 0 2px 6px rgba(0,0,0,.1);
-    }
-    input, button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 8px;
-      font-size: 16px;
-    }
-    button {
-      background: #2563eb;
-      color: white;
-      border: none;
-      border-radius: 6px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 12px;
-    }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 8px;
-      text-align: center;
-    }
-    th { background: #eee }
-  </style>
+<style>
+body{font-family:Arial;background:#f2f4f7;margin:0;padding:15px}
+h2{margin-top:0}
+.card{background:#fff;padding:15px;border-radius:8px;margin-bottom:15px}
+input,button{width:100%;padding:10px;margin-top:8px}
+button{background:#2563eb;color:#fff;border:none;border-radius:6px}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{border:1px solid #ddd;padding:8px;text-align:center}
+th{background:#eee}
+</style>
 </head>
 <body>
 
-  <div class="card">
-    <h2>➕ Master Barang</h2>
-    <input type="text" id="namaBarang" placeholder="Nama barang">
-    <button onclick="tambahBarang()">Simpan Barang</button>
-  </div>
+<div class="card">
+  <h2>📦 Master Barang</h2>
+  <input id="namaBarang" placeholder="Nama barang">
+  <button onclick="simpanBarang()">Simpan</button>
+</div>
 
-  <div class="card">
-    <h2>📦 Daftar Barang</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Nama Barang</th>
-          <th>Stok</th>
-          <th>Aksi</th>
-        </tr>
-      </thead>
-      <tbody id="tabelBarang"></tbody>
-    </table>
-  </div>
+<div class="card">
+  <h2>📊 Daftar Barang</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Nama</th>
+        <th>Stok</th>
+        <th>Aksi</th>
+      </tr>
+    </thead>
+    <tbody id="listBarang"></tbody>
+  </table>
+</div>
 
-  <script>
-    // ===============================
-    // 🔧const firebaseConfig = {
-    apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89GpilOio-tTB3o",
-    authDomain: "gudang-sms-4c81c.firebaseapp.com",
-    databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "gudang-sms-4c81c",
-    storageBucket: "gudang-sms-4c81c.firebasestorage.app",
-    messagingSenderId: "598362736106",
-    appId: "1:598362736106:web:c0e2732d6ac7513931de93"
-  };
- 
-    // Init Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+<script>
+/* =============================
+   FIREBASE CONFIG (GANTI INI)
+   ============================= */
+const firebaseConfig = {
+  apiKey: "ISI_API_KEY",
+  authDomain: "ISI_AUTH_DOMAIN",
+  databaseURL: "ISI_DATABASE_URL",
+  projectId: "ISI_PROJECT_ID",
+  storageBucket: "ISI_STORAGE_BUCKET",
+  messagingSenderId: "ISI_SENDER_ID",
+  appId: "ISI_APP_ID"
+};
 
-    // ===============================
-    // TAMBAH BARANG (FIX)
-    // ===============================
-    function tambahBarang() {
-      const nama = document.getElementById("namaBarang").value.trim();
+/* =============================
+   INIT FIREBASE
+   ============================= */
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-      if (nama === "") {
-        alert("Nama barang tidak boleh kosong");
-        return;
-      }
+/* =============================
+   SIMPAN BARANG (FIX 100%)
+   ============================= */
+function simpanBarang(){
+  const nama = document.getElementById("namaBarang").value.trim();
+  if(nama === ""){
+    alert("Nama barang wajib diisi");
+    return;
+  }
 
-      db.ref("barang/" + nama).set({
-        stok: 0
-      }).then(() => {
-        alert("Barang berhasil disimpan");
-        document.getElementById("namaBarang").value = "";
-      }).catch(err => {
-        alert("Error: " + err.message);
-      });
-    }
+  db.ref("barang/" + nama).set({
+    stok: 0
+  }).then(()=>{
+    alert("Barang tersimpan");
+    document.getElementById("namaBarang").value = "";
+  }).catch(err=>{
+    alert("Error: " + err.message);
+  });
+}
 
-    // ===============================
-    // TAMPIL BARANG REALTIME
-    // ===============================
-    db.ref("barang").on("value", snapshot => {
-      const tbody = document.getElementById("tabelBarang");
-      tbody.innerHTML = "";
+/* =============================
+   LOAD BARANG REALTIME
+   ============================= */
+db.ref("barang").on("value", snapshot=>{
+  const tbody = document.getElementById("listBarang");
+  tbody.innerHTML = "";
 
-      snapshot.forEach(child => {
-        const nama = child.key;
-        const stok = child.val().stok;
+  snapshot.forEach(child=>{
+    const nama = child.key;
+    const stok = child.val().stok || 0;
 
-        tbody.innerHTML += `
-          <tr>
-            <td>${nama}</td>
-            <td>${stok}</td>
-            <td>
-              <button onclick="hapusBarang('${nama}')">Hapus</button>
-            </td>
-          </tr>
-        `;
-      });
-    });
+    tbody.innerHTML += `
+      <tr>
+        <td>${nama}</td>
+        <td>${stok}</td>
+        <td>
+          <button onclick="hapusBarang('${nama}')">Hapus</button>
+        </td>
+      </tr>
+    `;
+  });
+});
 
-    // ===============================
-    // HAPUS BARANG
-    // ===============================
-    function hapusBarang(nama) {
-      if (confirm("Hapus barang " + nama + "?")) {
-        db.ref("barang/" + nama).remove();
-      }
-    }
-  </script>
+/* =============================
+   HAPUS BARANG
+   ============================= */
+function hapusBarang(nama){
+  if(confirm("Hapus barang " + nama + "?")){
+    db.ref("barang/" + nama).remove();
+  }
+}
+</script>
 
 </body>
 </html>
-
