@@ -55,17 +55,17 @@ th{background:#f1f5f9}
 <!-- BARANG MASUK -->
 <div id="masuk" class="card" style="display:none">
 <h3>Barang Masuk</h3>
-<select id="barangMasuk"></select>
+<select id="selectMasuk"></select>
 <input id="jumlahMasuk" type="number" placeholder="Jumlah">
-<button onclick="barangMasuk()">Simpan</button>
+<button onclick="simpanMasuk()">Simpan</button>
 </div>
 
 <!-- BARANG KELUAR -->
 <div id="keluar" class="card" style="display:none">
 <h3>Barang Keluar</h3>
-<select id="barangKeluar"></select>
+<select id="selectKeluar"></select>
 <input id="jumlahKeluar" type="number" placeholder="Jumlah">
-<button onclick="barangKeluar()">Simpan</button>
+<button onclick="simpanKeluar()">Simpan</button>
 </div>
 
 <!-- STOK -->
@@ -96,84 +96,75 @@ th{background:#f1f5f9}
 </div>
 
 <script>
-let barang = [];
-let riwayat = [];
+let dataBarang = [];
+let dataRiwayat = [];
 
 function showMenu(menu){
-  ['master','masuk','keluar','stok','minimum','riwayat'].forEach(id=>{
-    document.getElementById(id).style.display='none';
-  });
-  document.getElementById(menu).style.display='block';
-
-  document.querySelectorAll('.sidebar a').forEach(a=>{
-    a.classList.remove('active');
-    if(a.getAttribute('onclick').includes(menu)) a.classList.add('active');
-  });
+['master','masuk','keluar','stok','minimum','riwayat'].forEach(id=>{
+document.getElementById(id).style.display='none';
+});
+document.getElementById(menu).style.display='block';
 }
 
 function addBarang(){
-  if(!kodeBarang.value||!namaBarang.value||!satuanBarang.value||!minBarang.value){
-    alert("Lengkapi data barang");
-    return;
-  }
-
-  barang.push({
-    kode:kodeBarang.value,
-    nama:namaBarang.value,
-    satuan:satuanBarang.value,
-    stok:0,
-    min:parseInt(minBarang.value)
-  });
-
-  render();
-  kodeBarang.value=namaBarang.value=satuanBarang.value=minBarang.value='';
+if(!kodeBarang.value||!namaBarang.value||!satuanBarang.value||!minBarang.value){
+alert("Lengkapi data barang"); return;
 }
 
-function barangMasuk(){
-  if(barang.length===0) return alert("Data barang kosong");
-  let i=barangMasuk.selectedIndex;
-  let j=parseInt(jumlahMasuk.value);
-  if(!j||j<=0) return alert("Jumlah tidak valid");
+dataBarang.push({
+kode:kodeBarang.value,
+nama:namaBarang.value,
+satuan:satuanBarang.value,
+stok:0,
+min:parseInt(minBarang.value)
+});
 
-  barang[i].stok+=j;
-  riwayat.push(${new Date().toLocaleString()}|Masuk|${barang[i].nama}|${j});
-  render();
-  jumlahMasuk.value='';
+kodeBarang.value=namaBarang.value=satuanBarang.value=minBarang.value='';
+render();
 }
 
-function barangKeluar(){
-  if(barang.length===0) return alert("Data barang kosong");
-  let i=barangKeluar.selectedIndex;
-  let j=parseInt(jumlahKeluar.value);
-  if(!j||j<=0) return alert("Jumlah tidak valid");
-  if(barang[i].stok<j) return alert("Stok tidak cukup");
+function simpanMasuk(){
+let i=selectMasuk.selectedIndex;
+let j=parseInt(jumlahMasuk.value);
+if(isNaN(j)||j<=0) return alert("Jumlah tidak valid");
 
-  barang[i].stok-=j;
-  riwayat.push(${new Date().toLocaleString()}|Keluar|${barang[i].nama}|${j});
-  render();
-  jumlahKeluar.value='';
+dataBarang[i].stok+=j;
+dataRiwayat.push({tgl:new Date().toLocaleString(),jenis:"Masuk",barang:dataBarang[i].nama,jumlah:j});
+jumlahMasuk.value='';
+render();
+}
+
+function simpanKeluar(){
+let i=selectKeluar.selectedIndex;
+let j=parseInt(jumlahKeluar.value);
+if(isNaN(j)||j<=0) return alert("Jumlah tidak valid");
+if(dataBarang[i].stok<j) return alert("Stok tidak cukup");
+
+dataBarang[i].stok-=j;
+dataRiwayat.push({tgl:new Date().toLocaleString(),jenis:"Keluar",barang:dataBarang[i].nama,jumlah:j});
+jumlahKeluar.value='';
+render();
 }
 
 function render(){
-  tableBarang.innerHTML='<tr><th>Kode</th><th>Nama</th><th>Satuan</th><th>Stok</th><th>Min</th></tr>';
-  tableStok.innerHTML='<tr><th>Barang</th><th>Stok</th></tr>';
-  tableMin.innerHTML='<tr><th>Barang</th><th>Stok</th><th>Minimum</th></tr>';
-  tableRiwayat.innerHTML='<tr><th>Tanggal</th><th>Jenis</th><th>Barang</th><th>Jumlah</th></tr>';
-  barangMasuk.innerHTML='';
-  barangKeluar.innerHTML='';
+tableBarang.innerHTML='<tr><th>Kode</th><th>Nama</th><th>Satuan</th><th>Stok</th><th>Min</th></tr>';
+tableStok.innerHTML='<tr><th>Barang</th><th>Stok</th></tr>';
+tableMin.innerHTML='<tr><th>Barang</th><th>Stok</th><th>Minimum</th></tr>';
+tableRiwayat.innerHTML='<tr><th>Tanggal</th><th>Jenis</th><th>Barang</th><th>Jumlah</th></tr>';
+selectMasuk.innerHTML='';
+selectKeluar.innerHTML='';
 
-  barang.forEach(b=>{
-    tableBarang.innerHTML+=<tr><td>${b.kode}</td><td>${b.nama}</td><td>${b.satuan}</td><td>${b.stok}</td><td>${b.min}</td></tr>;
-    tableStok.innerHTML+=<tr><td>${b.nama}</td><td>${b.stok}</td></tr>;
-    tableMin.innerHTML+=<tr><td>${b.nama}</td><td>${b.stok}</td><td>${b.min}</td></tr>;
-    barangMasuk.innerHTML+=<option>${b.nama}</option>;
-    barangKeluar.innerHTML+=<option>${b.nama}</option>;
-  });
+dataBarang.forEach(b=>{
+tableBarang.innerHTML+=<tr><td>${b.kode}</td><td>${b.nama}</td><td>${b.satuan}</td><td>${b.stok}</td><td>${b.min}</td></tr>;
+tableStok.innerHTML+=<tr><td>${b.nama}</td><td>${b.stok}</td></tr>;
+tableMin.innerHTML+=<tr><td>${b.nama}</td><td>${b.stok}</td><td>${b.min}</td></tr>;
+selectMasuk.innerHTML+=<option>${b.nama}</option>;
+selectKeluar.innerHTML+=<option>${b.nama}</option>;
+});
 
-  riwayat.forEach(r=>{
-    let x=r.split('|');
-    tableRiwayat.innerHTML+=<tr><td>${x[0]}</td><td>${x[1]}</td><td>${x[2]}</td><td>${x[3]}</td></tr>;
-  });
+dataRiwayat.forEach(r=>{
+tableRiwayat.innerHTML+=<tr><td>${r.tgl}</td><td>${r.jenis}</td><td>${r.barang}</td><td>${r.jumlah}</td></tr>;
+});
 }
 </script>
 
