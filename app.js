@@ -1,5 +1,6 @@
 window.addEventListener("DOMContentLoaded", function() {
-  alert("JS JALAN ✅"); // pastikan JS jalan
+  console.log("JS JALAN ✅");
+  alert("JS JALAN ✅"); // pastikan muncul
 
   const firebaseConfig = {
     apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
@@ -14,6 +15,7 @@ window.addEventListener("DOMContentLoaded", function() {
 
   // Sidebar
   window.show = function(id){
+    console.log("show", id);
     document.querySelectorAll('.card').forEach(c => c.classList.add('hidden'));
     document.getElementById(id).classList.remove('hidden');
   };
@@ -22,16 +24,20 @@ window.addEventListener("DOMContentLoaded", function() {
   window.simpanBarang = function(){
     const nama = document.getElementById("namaBarang").value.trim();
     const min = document.getElementById("minStok").value;
+    console.log("simpanBarang", nama, min);
     if(!nama) return alert("Nama kosong");
 
-    db.ref('barang/'+nama).set({stok:0, min:min});
-    alert("Barang disimpan");
+    db.ref('barang/'+nama).set({stok:0, min:min}, err => {
+      if(err) alert("Error: " + err.message);
+      else alert("Barang disimpan");
+    });
   };
 
   // Barang Masuk
   window.barangMasuk = function(){
     const b = document.getElementById("masukBarang").value.trim();
     const q = parseInt(document.getElementById("masukQty").value);
+    console.log("barangMasuk", b, q);
     if(!b || !q) return alert("Data belum lengkap");
 
     db.ref('barang/'+b+'/stok').transaction(s => (s||0)+q);
@@ -43,6 +49,7 @@ window.addEventListener("DOMContentLoaded", function() {
   window.barangKeluar = function(){
     const b = document.getElementById("keluarBarang").value.trim();
     const q = parseInt(document.getElementById("keluarQty").value);
+    console.log("barangKeluar", b, q);
     if(!b || !q) return alert("Data belum lengkap");
 
     db.ref('barang/'+b+'/stok').transaction(s => (s||0)-q);
@@ -53,6 +60,7 @@ window.addEventListener("DOMContentLoaded", function() {
   // Stok Barang
   const listStok = document.getElementById("listStok");
   db.ref('barang').on('value', snap=>{
+    console.log("update stok", snap.val());
     let html = '';
     snap.forEach(c=>{
       html += <div>${c.key} : ${c.val().stok}</div>;
@@ -64,6 +72,7 @@ window.addEventListener("DOMContentLoaded", function() {
   const listRiwayat = document.getElementById("listRiwayat");
   db.ref('riwayat').on('child_added', snap=>{
     const d = snap.val();
+    console.log("riwayat child_added", d);
     const li = document.createElement('li');
     li.textContent = ${d.barang} - ${d.jenis} (${d.qty});
     listRiwayat.prepend(li);
