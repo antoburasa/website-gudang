@@ -2,41 +2,58 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Dashboard Gudang</title>
+  <title>Login SMS Gudang</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f1f5f9;
+      background: #020617;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
       margin: 0;
-    }
-    header {
-      background: #0f172a;
       color: white;
-      padding: 15px;
     }
-    main {
-      padding: 20px;
+    .box {
+      background: #0f172a;
+      padding: 30px;
+      border-radius: 8px;
+      width: 300px;
     }
-    .card {
-      background: white;
-      padding: 15px;
-      border-radius: 10px;
-      margin-bottom: 10px;
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 5px;
+      border: none;
+    }
+    button {
+      background: #2563eb;
+      color: white;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
+  <div class="box">
+    <h3>Login SMS Gudang</h3>
+    <input type="text" id="user" placeholder="Username">
+    <input type="password" id="pass" placeholder="Password">
+    <button onclick="login()">Login</button>
+  </div>
 
-<header>
-  <h2>Dashboard SMS Gudang</h2>
-</header>
+  <script>
+    function login() {
+      const user = document.getElementById("user").value;
+      const pass = document.getElementById("pass").value;
 
-<main>
-  <div class="card">📦 Total Barang: 120</div>
-  <div class="card">📥 Barang Masuk Hari Ini: 5</div>
-  <div class="card">📤 Barang Keluar Hari Ini: 3</div>
-</main>
-
+      if (user === "admin" && pass === "1234") {
+        window.location.href = "dashboard.html";
+      } else {
+        alert("Username atau password salah");
+      }
+    }
+  </script>
 </body>
 </html>
