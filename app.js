@@ -1,5 +1,5 @@
 window.addEventListener("DOMContentLoaded", function() {
-  alert("JS JALAN ✅"); // cek JS jalan
+  alert("JS JALAN ✅"); // pastikan JS jalan
 
   const firebaseConfig = {
     apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
