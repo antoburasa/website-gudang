@@ -12,10 +12,7 @@
 body { font-family: Arial; margin: 0; display: flex; background:#f4f4f4; }
 .sidebar { width: 220px; background:#1e3a8a; color:white; padding:15px; }
 .sidebar h3 { text-align:center; margin-bottom:20px; }
-.sidebar button {
-  width:100%; margin:5px 0; padding:10px; border:none; border-radius:5px;
-  background:#3b82f6; color:white; cursor:pointer;
-}
+.sidebar button { width:100%; margin:5px 0; padding:10px; border:none; border-radius:5px; background:#3b82f6; color:white; cursor:pointer; }
 .main { flex:1; padding:20px; }
 .card { background:white; padding:15px; border-radius:8px; margin-bottom:15px; }
 input, button { padding:8px; margin:5px 0; width:100%; }
@@ -70,6 +67,5 @@ input, button { padding:8px; margin:5px 0; width:100%; }
 </div>
 
 <script src="app.js"></script>
-
 </body>
 </html>
