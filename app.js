@@ -1,82 +1,75 @@
-window.addEventListener("DOMContentLoaded", function() {
-  console.clear();
-  console.log("✅ JS JALAN - Ultra Debug Version");
-  alert("✅ JS JALAN - Dashboard siap!");
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Dashboard Gudang</title>
 
-  // --- KONFIGURASI FIREBASE ---
-  const firebaseConfig = {
-    apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
-    authDomain: "gudang-sms-4c81c.firebaseapp.com",
-    databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "gudang-sms-4c81c",
-    appId: "1:598362736106:web:c8e2732d6ac7613931de93"
-  };
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+<style>
+body { font-family: Arial; margin: 0; display: flex; background:#f4f4f4; }
+.sidebar { width: 220px; background:#1e3a8a; color:white; padding:15px; }
+.sidebar h3 { text-align:center; margin-bottom:20px; }
+.sidebar button {
+  width:100%; margin:5px 0; padding:10px; border:none; border-radius:5px;
+  background:#3b82f6; color:white; cursor:pointer;
+}
+.main { flex:1; padding:20px; }
+.card { background:white; padding:15px; border-radius:8px; margin-bottom:15px; }
+input, button { padding:8px; margin:5px 0; width:100%; }
+.hidden { display:none; }
+</style>
+</head>
 
-  // --- SIDEBAR ---
-  window.show = function(id){
-    console.log("Sidebar: show", id);
-    document.querySelectorAll('.card').forEach(c => c.classList.add('hidden'));
-    document.getElementById(id).classList.remove('hidden');
-  };
+<body>
 
-  // --- MASTER BARANG ---
-  window.simpanBarang = function(){
-    const nama = document.getElementById("namaBarang").value.trim();
-    const min = document.getElementById("minStok").value;
-    console.log("simpanBarang", {nama, min});
-    if(!nama) return alert("Nama kosong");
+<div class="sidebar">
+  <h3>📦 GUDANG</h3>
+  <button onclick="show('master')">Master Barang</button>
+  <button onclick="show('masuk')">Barang Masuk</button>
+  <button onclick="show('keluar')">Barang Keluar</button>
+  <button onclick="show('stok')">Stok Barang</button>
+  <button onclick="show('riwayat')">Riwayat</button>
+</div>
 
-    db.ref('barang/'+nama).set({stok:0, min:min}, err=>{
-      if(err) alert("Error: "+err.message);
-      else alert("✅ Barang disimpan");
-    });
-  };
+<div class="main">
 
-  // --- BARANG MASUK ---
-  window.barangMasuk = function(){
-    const b = document.getElementById("masukBarang").value.trim();
-    const q = parseInt(document.getElementById("masukQty").value);
-    console.log("barangMasuk", {b,q});
-    if(!b || !q) return alert("Data belum lengkap");
+<div id="master" class="card">
+  <h3>Master Barang</h3>
+  <input id="namaBarang" placeholder="Nama Barang">
+  <input id="minStok" type="number" placeholder="Minimum Stok">
+  <button onclick="simpanBarang()">Simpan Barang</button>
+</div>
 
-    db.ref('barang/'+b+'/stok').transaction(s => (s||0)+q);
-    db.ref('riwayat').push({barang:b, jenis:'masuk', qty:q});
-    alert("✅ Barang masuk disimpan");
-  };
+<div id="masuk" class="card hidden">
+  <h3>Barang Masuk</h3>
+  <input id="masukBarang" placeholder="Nama Barang">
+  <input id="masukQty" type="number" placeholder="Jumlah">
+  <button onclick="barangMasuk()">Simpan</button>
+</div>
 
-  // --- BARANG KELUAR ---
-  window.barangKeluar = function(){
-    const b = document.getElementById("keluarBarang").value.trim();
-    const q = parseInt(document.getElementById("keluarQty").value);
-    console.log("barangKeluar", {b,q});
-    if(!b || !q) return alert("Data belum lengkap");
+<div id="keluar" class="card hidden">
+  <h3>Barang Keluar</h3>
+  <input id="keluarBarang" placeholder="Nama Barang">
+  <input id="keluarQty" type="number" placeholder="Jumlah">
+  <button onclick="barangKeluar()">Simpan</button>
+</div>
 
-    db.ref('barang/'+b+'/stok').transaction(s => (s||0)-q);
-    db.ref('riwayat').push({barang:b, jenis:'keluar', qty:q});
-    alert("✅ Barang keluar disimpan");
-  };
+<div id="stok" class="card hidden">
+  <h3>Stok Barang</h3>
+  <div id="listStok">Memuat...</div>
+</div>
 
-  // --- STOK BARANG ---
-  const listStok = document.getElementById("listStok");
-  db.ref('barang').on('value', snap=>{
-    console.log("update stok", snap.val());
-    let html = '';
-    snap.forEach(c=>{
-      html += <div>${c.key} : ${c.val().stok}</div>;
-    });
-    listStok.innerHTML = html || "Belum ada data";
-  });
+<div id="riwayat" class="card hidden">
+  <h3>Riwayat Transaksi</h3>
+  <ul id="listRiwayat"></ul>
+</div>
 
-  // --- RIWAYAT TRANSAKSI ---
-  const listRiwayat = document.getElementById("listRiwayat");
-  db.ref('riwayat').on('child_added', snap=>{
-    const d = snap.val();
-    console.log("riwayat child_added", d);
-    const li = document.createElement('li');
-    li.textContent = ${d.barang} - ${d.jenis} (${d.qty});
-    listRiwayat.prepend(li);
-  });
-});
+</div>
+
+<script src="app.js"></script>
+
+</body>
+</html>
