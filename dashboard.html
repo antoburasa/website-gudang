@@ -4,22 +4,22 @@
 <meta charset="UTF-8">
 <title>Dashboard Gudang</title>
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <style>
-body { font-family: Arial; margin: 0; display: flex; background:#f4f4f4 }
-.sidebar { width: 220px; background:#1e3a8a; color:white; padding:15px }
-.sidebar h3 { text-align:center }
+body { font-family: Arial; margin: 0; display: flex; background:#f4f4f4; }
+.sidebar { width: 220px; background:#1e3a8a; color:white; padding:15px; }
+.sidebar h3 { text-align:center; }
 .sidebar button {
-  width:100%; margin:5px 0; padding:10px;
-  border:none; border-radius:5px;
-  background:#3b82f6; color:white; cursor:pointer
+  width:100%; margin:5px 0; padding:10px; border:none; border-radius:5px;
+  background:#3b82f6; color:white; cursor:pointer;
 }
-.main { flex:1; padding:20px }
-.card { background:white; padding:15px; border-radius:8px; margin-bottom:15px }
-input, button { padding:8px; margin:5px 0; width:100% }
-.hidden { display:none }
+.main { flex:1; padding:20px; }
+.card { background:white; padding:15px; border-radius:8px; margin-bottom:15px; }
+input, button { padding:8px; margin:5px 0; width:100%; }
+.hidden { display:none; }
 </style>
 </head>
 
@@ -69,76 +69,8 @@ input, button { padding:8px; margin:5px 0; width:100% }
 
 </div>
 
-<script>
-const firebaseConfig = {
-  apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
-  authDomain: "gudang-sms-4c81c.firebaseapp.com",
-  databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "gudang-sms-4c81c",
-  appId: "1:598362736106:web:c8e2732d6ac7613931de93"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-
-function show(id){
-  document.querySelectorAll('.card')
-    .forEach(c => c.classList.add('hidden'));
-  document.getElementById(id).classList.remove('hidden');
-}
-
-function simpanBarang(){
-  const nama = namaBarang.value.trim();
-  const min = minStok.value;
-  if(!nama) return alert("Nama kosong");
-
-  db.ref('barang/'+nama).set({stok:0, min:min});
-  alert('Barang disimpan');
-}
-
-function barangMasuk(){
-  const b = masukBarang.value.trim();
-  const q = parseInt(masukQty.value);
-  if(!b || !q) return alert("Data belum lengkap");
-
-  db.ref('barang/'+b+'/stok')
-    .transaction(s => (s||0)+q);
-
-  db.ref('riwayat')
-    .push({barang:b, jenis:'masuk', qty:q});
-
-  alert('Barang masuk disimpan');
-}
-
-function barangKeluar(){
-  const b = keluarBarang.value.trim();
-  const q = parseInt(keluarQty.value);
-  if(!b || !q) return alert("Data belum lengkap");
-
-  db.ref('barang/'+b+'/stok')
-    .transaction(s => (s||0)-q);
-
-  db.ref('riwayat')
-    .push({barang:b, jenis:'keluar', qty:q});
-
-  alert('Barang keluar disimpan');
-}
-
-db.ref('barang').on('value', snap=>{
-  let html='';
-  snap.forEach(c=>{
-    html += <div>${c.key} : ${c.val().stok}</div>;
-  });
-  listStok.innerHTML = html || "Belum ada data";
-});
-
-db.ref('riwayat').on('child_added', snap=>{
-  const d = snap.val();
-  const li = document.createElement('li');
-  li.textContent = ${d.barang} - ${d.jenis} (${d.qty});
-  listRiwayat.prepend(li);
-});
-</script>
+<!-- Panggil JS terpisah -->
+<script src="app.js"></script>
 
 </body>
 </html>
