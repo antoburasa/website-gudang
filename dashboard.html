@@ -1,159 +1,37 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>Dashboard Gudang</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <title>TEST GUDANG</title>
 
-<style>
-body{margin:0;font-family:Arial;background:#f3f4f6}
-.sidebar{
-  width:220px;background:#1e3a8a;color:#fff;
-  position:fixed;height:100%;padding:15px
-}
-.sidebar h2{text-align:center}
-.sidebar button{
-  width:100%;margin:6px 0;padding:10px;
-  background:#2563eb;color:#fff;
-  border:none;border-radius:6px;
-  cursor:pointer;font-size:14px
-}
-.sidebar button:hover{background:#3b82f6}
-.content{margin-left:240px;padding:20px}
-.card{
-  background:#fff;padding:15px;
-  border-radius:10px;margin-bottom:15px
-}
-input,button{
-  width:100%;padding:10px;
-  margin-top:8px;font-size:14px
-}
-table{width:100%;border-collapse:collapse;margin-top:10px}
-th,td{border-bottom:1px solid #ddd;padding:8px;text-align:left}
-</style>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
-
 <body>
 
-<!-- SIDEBAR -->
-<div class="sidebar">
-  <h2>GUDANG</h2>
-  <button data-page="master">Master Barang</button>
-  <button data-page="masuk">Barang Masuk</button>
-  <button data-page="keluar">Barang Keluar</button>
-  <button data-page="stok">Stok Barang</button>
-</div>
+<h2>TES FIREBASE</h2>
 
-<!-- KONTEN -->
-<div class="content">
-
-<!-- MASTER BARANG -->
-<div id="master" class="card">
-  <h3>Master Barang</h3>
-  <input id="namaBarang" placeholder="Nama Barang">
-  <input id="stokAwal" type="number" placeholder="Stok Awal">
-  <button id="btnSimpanBarang">Simpan Barang</button>
-
-  <table>
-    <thead>
-      <tr><th>Nama Barang</th><th>Stok</th></tr>
-    </thead>
-    <tbody id="tabelBarang"></tbody>
-  </table>
-</div>
-
-<!-- BARANG MASUK -->
-<div id="masuk" class="card" style="display:none">
-  <h3>Barang Masuk</h3>
-  <input id="masukNama" placeholder="Nama Barang">
-  <input id="masukQty" type="number" placeholder="Jumlah">
-  <button id="btnMasuk">Simpan</button>
-</div>
-
-<!-- BARANG KELUAR -->
-<div id="keluar" class="card" style="display:none">
-  <h3>Barang Keluar</h3>
-  <input id="keluarNama" placeholder="Nama Barang">
-  <input id="keluarQty" type="number" placeholder="Jumlah">
-  <button id="btnKeluar">Simpan</button>
-</div>
-
-<!-- STOK -->
-<div id="stok" class="card" style="display:none">
-  <h3>Stok Barang</h3>
-  <div id="stokList"></div>
-</div>
-
-</div>
+<input id="barang" placeholder="Nama barang">
+<button onclick="simpan()">SIMPAN</button>
 
 <script>
-document.addEventListener("DOMContentLoaded", function () {
+  const firebaseConfig = {
+    apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
+    authDomain: "gudang-sms-4c81c.firebaseapp.com",
+    databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "gudang-sms-4c81c",
+    appId: "1:598362736106:web:c8e2732d6ac7613931de93"
+  };
 
-  const dataBarang = {};
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
 
-  // SIDEBAR NAVIGASI
-  document.querySelectorAll(".sidebar button").forEach(btn => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(".card").forEach(c => c.style.display = "none");
-      document.getElementById(btn.dataset.page).style.display = "block";
-      if(btn.dataset.page === "stok") renderStok();
-    });
-  });
-
-  // SIMPAN MASTER BARANG
-  document.getElementById("btnSimpanBarang").addEventListener("click", () => {
-    const nama = document.getElementById("namaBarang").value.trim();
-    const stok = parseInt(document.getElementById("stokAwal").value);
-
-    if(!nama || isNaN(stok)){
-      alert("Lengkapi data");
-      return;
-    }
-
-    dataBarang[nama] = stok;
-    renderTabel();
-
-    document.getElementById("namaBarang").value = "";
-    document.getElementById("stokAwal").value = "";
-  });
-
-  // BARANG MASUK
-  document.getElementById("btnMasuk").addEventListener("click", () => {
-    const n = document.getElementById("masukNama").value;
-    const q = parseInt(document.getElementById("masukQty").value);
-    if(!dataBarang[n]) return alert("Barang belum ada");
-    dataBarang[n] += q;
-    document.getElementById("masukNama").value="";
-    document.getElementById("masukQty").value="";
-  });
-
-  // BARANG KELUAR
-  document.getElementById("btnKeluar").addEventListener("click", () => {
-    const n = document.getElementById("keluarNama").value;
-    const q = parseInt(document.getElementById("keluarQty").value);
-    if(!dataBarang[n]) return alert("Barang belum ada");
-    dataBarang[n] -= q;
-    document.getElementById("keluarNama").value="";
-    document.getElementById("keluarQty").value="";
-  });
-
-  function renderTabel(){
-    const tabel = document.getElementById("tabelBarang");
-    tabel.innerHTML = "";
-    for(let b in dataBarang){
-      tabel.innerHTML += <tr><td>${b}</td><td>${dataBarang[b]}</td></tr>;
-    }
+  function simpan() {
+    const barang = document.getElementById("barang").value;
+    db.ref("test").push({ barang: barang, waktu: Date.now() })
+      .then(() => alert("BERHASIL SIMPAN"))
+      .catch(err => alert("ERROR: " + err.message));
   }
-
-  function renderStok(){
-    const s = document.getElementById("stokList");
-    s.innerHTML = "";
-    for(let b in dataBarang){
-      s.innerHTML += <p>${b} : ${dataBarang[b]}</p>;
-    }
-  }
-
-});
 </script>
 
 </body>
