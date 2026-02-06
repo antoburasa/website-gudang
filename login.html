@@ -1,59 +1,57 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title>Login SMS Gudang</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #020617;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      color: white;
-    }
-    .box {
-      background: #0f172a;
-      padding: 30px;
-      border-radius: 8px;
-      width: 300px;
-    }
-    input, button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      border-radius: 5px;
-      border: none;
-    }
-    button {
-      background: #2563eb;
-      color: white;
-      cursor: pointer;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Login Gudang</title>
+<style>
+body {
+  font-family: Arial;
+  background:#1e3a8a;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+.card {
+  background:white;
+  padding:25px;
+  border-radius:10px;
+  width:280px;
+}
+input, button {
+  width:100%;
+  padding:10px;
+  margin-top:10px;
+}
+button {
+  background:#3b82f6;
+  border:none;
+  color:white;
+  cursor:pointer;
+}
+</style>
 </head>
 <body>
-  <div class="box">
-    <h3>Login SMS Gudang</h3>
-    <input type="text" id="user" placeholder="Username">
-    <input type="password" id="pass" placeholder="Password">
-    <button onclick="login()">Login</button>
-  </div>
 
-  <script>
-    function login() {
-      const user = document.getElementById("user").value;
-      const pass = document.getElementById("pass").value;
+<div class="card">
+  <h3 style="text-align:center">LOGIN GUDANG</h3>
+  <input id="user" placeholder="Username">
+  <input id="pass" type="password" placeholder="Password">
+  <button onclick="login()">LOGIN</button>
+</div>
 
-      if (user === "admin" && pass === "1234") {
-        window.location.href = "dashboard.html";
-      } else {
-        alert("Username atau password salah");
-      }
-    }
-  </script>
+<script>
+function login(){
+  const u = user.value;
+  const p = pass.value;
+
+  if(u === "admin" && p === "1234"){
+    window.location.href = "dashboard.html";
+  } else {
+    alert("Username / Password salah");
+  }
+}
+</script>
+
 </body>
 </html>
