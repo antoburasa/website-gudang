@@ -15,19 +15,27 @@ body{margin:0;font-family:Arial;background:#f3f4f6}
 .sidebar button{
   width:100%;margin:6px 0;padding:10px;
   background:#2563eb;color:#fff;
-  border:none;border-radius:6px;cursor:pointer
+  border:none;border-radius:6px;
+  cursor:pointer;font-size:14px
 }
 .sidebar button:hover{background:#3b82f6}
 .content{margin-left:240px;padding:20px}
-.card{background:#fff;padding:15px;border-radius:10px;margin-bottom:15px}
-input,button{width:100%;padding:10px;margin-top:8px}
+.card{
+  background:#fff;padding:15px;
+  border-radius:10px;margin-bottom:15px
+}
+input,button{
+  width:100%;padding:10px;
+  margin-top:8px;font-size:14px
+}
 table{width:100%;border-collapse:collapse;margin-top:10px}
-th,td{border-bottom:1px solid #ddd;padding:8px}
+th,td{border-bottom:1px solid #ddd;padding:8px;text-align:left}
 </style>
 </head>
 
 <body>
 
+<!-- SIDEBAR -->
 <div class="sidebar">
   <h2>GUDANG</h2>
   <button data-page="master">Master Barang</button>
@@ -36,8 +44,10 @@ th,td{border-bottom:1px solid #ddd;padding:8px}
   <button data-page="stok">Stok Barang</button>
 </div>
 
+<!-- KONTEN -->
 <div class="content">
 
+<!-- MASTER BARANG -->
 <div id="master" class="card">
   <h3>Master Barang</h3>
   <input id="namaBarang" placeholder="Nama Barang">
@@ -45,11 +55,14 @@ th,td{border-bottom:1px solid #ddd;padding:8px}
   <button id="btnSimpanBarang">Simpan Barang</button>
 
   <table>
-    <thead><tr><th>Nama</th><th>Stok</th></tr></thead>
+    <thead>
+      <tr><th>Nama Barang</th><th>Stok</th></tr>
+    </thead>
     <tbody id="tabelBarang"></tbody>
   </table>
 </div>
 
+<!-- BARANG MASUK -->
 <div id="masuk" class="card" style="display:none">
   <h3>Barang Masuk</h3>
   <input id="masukNama" placeholder="Nama Barang">
@@ -57,6 +70,7 @@ th,td{border-bottom:1px solid #ddd;padding:8px}
   <button id="btnMasuk">Simpan</button>
 </div>
 
+<!-- BARANG KELUAR -->
 <div id="keluar" class="card" style="display:none">
   <h3>Barang Keluar</h3>
   <input id="keluarNama" placeholder="Nama Barang">
@@ -64,6 +78,7 @@ th,td{border-bottom:1px solid #ddd;padding:8px}
   <button id="btnKeluar">Simpan</button>
 </div>
 
+<!-- STOK -->
 <div id="stok" class="card" style="display:none">
   <h3>Stok Barang</h3>
   <div id="stokList"></div>
@@ -72,21 +87,21 @@ th,td{border-bottom:1px solid #ddd;padding:8px}
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", function () {
 
   const dataBarang = {};
 
-  // SIDEBAR
-  document.querySelectorAll(".sidebar button").forEach(btn=>{
-    btn.addEventListener("click",()=>{
-      document.querySelectorAll(".card").forEach(c=>c.style.display="none");
-      document.getElementById(btn.dataset.page).style.display="block";
-      if(btn.dataset.page==="stok") renderStok();
+  // SIDEBAR NAVIGASI
+  document.querySelectorAll(".sidebar button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".card").forEach(c => c.style.display = "none");
+      document.getElementById(btn.dataset.page).style.display = "block";
+      if(btn.dataset.page === "stok") renderStok();
     });
   });
 
   // SIMPAN MASTER BARANG
-  document.getElementById("btnSimpanBarang").addEventListener("click",()=>{
+  document.getElementById("btnSimpanBarang").addEventListener("click", () => {
     const nama = document.getElementById("namaBarang").value.trim();
     const stok = parseInt(document.getElementById("stokAwal").value);
 
@@ -98,37 +113,43 @@ document.addEventListener("DOMContentLoaded", () => {
     dataBarang[nama] = stok;
     renderTabel();
 
-    document.getElementById("namaBarang").value="";
-    document.getElementById("stokAwal").value="";
+    document.getElementById("namaBarang").value = "";
+    document.getElementById("stokAwal").value = "";
   });
 
   // BARANG MASUK
-  document.getElementById("btnMasuk").addEventListener("click",()=>{
-    const n = masukNama.value;
-    const q = parseInt(masukQty.value);
+  document.getElementById("btnMasuk").addEventListener("click", () => {
+    const n = document.getElementById("masukNama").value;
+    const q = parseInt(document.getElementById("masukQty").value);
     if(!dataBarang[n]) return alert("Barang belum ada");
-    dataBarang[n]+=q;
+    dataBarang[n] += q;
+    document.getElementById("masukNama").value="";
+    document.getElementById("masukQty").value="";
   });
 
   // BARANG KELUAR
-  document.getElementById("btnKeluar").addEventListener("click",()=>{
-    const n = keluarNama.value;
-    const q = parseInt(keluarQty.value);
+  document.getElementById("btnKeluar").addEventListener("click", () => {
+    const n = document.getElementById("keluarNama").value;
+    const q = parseInt(document.getElementById("keluarQty").value);
     if(!dataBarang[n]) return alert("Barang belum ada");
-    dataBarang[n]-=q;
+    dataBarang[n] -= q;
+    document.getElementById("keluarNama").value="";
+    document.getElementById("keluarQty").value="";
   });
 
   function renderTabel(){
-    tabelBarang.innerHTML="";
+    const tabel = document.getElementById("tabelBarang");
+    tabel.innerHTML = "";
     for(let b in dataBarang){
-      tabelBarang.innerHTML+=<tr><td>${b}</td><td>${dataBarang[b]}</td></tr>;
+      tabel.innerHTML += <tr><td>${b}</td><td>${dataBarang[b]}</td></tr>;
     }
   }
 
   function renderStok(){
-    stokList.innerHTML="";
+    const s = document.getElementById("stokList");
+    s.innerHTML = "";
     for(let b in dataBarang){
-      stokList.innerHTML+=<p>${b} : ${dataBarang[b]}</p>;
+      s.innerHTML += <p>${b} : ${dataBarang[b]}</p>;
     }
   }
 
