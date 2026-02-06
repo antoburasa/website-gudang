@@ -14,13 +14,13 @@ window.addEventListener("DOMContentLoaded", function() {
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
-  // --- SIDEBAR ---
+  // SIDEBAR
   window.show = function(id){
     document.querySelectorAll('.card').forEach(c => c.classList.add('hidden'));
     document.getElementById(id).classList.remove('hidden');
   };
 
-  // --- MASTER BARANG ---
+  // MASTER BARANG
   window.simpanBarang = function(){
     const nama = document.getElementById("namaBarang").value.trim();
     const min = document.getElementById("minStok").value;
@@ -32,7 +32,7 @@ window.addEventListener("DOMContentLoaded", function() {
     });
   };
 
-  // --- BARANG MASUK ---
+  // BARANG MASUK
   window.barangMasuk = function(){
     const b = document.getElementById("masukBarang").value.trim();
     const q = parseInt(document.getElementById("masukQty").value);
@@ -43,7 +43,7 @@ window.addEventListener("DOMContentLoaded", function() {
     alert("✅ Barang masuk disimpan");
   };
 
-  // --- BARANG KELUAR ---
+  // BARANG KELUAR
   window.barangKeluar = function(){
     const b = document.getElementById("keluarBarang").value.trim();
     const q = parseInt(document.getElementById("keluarQty").value);
@@ -54,7 +54,7 @@ window.addEventListener("DOMContentLoaded", function() {
     alert("✅ Barang keluar disimpan");
   };
 
-  // --- STOK BARANG ---
+  // STOK BARANG
   const listStok = document.getElementById("listStok");
   db.ref('barang').on('value', snap=>{
     let html = '';
@@ -64,7 +64,7 @@ window.addEventListener("DOMContentLoaded", function() {
     listStok.innerHTML = html || "Belum ada data";
   });
 
-  // --- RIWAYAT TRANSAKSI ---
+  // RIWAYAT TRANSAKSI
   const listRiwayat = document.getElementById("listRiwayat");
   db.ref('riwayat').on('child_added', snap=>{
     const d = snap.val();
