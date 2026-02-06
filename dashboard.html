@@ -18,7 +18,7 @@ body { font-family: Arial; margin: 0; display: flex; background:#f4f4f4 }
 }
 .main { flex:1; padding:20px }
 .card { background:white; padding:15px; border-radius:8px; margin-bottom:15px }
-input, select, button { padding:8px; margin:5px 0; width:100% }
+input, button { padding:8px; margin:5px 0; width:100% }
 .hidden { display:none }
 </style>
 </head>
@@ -82,48 +82,60 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 function show(id){
-  document.querySelectorAll('.card').forEach(c=>c.classList.add('hidden'));
+  document.querySelectorAll('.card')
+    .forEach(c => c.classList.add('hidden'));
   document.getElementById(id).classList.remove('hidden');
 }
 
 function simpanBarang(){
-  const nama = namaBarang.value;
+  const nama = namaBarang.value.trim();
   const min = minStok.value;
+  if(!nama) return alert("Nama kosong");
+
   db.ref('barang/'+nama).set({stok:0, min:min});
   alert('Barang disimpan');
 }
 
 function barangMasuk(){
-  const b = masukBarang.value;
+  const b = masukBarang.value.trim();
   const q = parseInt(masukQty.value);
-  const ref = db.ref('barang/'+b+'/stok');
-  ref.transaction(s => (s||0)+q);
-  db.ref('riwayat').push({barang:b, jenis:'masuk', qty:q});
+  if(!b || !q) return alert("Data belum lengkap");
+
+  db.ref('barang/'+b+'/stok')
+    .transaction(s => (s||0)+q);
+
+  db.ref('riwayat')
+    .push({barang:b, jenis:'masuk', qty:q});
+
   alert('Barang masuk disimpan');
 }
 
 function barangKeluar(){
-  const b = keluarBarang.value;
+  const b = keluarBarang.value.trim();
   const q = parseInt(keluarQty.value);
-  const ref = db.ref('barang/'+b+'/stok');
-  ref.transaction(s => (s||0)-q);
-  db.ref('riwayat').push({barang:b, jenis:'keluar', qty:q});
+  if(!b || !q) return alert("Data belum lengkap");
+
+  db.ref('barang/'+b+'/stok')
+    .transaction(s => (s||0)-q);
+
+  db.ref('riwayat')
+    .push({barang:b, jenis:'keluar', qty:q});
+
   alert('Barang keluar disimpan');
 }
 
 db.ref('barang').on('value', snap=>{
   let html='';
   snap.forEach(c=>{
-    const d=c.val();
-    html+=<div>${c.key} : ${d.stok}</div>;
+    html += <div>${c.key} : ${c.val().stok}</div>;
   });
-  listStok.innerHTML=html;
+  listStok.innerHTML = html || "Belum ada data";
 });
 
 db.ref('riwayat').on('child_added', snap=>{
-  const d=snap.val();
-  const li=document.createElement('li');
-  li.textContent=${d.barang} - ${d.jenis} (${d.qty});
+  const d = snap.val();
+  const li = document.createElement('li');
+  li.textContent = ${d.barang} - ${d.jenis} (${d.qty});
   listRiwayat.prepend(li);
 });
 </script>
