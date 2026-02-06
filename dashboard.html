@@ -8,47 +8,21 @@
 <style>
 body{margin:0;font-family:Arial;background:#f3f4f6}
 .sidebar{
-  width:220px;
-  background:#1e3a8a;
-  color:#fff;
-  position:fixed;
-  height:100%;
-  padding:15px
+  width:220px;background:#1e3a8a;color:#fff;
+  position:fixed;height:100%;padding:15px
 }
 .sidebar h2{text-align:center}
 .sidebar button{
-  width:100%;
-  margin:5px 0;
-  padding:10px;
-  background:#2563eb;
-  color:#fff;
-  border:none;
-  border-radius:6px;
-  cursor:pointer
+  width:100%;margin:6px 0;padding:10px;
+  background:#2563eb;color:#fff;
+  border:none;border-radius:6px;cursor:pointer
 }
 .sidebar button:hover{background:#3b82f6}
-
 .content{margin-left:240px;padding:20px}
-.card{
-  background:#fff;
-  padding:15px;
-  border-radius:10px;
-  margin-bottom:15px
-}
-input,select,button{
-  width:100%;
-  padding:10px;
-  margin-top:8px
-}
-button{
-  background:#1e3a8a;
-  color:#fff;
-  border:none;
-  border-radius:6px;
-  cursor:pointer
-}
+.card{background:#fff;padding:15px;border-radius:10px;margin-bottom:15px}
+input,button{width:100%;padding:10px;margin-top:8px}
 table{width:100%;border-collapse:collapse;margin-top:10px}
-th,td{border-bottom:1px solid #ddd;padding:8px;text-align:left}
+th,td{border-bottom:1px solid #ddd;padding:8px}
 </style>
 </head>
 
@@ -56,126 +30,109 @@ th,td{border-bottom:1px solid #ddd;padding:8px;text-align:left}
 
 <div class="sidebar">
   <h2>GUDANG</h2>
-  <button onclick="showPage('master')">Master Barang</button>
-  <button onclick="showPage('masuk')">Barang Masuk</button>
-  <button onclick="showPage('keluar')">Barang Keluar</button>
-  <button onclick="showPage('stok')">Stok Barang</button>
-  <button onclick="showPage('riwayat')">Riwayat</button>
+  <button data-page="master">Master Barang</button>
+  <button data-page="masuk">Barang Masuk</button>
+  <button data-page="keluar">Barang Keluar</button>
+  <button data-page="stok">Stok Barang</button>
 </div>
 
 <div class="content">
 
-<!-- MASTER BARANG -->
 <div id="master" class="card">
   <h3>Master Barang</h3>
   <input id="namaBarang" placeholder="Nama Barang">
   <input id="stokAwal" type="number" placeholder="Stok Awal">
-  <button onclick="simpanBarang()">Simpan Barang</button>
+  <button id="btnSimpanBarang">Simpan Barang</button>
 
   <table>
-    <thead>
-      <tr><th>Nama</th><th>Stok</th></tr>
-    </thead>
+    <thead><tr><th>Nama</th><th>Stok</th></tr></thead>
     <tbody id="tabelBarang"></tbody>
   </table>
 </div>
 
-<!-- BARANG MASUK -->
 <div id="masuk" class="card" style="display:none">
   <h3>Barang Masuk</h3>
   <input id="masukNama" placeholder="Nama Barang">
   <input id="masukQty" type="number" placeholder="Jumlah">
-  <button onclick="barangMasuk()">Simpan</button>
+  <button id="btnMasuk">Simpan</button>
 </div>
 
-<!-- BARANG KELUAR -->
 <div id="keluar" class="card" style="display:none">
   <h3>Barang Keluar</h3>
   <input id="keluarNama" placeholder="Nama Barang">
   <input id="keluarQty" type="number" placeholder="Jumlah">
-  <button onclick="barangKeluar()">Simpan</button>
+  <button id="btnKeluar">Simpan</button>
 </div>
 
-<!-- STOK -->
 <div id="stok" class="card" style="display:none">
   <h3>Stok Barang</h3>
   <div id="stokList"></div>
 </div>
 
-<!-- RIWAYAT -->
-<div id="riwayat" class="card" style="display:none">
-  <h3>Riwayat Transaksi</h3>
-  <ul id="listRiwayat"></ul>
-</div>
-
 </div>
 
 <script>
-let dataBarang = {};
-let riwayat = [];
+document.addEventListener("DOMContentLoaded", () => {
 
-// GANTI HALAMAN
-function showPage(id){
-  document.querySelectorAll('.card').forEach(c=>c.style.display='none');
-  document.getElementById(id).style.display='block';
-  if(id==='stok') tampilStok();
-}
+  const dataBarang = {};
 
-// SIMPAN MASTER BARANG
-function simpanBarang(){
-  const nama = namaBarang.value.trim();
-  const stok = parseInt(stokAwal.value);
+  // SIDEBAR
+  document.querySelectorAll(".sidebar button").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      document.querySelectorAll(".card").forEach(c=>c.style.display="none");
+      document.getElementById(btn.dataset.page).style.display="block";
+      if(btn.dataset.page==="stok") renderStok();
+    });
+  });
 
-  if(!nama || isNaN(stok)){
-    alert('Lengkapi data');
-    return;
+  // SIMPAN MASTER BARANG
+  document.getElementById("btnSimpanBarang").addEventListener("click",()=>{
+    const nama = document.getElementById("namaBarang").value.trim();
+    const stok = parseInt(document.getElementById("stokAwal").value);
+
+    if(!nama || isNaN(stok)){
+      alert("Lengkapi data");
+      return;
+    }
+
+    dataBarang[nama] = stok;
+    renderTabel();
+
+    document.getElementById("namaBarang").value="";
+    document.getElementById("stokAwal").value="";
+  });
+
+  // BARANG MASUK
+  document.getElementById("btnMasuk").addEventListener("click",()=>{
+    const n = masukNama.value;
+    const q = parseInt(masukQty.value);
+    if(!dataBarang[n]) return alert("Barang belum ada");
+    dataBarang[n]+=q;
+  });
+
+  // BARANG KELUAR
+  document.getElementById("btnKeluar").addEventListener("click",()=>{
+    const n = keluarNama.value;
+    const q = parseInt(keluarQty.value);
+    if(!dataBarang[n]) return alert("Barang belum ada");
+    dataBarang[n]-=q;
+  });
+
+  function renderTabel(){
+    tabelBarang.innerHTML="";
+    for(let b in dataBarang){
+      tabelBarang.innerHTML+=<tr><td>${b}</td><td>${dataBarang[b]}</td></tr>;
+    }
   }
 
-  dataBarang[nama] = stok;
-  renderBarang();
-
-  namaBarang.value='';
-  stokAwal.value='';
-}
-
-// TAMPIL MASTER BARANG
-function renderBarang(){
-  tabelBarang.innerHTML='';
-  for(let b in dataBarang){
-    tabelBarang.innerHTML += <tr><td>${b}</td><td>${dataBarang[b]}</td></tr>;
+  function renderStok(){
+    stokList.innerHTML="";
+    for(let b in dataBarang){
+      stokList.innerHTML+=<p>${b} : ${dataBarang[b]}</p>;
+    }
   }
-}
 
-// BARANG MASUK
-function barangMasuk(){
-  const n = masukNama.value;
-  const q = parseInt(masukQty.value);
-  if(!dataBarang[n]) return alert('Barang tidak ada');
-
-  dataBarang[n] += q;
-  riwayat.push(Masuk: ${n} +${q});
-  masukNama.value=''; masukQty.value='';
-}
-
-// BARANG KELUAR
-function barangKeluar(){
-  const n = keluarNama.value;
-  const q = parseInt(keluarQty.value);
-  if(!dataBarang[n]) return alert('Barang tidak ada');
-
-  dataBarang[n] -= q;
-  riwayat.push(Keluar: ${n} -${q});
-  keluarNama.value=''; keluarQty.value='';
-}
-
-// STOK
-function tampilStok(){
-  stokList.innerHTML='';
-  for(let b in dataBarang){
-    stokList.innerHTML += <p>${b} : ${dataBarang[b]}</p>;
-  }
-  listRiwayat.innerHTML = riwayat.map(r=><li>${r}</li>).join('');
-}
+});
 </script>
 
 </body>
