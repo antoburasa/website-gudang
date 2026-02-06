@@ -3,38 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GUDANG SMS v1.6 - FIX SINGAPORE</title>
-    
+    <title>GUDANG SMS v1.7 - STABIL</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
-    
     <style>
         :root { --primary: #1e3a8a; --bg: #f4f7fa; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); margin: 0; padding: 20px; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); margin: 0; padding: 15px; }
         .container { max-width: 500px; margin: auto; }
-        h2 { text-align: center; color: var(--primary); font-weight: 800; }
-        .status-bar { text-align: center; font-size: 12px; padding: 8px; border-radius: 10px; margin-bottom: 15px; background: #fff; border: 1px solid #ddd; font-weight: bold; }
+        .status-bar { text-align: center; font-size: 12px; padding: 10px; border-radius: 10px; margin-bottom: 15px; background: #fff; border: 1px solid #ddd; font-weight: bold; color: #e67e22; }
         .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
         .box { padding: 20px; border-radius: 12px; color: white; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .box-blue { background: #007bff; }
-        .box-cyan { background: #17a2b8; }
-        .box b { font-size: 30px; display: block; }
-        .card { background: white; padding: 20px; border-radius: 15px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #cbd5e1; box-sizing: border-box; font-size: 14px; }
-        button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; text-transform: uppercase; }
-        button:disabled { background: #ccc; }
-        .stok-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; font-weight: 600; }
+        .box-blue { background: #3b82f6; }
+        .box-cyan { background: #14b8a6; }
+        .box b { font-size: 32px; display: block; }
+        .card { background: white; padding: 20px; border-radius: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        input, select, button { width: 100%; padding: 14px; margin-top: 10px; border-radius: 10px; border: 1px solid #e2e8f0; box-sizing: border-box; font-size: 14px; }
+        button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
+        .stok-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f1f5f9; font-weight: 600; }
         table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
-        th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
+        th, td { padding: 10px; border-bottom: 1px solid #f1f5f9; text-align: left; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>📦 GUDANG SMS v1.6</h2>
-    <div id="status" class="status-bar" style="color: orange;">🛰️ Menghubungkan ke Server Singapore...</div>
+    <h2 style="text-align:center; color:var(--primary);">📦 GUDANG SMS v1.7</h2>
+    <div id="status" class="status-bar">MENGHUBUNGKAN...</div>
 
     <div class="dashboard">
         <div class="box box-blue">STOK TOTAL<br><b id="totalStok">0</b></div>
@@ -42,7 +37,6 @@
     </div>
 
     <div class="card">
-        <h3 style="margin:0; font-size:14px; color:var(--primary);">➕ INPUT TRANSAKSI</h3>
         <input type="text" id="barang" placeholder="Nama Barang">
         <select id="jenis">
             <option value="masuk">BARANG MASUK (+)</option>
@@ -53,12 +47,12 @@
     </div>
 
     <div class="card">
-        <h3 style="margin:0; font-size:14px; color:var(--primary);">📊 RINGKASAN STOK</h3>
-        <div id="listStok" style="margin-top:10px;">Menunggu data...</div>
+        <h3 style="margin:0 0 10px 0; font-size:14px; color:var(--primary);">📊 RINGKASAN STOK</h3>
+        <div id="listStok">Memuat stok...</div>
     </div>
 
     <div class="card">
-        <h3 style="margin:0; font-size:14px; color:var(--primary);">📜 RIWAYAT TERAKHIR</h3>
+        <h3 style="margin:0 0 10px 0; font-size:14px; color:var(--primary);">📜 RIWAYAT</h3>
         <table id="riwayat">
             <thead><tr><th>Barang</th><th>Tipe</th><th>Qty</th></tr></thead>
             <tbody id="bodyRiwayat"></tbody>
@@ -67,33 +61,41 @@
 </div>
 
 <script>
-    // --- KONFIGURASI KHUSUS SINGAPORE (Disesuaikan foto database kamu) ---
+    // --- KONFIGURASI FINAL ---
     const firebaseConfig = {
         apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
         authDomain: "gudang-sms-4c81c.firebaseapp.com",
-        // Alamat di bawah ini HARUS SAMA dengan foto database kamu agar tidak macet
         databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
         projectId: "gudang-sms-4c81c",
         appId: "1:598362736106:web:c8e2732d6ac7613931de93"
     };
 
-    firebase.initializeApp(firebaseConfig);
+    // Inisialisasi
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
     const db = firebase.database();
 
-    // Fungsi Ambil Data Realtime
-    function muatData() {
-        db.ref("riwayat").on("value", (snap) => {
-            document.getElementById("status").innerHTML = "✅ SERVER SINGAPORE CONNECTED";
-            document.getElementById("status").style.color = "green";
-            
-            let total = 0; 
-            let peta = {}; 
-            let riwayatHtml = "";
-            let arr = [];
+    // Fungsi Utama Tampil Data
+    function jalankanApp() {
+        // Cek koneksi secara manual
+        const connectedRef = db.ref(".info/connected");
+        connectedRef.on("value", (snap) => {
+            if (snap.val() === true) {
+                document.getElementById("status").innerHTML = "✅ TERHUBUNG KE SINGAPORE";
+                document.getElementById("status").style.color = "green";
+            } else {
+                document.getElementById("status").innerHTML = "🛰️ MENCARI SINYAL DATABASE...";
+                document.getElementById("status").style.color = "#e67e22";
+            }
+        });
 
+        // Ambil Data Riwayat
+        db.ref("riwayat").on("value", (snap) => {
+            let total = 0; let peta = {}; let riwayatHtml = ""; let arr = [];
+            
             if (!snap.exists()) {
-                document.getElementById("listStok").innerHTML = "Database kosong.";
-                document.getElementById("bodyRiwayat").innerHTML = "<tr><td colspan='3' style='text-align:center'>Tidak ada transaksi</td></tr>";
+                document.getElementById("listStok").innerHTML = "Data kosong.";
                 return;
             }
 
@@ -101,8 +103,6 @@
                 const d = child.val();
                 arr.push(d);
                 let q = parseInt(d.jumlah) || 0;
-                
-                // Logika Hitung
                 if (d.jenis === "masuk") {
                     peta[d.barang] = (peta[d.barang] || 0) + q;
                     total += q;
@@ -112,57 +112,50 @@
                 }
             });
 
-            // Update UI
             document.getElementById("totalStok").innerText = total;
             document.getElementById("totalJenis").innerText = Object.keys(peta).length;
 
             let stokHtml = "";
             for (let b in peta) {
-                stokHtml += <div class="stok-row"><span>${b}</span><span>${peta[b]} UNIT</span></div>;
+                stokHtml += <div class="stok-row"><span>${b}</span><span>${peta[b]}</span></div>;
             }
             document.getElementById("listStok").innerHTML = stokHtml;
 
-            // Tampilkan 5 terakhir
             arr.reverse().slice(0, 5).forEach(r => {
-                riwayatHtml += <tr><td>${r.barang}</td><td style="color:${r.jenis==='masuk'?'green':'red'}">${r.jenis.toUpperCase()}</td><td>${r.jumlah}</td></tr>;
+                riwayatHtml += <tr><td>${r.barang}</td><td>${r.jenis.toUpperCase()}</td><td>${r.jumlah}</td></tr>;
             });
             document.getElementById("bodyRiwayat").innerHTML = riwayatHtml;
-        }, (err) => {
-            document.getElementById("status").innerHTML = "❌ ERROR: " + err.message;
-            document.getElementById("status").style.color = "red";
         });
     }
 
-    // Fungsi Simpan
     function simpan() {
-        const b = document.getElementById("barang");
-        const j = document.getElementById("jumlah");
+        const b = document.getElementById("barang").value.toUpperCase().trim();
+        const j = document.getElementById("jumlah").value;
+        const t = document.getElementById("jenis").value;
         const btn = document.getElementById("btnSimpan");
 
-        if(!b.value || !j.value) return alert("Mohon isi nama barang dan jumlah!");
+        if(!b || !j) return alert("Isi lengkap!");
 
         btn.disabled = true;
-        btn.innerText = "MENYIMPAN...";
+        btn.innerText = "PROSES...";
 
         db.ref("riwayat").push({
-            barang: b.value.toUpperCase().trim(),
-            jumlah: parseInt(j.value),
-            jenis: document.getElementById("jenis").value,
-            waktu: new Date().toLocaleString()
+            barang: b,
+            jumlah: parseInt(j),
+            jenis: t,
+            timestamp: Date.now()
         }).then(() => {
-            b.value = ""; 
-            j.value = "";
+            document.getElementById("barang").value = "";
+            document.getElementById("jumlah").value = "";
             btn.disabled = false;
             btn.innerText = "SIMPAN DATA";
-        }).catch(err => {
-            alert("Gagal simpan: " + err.message);
+        }).catch(e => {
+            alert("Error: " + e.message);
             btn.disabled = false;
-            btn.innerText = "SIMPAN DATA";
         });
     }
 
-    // Jalankan
-    muatData();
+    window.onload = jalankanApp;
 </script>
 </body>
 </html>
