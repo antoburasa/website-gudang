@@ -2,22 +2,23 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Login - SMS Gudang</title>
+  <title>Login SMS Gudang</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
       font-family: Arial, sans-serif;
       background: #020617;
-      color: white;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
+      margin: 0;
+      color: white;
     }
     .box {
       background: #0f172a;
       padding: 30px;
-      border-radius: 10px;
+      border-radius: 8px;
       width: 300px;
     }
     input, button {
@@ -35,26 +36,24 @@
   </style>
 </head>
 <body>
+  <div class="box">
+    <h3>Login SMS Gudang</h3>
+    <input type="text" id="user" placeholder="Username">
+    <input type="password" id="pass" placeholder="Password">
+    <button onclick="login()">Login</button>
+  </div>
 
-<div class="box">
-  <h2>Login Gudang</h2>
-  <input type="text" id="user" placeholder="Username">
-  <input type="password" id="pass" placeholder="Password">
-  <button onclick="login()">Masuk</button>
-</div>
+  <script>
+    function login() {
+      const user = document.getElementById("user").value;
+      const pass = document.getElementById("pass").value;
 
-<script>
-  function login() {
-    const user = document.getElementById("user").value;
-    const pass = document.getElementById("pass").value;
-
-    if (user === "admin" && pass === "1234") {
-      window.location.href = "dashboard.html";
-    } else {
-      alert("Username atau password salah");
+      if (user === "admin" && pass === "1234") {
+        window.location.href = "dashboard.html";
+      } else {
+        alert("Username atau password salah");
+      }
     }
-  }
-</script>
-
+  </script>
 </body>
 </html>
