@@ -1,103 +1,55 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<title>Dashboard Gudang</title>
-
-<style>
-body{
-  font-family: Arial, sans-serif;
-  background:#0f172a;
-  color:white;
-  margin:0;
-  padding:0;
-}
-
-.header{
-  background:#1e293b;
-  padding:15px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-
-.container{
-  padding:20px;
-}
-
-input, button{
-  padding:10px;
-  margin-top:10px;
-  width:100%;
-  max-width:300px;
-}
-
-button{
-  background:#22c55e;
-  border:none;
-  cursor:pointer;
-}
-
-.logout{
-  background:#ef4444;
-}
-</style>
+  <meta charset="UTF-8">
+  <title>Dashboard Gudang</title>
+  <style>
+    body {
+      background:#1f2937;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      height:100vh;
+      font-family:Arial;
+    }
+    .box {
+      background:#111827;
+      padding:20px;
+      width:320px;
+      border-radius:10px;
+      color:white;
+    }
+    input,button {
+      width:100%;
+      padding:10px;
+      margin-top:10px;
+      border-radius:5px;
+      border:none;
+    }
+    .add { background:#22c55e; }
+    .logout { background:#ef4444; }
+  </style>
 </head>
-
 <body>
 
-<script>
-if(localStorage.getItem("login") !== "1"){
-  location.href = "index.html";
-}
-</script>
+<div class="box">
+  <h3>Dashboard Gudang</h3>
+  <p>Login berhasil ✅</p>
 
-<div class="header">
-  <strong>Gudang</strong>
+  <input placeholder="Nama Barang">
+  <input placeholder="Jumlah">
+  <button class="add">Tambah Stok</button>
   <button class="logout" onclick="logout()">Logout</button>
 </div>
 
-<div class="container">
-  <h2>Dashboard Gudang</h2>
-  <p>Login berhasil ✅</p>
-
-  <input id="barang" placeholder="Nama Barang">
-  <input id="qty" type="number" placeholder="Jumlah">
-
-  <br>
-  <button onclick="tambah()">Tambah Stok</button>
-
-  <h3>Stok Barang</h3>
-  <div id="list"></div>
-</div>
-
 <script>
-let stok = {};
-
-function tambah(){
-  let barang = document.getElementById("barang").value;
-  let qty = Number(document.getElementById("qty").value);
-
-  if(!barang || qty <= 0){
-    alert("Data tidak valid");
-    return;
-  }
-
-  stok[barang] = (stok[barang] || 0) + qty;
-  tampil();
-}
-
-function tampil(){
-  let html = "";
-  for(let b in stok){
-    html += <p>${b} : ${stok[b]}</p>;
-  }
-  document.getElementById("list").innerHTML = html;
+if(localStorage.getItem("login") !== "ok"){
+  window.location.href = "index.html";
 }
 
 function logout(){
   localStorage.removeItem("login");
-  location.href = "index.html";
+  window.location.href = "index.html";
 }
 </script>
 
