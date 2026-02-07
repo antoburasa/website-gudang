@@ -2,66 +2,17 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Dashboard Gudang</title>
-
-<!-- Firebase v8 (WAJIB v8, bukan v9) -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
-<style>
-body { margin:0; font-family:Arial; display:flex; background:#f4f4f4 }
-.sidebar {
-  width:220px; background:#1e3a8a; color:white; padding:15px
-}
-.sidebar h3 { text-align:center }
-.sidebar button {
-  width:100%; margin:5px 0; padding:10px;
-  border:none; border-radius:5px;
-  background:#3b82f6; color:white; cursor:pointer
-}
-.main { flex:1; padding:20px }
-.card {
-  background:white; padding:15px;
-  border-radius:8px; margin-bottom:15px
-}
-.hidden { display:none }
-input, button { width:100%; padding:8px; margin:5px 0 }
-</style>
+<title>Dashboard</title>
+<link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-<div class="sidebar">
-  <h3>📦 GUDANG</h3>
-  <button onclick="showPage('master')">Master Barang</button>
-  <button onclick="showPage('masuk')">Barang Masuk</button>
-  <button onclick="showPage('stok')">Stok Barang</button>
+<div class="card">
+  <h2>Dashboard Gudang</h2>
+  <p>Login berhasil</p>
+  <button onclick="logout()">Logout</button>
 </div>
 
-<div class="main">
-
-<div id="master" class="card">
-  <h3>Master Barang</h3>
-  <input id="namaBarang" placeholder="Nama Barang">
-  <input id="minStok" type="number" placeholder="Minimum Stok">
-  <button onclick="simpanBarang()">Simpan Barang</button>
-</div>
-
-<div id="masuk" class="card hidden">
-  <h3>Barang Masuk</h3>
-  <input id="barangMasuk" placeholder="Nama Barang">
-  <input id="qtyMasuk" type="number" placeholder="Jumlah">
-  <button onclick="barangMasuk()">Simpan</button>
-</div>
-
-<div id="stok" class="card hidden">
-  <h3>Stok Barang</h3>
-  <div id="listStok">Belum ada data</div>
-</div>
-
-</div>
-
-<!-- PANGGIL APP.JS (WAJIB DI BAWAH) -->
 <script src="app.js"></script>
 </body>
 </html>
