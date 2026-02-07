@@ -2,19 +2,77 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Login</title>
-<link rel="stylesheet" href="style.css">
+<title>Login Gudang</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{font-family:Arial;background:#1f2937;color:white}
+.box{width:320px;margin:80px auto;background:#111827;padding:20px;border-radius:8px}
+input,button{width:100%;padding:10px;margin-top:10px;border:none;border-radius:5px}
+button{background:#22c55e;font-weight:bold;cursor:pointer}
+.hidden{display:none}
+</style>
 </head>
 <body>
 
-<div class="card">
-  <h2>Login</h2>
-  <input id="user" placeholder="Username">
-  <input id="pass" type="password" placeholder="Password">
-  <button onclick="login()">Login</button>
-  <p id="msg"></p>
+<div class="box" id="loginBox">
+  <h3>Login Gudang</h3>
+  <input id="username" placeholder="Username">
+  <input id="password" type="password" placeholder="Password">
+  <button id="btnLogin">Login</button>
+  <p id="loginMsg"></p>
 </div>
 
-<script src="app.js"></script>
+<div class="box hidden" id="dashboard">
+  <h3>Dashboard Gudang</h3>
+  <p>Login berhasil ✅</p>
+
+  <input id="barangInput" placeholder="Nama Barang">
+  <input id="qtyInput" type="number" placeholder="Jumlah">
+  <button id="btnTambah">Tambah Stok</button>
+
+  <div id="stokList"></div>
+
+  <button onclick="logout()" style="background:#ef4444;margin-top:15px">Logout</button>
+</div>
+
+<script>
+const USER="admin";
+const PASS="12345";
+let stok={};
+
+document.getElementById("btnLogin").onclick=function(){
+  const u=username.value.trim();
+  const p=password.value.trim();
+
+  if(u===USER && p===PASS){
+    loginBox.classList.add("hidden");
+    dashboard.classList.remove("hidden");
+  }else{
+    loginMsg.innerText="Username / Password salah ❌";
+  }
+};
+
+document.getElementById("btnTambah").onclick=function(){
+  const b=barangInput.value.trim();
+  const q=parseInt(qtyInput.value);
+
+  if(!b||!q){alert("Data tidak valid");return;}
+
+  stok[b]=(stok[b]||0)+q;
+  render();
+  barangInput.value="";
+  qtyInput.value="";
+};
+
+function render(){
+  stokList.innerHTML="";
+  for(let b in stok){
+    stokList.innerHTML+=<p>${b} : ${stok[b]}</p>;
+  }
+}
+
+function logout(){location.reload();}
+</script>
+
 </body>
 </html>
