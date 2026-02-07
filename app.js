@@ -1,70 +1,68 @@
-window.addEventListener("DOMContentLoaded", function() {
+// ===== TEST JS TERBACA =====
+console.log("app.js TERBACA");
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
-    authDomain: "gudang-sms-4c81c.firebaseapp.com",
-    databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "gudang-sms-4c81c",
-    appId: "1:598362736106:web:c8e2732d6ac7613931de93"
-  };
+// ===== FIREBASE CONFIG =====
+var firebaseConfig = {
+  apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
+  authDomain: "gudang-sms-4c81c.firebaseapp.com",
+  databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "gudang-sms-4c81c",
+  appId: "1:598362736106:web:c8e2732d6ac7613931de93"
+};
 
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+firebase.initializeApp(firebaseConfig);
+var db = firebase.database();
 
-  // SIDEBAR
-  window.show = function(id){
-    document.querySelectorAll('.card').forEach(c => c.classList.add('hidden'));
-    document.getElementById(id).classList.remove('hidden');
-  };
+// ===== NAVIGASI =====
+function showPage(id) {
+  document.querySelectorAll('.card').forEach(el => el.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+}
 
-  // MASTER BARANG
-  window.simpanBarang = function(){
-    const nama = document.getElementById("namaBarang").value.trim();
-    const min = document.getElementById("minStok").value;
-    if(!nama) return alert("Nama barang kosong");
-    db.ref('barang/'+nama).set({stok:0, min:min}, err=>{
-      if(err) alert("Error: "+err.message);
-      else alert("✅ Barang disimpan");
-    });
-  };
+// ===== SIMPAN BARANG =====
+function simpanBarang() {
+  var nama = document.getElementById("namaBarang").value;
+  var min = document.getElementById("minStok").value;
 
-  // BARANG MASUK
-  window.barangMasuk = function(){
-    const b = document.getElementById("masukBarang").value.trim();
-    const q = parseInt(document.getElementById("masukQty").value);
-    if(!b || !q) return alert("Data belum lengkap");
-    db.ref('barang/'+b+'/stok').transaction(s => (s||0)+q);
-    db.ref('riwayat').push({barang:b, jenis:'masuk', qty:q});
-    alert("✅ Barang masuk disimpan");
-  };
+  if (nama === "" || min === "") {
+    alert("Lengkapi data!");
+    return;
+  }
 
-  // BARANG KELUAR
-  window.barangKeluar = function(){
-    const b = document.getElementById("keluarBarang").value.trim();
-    const q = parseInt(document.getElementById("keluarQty").value);
-    if(!b || !q) return alert("Data belum lengkap");
-    db.ref('barang/'+b+'/stok').transaction(s => (s||0)-q);
-    db.ref('riwayat').push({barang:b, jenis:'keluar', qty:q});
-    alert("✅ Barang keluar disimpan");
-  };
-
-  // TAMPIL STOK
-  const listStok = document.getElementById("listStok");
-  db.ref('barang').on('value', snap=>{
-    let html = '';
-    snap.forEach(c=>{
-      html += <div>${c.key} : ${c.val().stok}</div>;
-    });
-    listStok.innerHTML = html || "Belum ada data";
+  db.ref("barang/" + nama).set({
+    stok: 0,
+    min: Number(min)
   });
 
-  // TAMPIL RIWAYAT
-  const listRiwayat = document.getElementById("listRiwayat");
-  db.ref('riwayat').on('child_added', snap=>{
-    const d = snap.val();
-    const li = document.createElement('li');
-    li.textContent = ${d.barang} - ${d.jenis} (${d.qty});
-    listRiwayat.prepend(li);
-  });
+  alert("Barang berhasil disimpan ✅");
+  document.getElementById("namaBarang").value = "";
+  document.getElementById("minStok").value = "";
+}
 
+// ===== BARANG MASUK =====
+function barangMasuk() {
+  var nama = document.getElementById("barangMasuk").value;
+  var qty = Number(document.getElementById("qtyMasuk").value);
+
+  if (nama === "" || qty <= 0) {
+    alert("Data tidak valid");
+    return;
+  }
+
+  var ref = db.ref("barang/" + nama + "/stok");
+  ref.transaction(stok => (stok || 0) + qty);
+
+  alert("Barang masuk tersimpan ✅");
+  document.getElementById("barangMasuk").value = "";
+  document.getElementById("qtyMasuk").value = "";
+}
+
+// ===== TAMPILKAN STOK =====
+db.ref("barang").on("value", snapshot => {
+  var html = "";
+  snapshot.forEach(child => {
+    var data = child.val();
+    html += <div>${child.key} : ${data.stok}</div>;
+  });
+  document.getElementById("listStok").innerHTML = html || "Belum ada data";
 });
