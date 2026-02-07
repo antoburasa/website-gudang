@@ -7,52 +7,22 @@
 body{
   margin:0;
   font-family:Arial;
-  background:#f1f5f9;
   display:flex;
 }
 .sidebar{
-  width:220px;
+  width:200px;
   background:#1e293b;
   color:white;
   padding:15px;
 }
-.sidebar h3{
-  text-align:center;
-}
 .sidebar button{
   width:100%;
-  margin:5px 0;
   padding:10px;
-  border:none;
-  background:#334155;
-  color:white;
-  cursor:pointer;
-  border-radius:4px;
-}
-.sidebar button:hover{
-  background:#475569;
+  margin:5px 0;
 }
 .main{
   flex:1;
   padding:20px;
-}
-.card{
-  background:white;
-  padding:15px;
-  border-radius:8px;
-  display:none;
-}
-.card.active{
-  display:block;
-}
-input, button{
-  padding:8px;
-  margin:5px 0;
-  width:100%;
-}
-.logout{
-  background:#22c55e;
-  margin-top:15px;
 }
 </style>
 </head>
@@ -60,41 +30,13 @@ input, button{
 <body>
 
 <div class="sidebar">
-  <h3>📦 Gudang</h3>
-  <button onclick="showMenu('master')">Master Barang</button>
-  <button onclick="showMenu('masuk')">Barang Masuk</button>
-  <button onclick="showMenu('keluar')">Barang Keluar</button>
-  <button onclick="showMenu('stok')">Stok Barang</button>
-  <button class="logout" onclick="logout()">Logout</button>
+  <h3>Gudang</h3>
+  <button onclick="logout()">Logout</button>
 </div>
 
 <div class="main">
-
-<div id="master" class="card active">
-  <h3>Master Barang</h3>
-  <input id="namaBarang" placeholder="Nama Barang">
-  <button onclick="simpanBarang()">Simpan</button>
-</div>
-
-<div id="masuk" class="card">
-  <h3>Barang Masuk</h3>
-  <input id="barangMasuk" placeholder="Nama Barang">
-  <input id="qtyMasuk" type="number" placeholder="Jumlah">
-  <button onclick="barangMasuk()">Simpan</button>
-</div>
-
-<div id="keluar" class="card">
-  <h3>Barang Keluar</h3>
-  <input id="barangKeluar" placeholder="Nama Barang">
-  <input id="qtyKeluar" type="number" placeholder="Jumlah">
-  <button onclick="barangKeluar()">Simpan</button>
-</div>
-
-<div id="stok" class="card">
-  <h3>Stok Barang</h3>
-  <div id="listStok">Belum ada data</div>
-</div>
-
+  <h2>Dashboard Gudang</h2>
+  <p>Login berhasil ✅</p>
 </div>
 
 <script src="app.js"></script>
