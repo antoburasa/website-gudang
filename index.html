@@ -2,44 +2,137 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Login Gudang</title>
+<title>Gudang SMS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
 <style>
 body{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
-  font-family:Arial;
-  background:#0f172a;
-}
-.box{
-  background:#1e293b;
-  padding:25px;
-  border-radius:8px;
-  width:300px;
+  margin:0;
+  font-family: Arial, sans-serif;
+  background:#1f2937;
   color:white;
 }
+
+.container{
+  max-width:400px;
+  margin:80px auto;
+  background:#111827;
+  padding:20px;
+  border-radius:8px;
+}
+
 input, button{
   width:100%;
   padding:10px;
-  margin:8px 0;
+  margin-top:10px;
+  border-radius:5px;
+  border:none;
 }
+
 button{
   background:#22c55e;
-  border:none;
+  color:black;
+  font-weight:bold;
   cursor:pointer;
+}
+
+button:hover{
+  background:#16a34a;
+}
+
+.hidden{
+  display:none;
+}
+
+table{
+  width:100%;
+  margin-top:15px;
+  border-collapse:collapse;
+}
+
+th, td{
+  border:1px solid #374151;
+  padding:6px;
+  text-align:center;
+}
+
+.logout{
+  background:#ef4444;
+  color:white;
 }
 </style>
 </head>
+
 <body>
 
-<div class="box">
-  <h3>Login Gudang</h3>
-  <input id="username" placeholder="Username">
-  <input id="password" type="password" placeholder="Password">
-  <button onclick="login()">Login</button>
+<!-- LOGIN -->
+<div class="container" id="loginBox">
+  <h2>Login Gudang</h2>
+  <input type="text" id="username" placeholder="Username">
+  <input type="password" id="password" placeholder="Password">
+  <button id="btnLogin">Login</button>
+  <p id="loginMsg"></p>
 </div>
 
-<script src="app.js"></script>
+<!-- DASHBOARD -->
+<div class="container hidden" id="dashboard">
+  <h2>Dashboard Gudang</h2>
+  <p>Login berhasil ✅</p>
+
+  <input type="text" id="barangInput" placeholder="Nama Barang">
+  <input type="number" id="qtyInput" placeholder="Jumlah">
+  <button id="btnTambah">Tambah Stok</button>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Barang</th>
+        <th>Qty</th>
+      </tr>
+    </thead>
+    <tbody id="stokList"></tbody>
+  </table>
+
+  <button class="logout" id="btnLogout">Logout</button>
+</div>
+
+<script>
+// LOGIN
+document.getElementById("btnLogin").addEventListener("click", function(){
+  let user = document.getElementById("username").value;
+  let pass = document.getElementById("password").value;
+
+  if(user === "admin" && pass === "12345"){
+    document.getElementById("loginBox").classList.add("hidden");
+    document.getElementById("dashboard").classList.remove("hidden");
+  } else {
+    document.getElementById("loginMsg").innerText = "Username / Password salah ❌";
+  }
+});
+
+// TAMBAH STOK (TIDAK ADA onclick → ANTI ERROR)
+document.getElementById("btnTambah").addEventListener("click", function(){
+  let barang = document.getElementById("barangInput").value;
+  let qty = document.getElementById("qtyInput").value;
+
+  if(barang === "" || qty === ""){
+    alert("Isi nama barang & jumlah");
+    return;
+  }
+
+  let row = document.createElement("tr");
+  row.innerHTML = <td>${barang}</td><td>${qty}</td>;
+  document.getElementById("stokList").appendChild(row);
+
+  document.getElementById("barangInput").value = "";
+  document.getElementById("qtyInput").value = "";
+});
+
+// LOGOUT
+document.getElementById("btnLogout").addEventListener("click", function(){
+  location.reload();
+});
+</script>
+
 </body>
 </html>
