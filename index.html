@@ -3,72 +3,71 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sistem Gudang v3</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://unpkg.com/html5-qrcode"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<title>Sistem Gudang Sederhana</title>
 
 <style>
-body{font-family:Inter;background:#f1f5f9;padding:20px;color:#0f172a}
-.card{background:white;padding:18px;border-radius:14px;margin-bottom:15px;box-shadow:0 4px 10px rgba(0,0,0,.05)}
-.dashboard{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-.box{text-align:center}
-.big{font-size:26px;font-weight:800}
-input,select,button{padding:10px;margin-top:6px;border-radius:8px;border:1px solid #e2e8f0;width:100%}
-button{background:#2563eb;color:white;border:none;font-weight:bold;cursor:pointer}
-.warning{color:#ef4444;font-weight:bold}
-table{width:100%;border-collapse:collapse;margin-top:10px}
-th,td{padding:8px;border-bottom:1px solid #eee;text-align:center}
+body{font-family:Arial;margin:0;background:#f4f6f9}
+.sidebar{
+width:200px;background:#1e3a8a;color:white;
+position:fixed;height:100%;padding:20px
+}
+.sidebar div{margin:10px 0;cursor:pointer}
+.content{margin-left:220px;padding:20px}
+.card{background:white;padding:15px;border-radius:8px;margin-bottom:15px}
+input,select,button{padding:8px;margin-top:5px;width:100%}
+table{width:100%;border-collapse:collapse}
+th,td{border-bottom:1px solid #eee;padding:8px;text-align:center}
 </style>
 </head>
 
 <body>
 
-<h2>📦 SISTEM GUDANG v3</h2>
-
-<div class="dashboard">
-<div class="card box">Total Stok<div id="totalStok" class="big">0</div></div>
-<div class="card box">Jenis Barang<div id="totalJenis" class="big">0</div></div>
-<div class="card box">Warning<div id="stokWarning" class="big">0</div></div>
-<div class="card box">Bulan Ini<div id="lapBulanan" class="big">0</div></div>
+<div class="sidebar">
+<h3>GUDANG</h3>
+<div onclick="show('dashboard')">Dashboard</div>
+<div onclick="show('master')">Master Barang</div>
+<div onclick="show('masuk')">Barang Masuk</div>
+<div onclick="show('keluar')">Barang Keluar</div>
+<div onclick="show('stok')">Stok Barang</div>
+<div onclick="show('riwayat')">Riwayat</div>
 </div>
 
-<div class="card">
-<h3>Input / Scan Barang</h3>
-<input id="barang" placeholder="Nama / Barcode barang">
-<select id="jenis">
-<option value="masuk">Barang Masuk</option>
-<option value="keluar">Barang Keluar</option>
-</select>
-<input id="jumlah" type="number" placeholder="Jumlah">
-<button onclick="prosesSimpan()">Simpan</button>
-<button onclick="mulaiScan()">Scan Barcode</button>
-<div id="reader" style="margin-top:10px"></div>
+<div class="content">
+
+<div id="dashboard" class="card">
+<h2>Dashboard</h2>
+Total Stok: <b id="totalStok">0</b><br>
+Total Barang: <b id="totalBarang">0</b>
 </div>
 
-<div class="card">
-<h3>Filter Riwayat</h3>
-<input type="date" id="tglAwal">
-<input type="date" id="tglAkhir">
-<button onclick="muatData()">Terapkan Filter</button>
-<button onclick="backupExcel()">Backup Excel</button>
+<div id="master" class="card" style="display:none">
+<h2>Master Barang</h2>
+<input id="namaBarang" placeholder="Nama Barang">
+<button onclick="tambahBarang()">Tambah Barang</button>
+<div id="listBarang"></div>
 </div>
 
-<div class="card">
-<h3>Grafik Stok</h3>
-<canvas id="chartStok"></canvas>
+<div id="masuk" class="card" style="display:none">
+<h2>Barang Masuk</h2>
+<select id="barangMasuk"></select>
+<input id="jumlahMasuk" type="number" placeholder="Jumlah">
+<button onclick="transaksi('masuk')">Simpan</button>
 </div>
 
-<div class="card">
-<h3>Stok Saat Ini</h3>
-<div id="ringkasanStok"></div>
+<div id="keluar" class="card" style="display:none">
+<h2>Barang Keluar</h2>
+<select id="barangKeluar"></select>
+<input id="jumlahKeluar" type="number" placeholder="Jumlah">
+<button onclick="transaksi('keluar')">Simpan</button>
 </div>
 
-<div class="card">
-<h3>Riwayat Transaksi</h3>
+<div id="stok" class="card" style="display:none">
+<h2>Stok Barang</h2>
+<div id="stokList"></div>
+</div>
+
+<div id="riwayat" class="card" style="display:none">
+<h2>Riwayat Transaksi</h2>
 <table>
 <thead>
 <tr>
@@ -76,11 +75,12 @@ th,td{padding:8px;border-bottom:1px solid #eee;text-align:center}
 <th>Barang</th>
 <th>Jenis</th>
 <th>Jumlah</th>
-<th>Aksi</th>
 </tr>
 </thead>
 <tbody id="riwayatBody"></tbody>
 </table>
+</div>
+
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -91,132 +91,98 @@ const firebaseConfig={
 apiKey:"AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
 authDomain:"gudang-sms-4c81c.firebaseapp.com",
 databaseURL:"https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
-projectId:"gudang-sms-4c81c",
-storageBucket:"gudang-sms-4c81c.appspot.com",
-appId:"1:598362736106:web:c8e2732d6ac7613931de93"
+projectId:"gudang-sms-4c81c"
 };
 
 firebase.initializeApp(firebaseConfig);
 const db=firebase.database();
 
-let editId=null;
-const MIN_STOK=5;
-let chart;
+function show(id){
+["dashboard","master","masuk","keluar","stok","riwayat"]
+.forEach(x=>document.getElementById(x).style.display="none");
+document.getElementById(id).style.display="block";
+}
 
-function prosesSimpan(){
-const barang=document.getElementById("barang").value.trim().toUpperCase();
-const jumlah=parseInt(document.getElementById("jumlah").value);
-const jenis=document.getElementById("jenis").value;
-if(!barang||!jumlah)return alert("Isi data");
+function tambahBarang(){
+const nama=namaBarang.value.toUpperCase();
+if(!nama)return;
+db.ref("barang/"+nama).set({nama});
+namaBarang.value="";
+}
 
-const data={barang,jumlah,jenis,tanggal:new Date().toISOString().slice(0,10)};
+function transaksi(jenis){
+const select=jenis=="masuk"?barangMasuk:barangKeluar;
+const jumlah=jenis=="masuk"?jumlahMasuk:jumlahKeluar;
 
-if(editId){
-db.ref("riwayat/"+editId).set(data);
-editId=null;
-}else{
+const data={
+barang:select.value,
+jumlah:parseInt(jumlah.value),
+jenis,
+tanggal:new Date().toISOString().slice(0,10)
+};
+
 db.ref("riwayat").push(data);
-}
-}
-
-function hapusData(id){ db.ref("riwayat/"+id).remove(); }
-
-function editData(id,b,j,n){
-editId=id;
-barang.value=b;
-jenis.value=j;
-jumlah.value=n;
+jumlah.value="";
 }
 
-function backupExcel(){
-const table=document.querySelector("table");
-const wb=XLSX.utils.table_to_book(table);
-XLSX.writeFile(wb,"BackupGudang.xlsx");
-}
-
-function mulaiScan(){
-const qr=new Html5Qrcode("reader");
-qr.start({facingMode:"environment"},{fps:10,qrbox:200},
-(txt)=>{barang.value=txt;qr.stop();});
+function muatBarang(){
+db.ref("barang").on("value",snap=>{
+let html="";
+let opt="";
+snap.forEach(c=>{
+const b=c.val().nama;
+html+=`<div>${b}</div>`;
+opt+=`<option value="${b}">${b}</option>`;
+});
+listBarang.innerHTML=html;
+barangMasuk.innerHTML=opt;
+barangKeluar.innerHTML=opt;
+});
 }
 
 function muatData(){
-const awal=tglAwal.value;
-const akhir=tglAkhir.value;
-
 db.ref("riwayat").on("value",snap=>{
-let html="";
 let stok={};
+let html="";
 let total=0;
-let warning=0;
-let bulanan=0;
 
-snap.forEach(child=>{
-const d=child.val();
-if(!d)return;
+snap.forEach(c=>{
+const d=c.val();
+const j=parseInt(d.jumlah);
 
-if(awal && d.tanggal<awal) return;
-if(akhir && d.tanggal>akhir) return;
-
-const jumlah=parseInt(d.jumlah)||0;
-const bulanIni=new Date().toISOString().slice(0,7);
-
-if(d.tanggal.startsWith(bulanIni)) bulanan+=jumlah;
-
-if(d.jenis==="masuk"){
-stok[d.barang]=(stok[d.barang]||0)+jumlah;
-total+=jumlah;
+if(d.jenis=="masuk"){
+stok[d.barang]=(stok[d.barang]||0)+j;
+total+=j;
 }else{
-stok[d.barang]=(stok[d.barang]||0)-jumlah;
-total-=jumlah;
+stok[d.barang]=(stok[d.barang]||0)-j;
+total-=j;
 }
 
-html+=`
-<tr>
+html+=`<tr>
 <td>${d.tanggal}</td>
 <td>${d.barang}</td>
 <td>${d.jenis}</td>
-<td>${jumlah}</td>
-<td>
-<button onclick="editData('${child.key}','${d.barang}','${d.jenis}',${jumlah})">Edit</button>
-<button onclick="hapusData('${child.key}')">Hapus</button>
-</td>
+<td>${j}</td>
 </tr>`;
 });
 
 riwayatBody.innerHTML=html;
 
-let ring="";
-let labels=[];
-let dataChart=[];
-
+let stokHtml="";
 for(let b in stok){
-const val=stok[b];
-if(val<=MIN_STOK)warning++;
-labels.push(b);
-dataChart.push(val);
-
-ring+=`<div style="display:flex;justify-content:space-between">
-<span>${b}</span>
-<b class="${val<=MIN_STOK?'warning':''}">${val}</b>
-</div>`;
+stokHtml+=`<div>${b} : <b>${stok[b]}</b></div>`;
 }
 
-ringkasanStok.innerHTML=ring;
+stokList.innerHTML=stokHtml;
 totalStok.innerText=total;
-totalJenis.innerText=Object.keys(stok).length;
-stokWarning.innerText=warning;
-lapBulanan.innerText=bulanan;
-
-if(chart)chart.destroy();
-chart=new Chart(document.getElementById("chartStok"),{
-type:"bar",
-data:{labels:labels,datasets:[{label:"Stok",data:dataChart}]}
-});
+totalBarang.innerText=Object.keys(stok).length;
 });
 }
 
-window.onload=muatData;
+window.onload=function(){
+muatBarang();
+muatData();
+};
 </script>
 
 </body>
