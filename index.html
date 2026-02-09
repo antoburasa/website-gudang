@@ -1,129 +1,149 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistem Gudang SMS v1.0</title>
+
+<style>
+body { font-family: Arial; background:#f4f7fa; padding:20px; }
+.card { background:white; padding:20px; border-radius:10px; margin-bottom:15px; }
+button { padding:10px; background:#007bff; color:white; border:none; border-radius:6px; cursor:pointer; }
+input, select { width:100%; padding:10px; margin-top:8px; }
+table { width:100%; border-collapse:collapse; margin-top:10px; }
+th, td { border-bottom:1px solid #eee; padding:10px; text-align:center; }
+.stok-item { display:flex; justify-content:space-between; padding:6px; }
+</style>
+</head>
+
+<body>
+
+<h2>📦 Sistem Gudang SMS</h2>
+
+<div class="card">
+<b>Total Stok:</b> <span id="totalStok">0</span><br>
+<b>Jenis Barang:</b> <span id="totalJenis">0</span>
+</div>
+
+<div class="card">
+<h3>Input Transaksi</h3>
+<input id="barang" placeholder="Nama barang">
+<select id="jenis">
+<option value="masuk">Barang Masuk</option>
+<option value="keluar">Barang Keluar</option>
+</select>
+<input id="jumlah" type="number" placeholder="Jumlah">
+<button onclick="prosesSimpan()">Simpan</button>
+</div>
+
+<div class="card">
+<h3>Stok Saat Ini</h3>
+<div id="ringkasanStok">Memuat data...</div>
+</div>
+
+<div class="card">
+<h3>Riwayat Transaksi</h3>
+<table>
+<thead>
+<tr>
+<th>Tanggal</th>
+<th>Barang</th>
+<th>Jenis</th>
+<th>Jumlah</th>
+<th>Aksi</th>
+</tr>
+</thead>
+<tbody id="riwayatBody"></tbody>
+</table>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
-        authDomain: "gudang-sms-4c81c.firebaseapp.com",
-        databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
-        projectId: "gudang-sms-4c81c",
-        storageBucket: "gudang-sms-4c81c.appspot.com",
-        appId: "1:598362736106:web:c8e2732d6ac7613931de93"
-    };
+const firebaseConfig = {
+apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
+authDomain: "gudang-sms-4c81c.firebaseapp.com",
+databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
+projectId: "gudang-sms-4c81c",
+storageBucket: "gudang-sms-4c81c.appspot.com",
+appId: "1:598362736106:web:c8e2732d6ac7613931de93"
+};
 
-    firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-    function prosesSimpan() {
-        const barangInput = document.getElementById("barang");
-        const jumlahInput = document.getElementById("jumlah");
-        const jenisInput = document.getElementById("jenis");
-        const btn = document.getElementById("btnSimpan");
+function prosesSimpan() {
+const barang = document.getElementById("barang").value.trim().toUpperCase();
+const jumlah = parseInt(document.getElementById("jumlah").value);
+const jenis = document.getElementById("jenis").value;
 
-        const barangNama = barangInput.value.trim().toUpperCase();
-        const jumlahNilai = parseInt(jumlahInput.value);
-        const jenisAksi = jenisInput.value;
+if (!barang || !jumlah) {
+alert("Isi data dengan benar");
+return;
+}
 
-        if (barangNama === "" || isNaN(jumlahNilai) || jumlahNilai <= 0) {
-            alert("Mohon isi nama barang dan jumlah dengan benar!");
-            return;
-        }
+db.ref("riwayat").push({
+barang: barang,
+jumlah: jumlah,
+jenis: jenis,
+tanggal: new Date().toISOString().slice(0,10)
+});
+}
 
-        btn.disabled = true;
-        btn.innerText = "MENYIMPAN...";
+function hapusData(id) {
+db.ref("riwayat/" + id).remove();
+}
 
-        database.ref("riwayat").push({
-            barang: barangNama,
-            jumlah: jumlahNilai,
-            jenis: jenisAksi,
-            tanggal: new Date().toISOString().slice(0, 10)
-        })
-        .then(() => {
-            barangInput.value = "";
-            jumlahInput.value = "";
-            btn.disabled = false;
-            btn.innerText = "SIMPAN DATA KE DATABASE";
-        })
-        .catch((error) => {
-            alert(error.message);
-            btn.disabled = false;
-            btn.innerText = "SIMPAN DATA KE DATABASE";
-        });
-    }
+function muatData() {
+db.ref("riwayat").on("value", snapshot => {
+let html = "";
+let stok = {};
+let total = 0;
 
-    function muatData() {
-        database.ref("riwayat").off();
+snapshot.forEach(child => {
+const d = child.val();
+if (!d) return;
 
-        const tglAwal = document.getElementById("tglAwal").value;
-        const tglAkhir = document.getElementById("tglAkhir").value;
+const jenis = d.jenis || "masuk";
+const jumlah = parseInt(d.jumlah) || 0;
 
-        database.ref("riwayat").on("value", (snapshot) => {
-            let htmlTabel = "";
-            let petaStok = {};
-            let totalUnit = 0;
+if (jenis === "masuk") {
+stok[d.barang] = (stok[d.barang] || 0) + jumlah;
+total += jumlah;
+} else {
+stok[d.barang] = (stok[d.barang] || 0) - jumlah;
+total -= jumlah;
+}
 
-            snapshot.forEach((childSnapshot) => {
-                const data = childSnapshot.val();
-                if (!data || !data.barang) return;
+html += `
+<tr>
+<td>${d.tanggal || "-"}</td>
+<td>${d.barang}</td>
+<td>${jenis}</td>
+<td>${jumlah}</td>
+<td><button onclick="hapusData('${child.key}')">Hapus</button></td>
+</tr>`;
+});
 
-                const jenisData = data.jenis || "masuk";
-                const jumlahData = parseInt(data.jumlah) || 0;
+document.getElementById("riwayatBody").innerHTML =
+html || "<tr><td colspan='5'>Tidak ada data</td></tr>";
 
-                if (tglAwal && data.tanggal < tglAwal) return;
-                if (tglAkhir && data.tanggal > tglAkhir) return;
+document.getElementById("totalStok").innerText = total;
+document.getElementById("totalJenis").innerText = Object.keys(stok).length;
 
-                if (jenisData === "masuk") {
-                    petaStok[data.barang] = (petaStok[data.barang] || 0) + jumlahData;
-                    totalUnit += jumlahData;
-                } else {
-                    petaStok[data.barang] = (petaStok[data.barang] || 0) - jumlahData;
-                    totalUnit -= jumlahData;
-                }
+let ringkasan = "";
+for (let b in stok) {
+ringkasan += `<div class="stok-item">${b} <b>${stok[b]}</b></div>`;
+}
 
-                htmlTabel += `
-                    <tr>
-                        <td>${data.tanggal || "-"}</td>
-                        <td style="text-align:left"><b>${data.barang}</b></td>
-                        <td style="color:${jenisData === 'masuk' ? '#28a745' : '#dc3545'}">
-                            <b>${jenisData.toUpperCase()}</b>
-                        </td>
-                        <td>${jumlahData}</td>
-                        <td class="no-print">
-                            <button class="btn-danger" onclick="hapusData('${childSnapshot.key}')">
-                                HAPUS
-                            </button>
-                        </td>
-                    </tr>`;
-            });
+document.getElementById("ringkasanStok").innerHTML =
+ringkasan || "Belum ada stok";
+});
+}
 
-            document.getElementById("riwayatBody").innerHTML =
-                htmlTabel || "<tr><td colspan='5'>Tidak ada data.</td></tr>";
-
-            document.getElementById("totalStok").innerText = totalUnit;
-            document.getElementById("totalJenis").innerText = Object.keys(petaStok).length;
-
-            let ringkasanHtml = "";
-            for (let namaBarang in petaStok) {
-                ringkasanHtml += `
-                    <div class="stok-item">
-                        <span>${namaBarang}</span>
-                        <b>${petaStok[namaBarang]} UNIT</b>
-                    </div>`;
-            }
-
-            document.getElementById("ringkasanStok").innerHTML =
-                ringkasanHtml || "Belum ada stok terdaftar.";
-        });
-    }
-
-    function hapusData(id) {
-        if (confirm("Hapus data transaksi ini?")) {
-            database.ref("riwayat/" + id).remove();
-        }
-    }
-
-    function eksporExcel() {
-        const table = document.getElementById("tabelRiwayat");
-        const wb = XLSX.utils.table_to_book(table);
-        XLSX.writeFile(wb, "Laporan_Gudang_SMS.xlsx");
-    }
-
-    window.onload = muatData;
+window.onload = muatData;
 </script>
+
+</body>
+</html>
