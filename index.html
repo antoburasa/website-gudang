@@ -3,26 +3,114 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sistem Gudang SMS v1.0</title>
+<title>Sistem Gudang v2</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap" rel="stylesheet">
 
 <style>
-body { font-family: Arial; background:#f4f7fa; padding:20px; }
-.card { background:white; padding:20px; border-radius:10px; margin-bottom:15px; }
-button { padding:10px; background:#007bff; color:white; border:none; border-radius:6px; cursor:pointer; }
-input, select { width:100%; padding:10px; margin-top:8px; }
-table { width:100%; border-collapse:collapse; margin-top:10px; }
-th, td { border-bottom:1px solid #eee; padding:10px; text-align:center; }
-.stok-item { display:flex; justify-content:space-between; padding:6px; }
+body{
+font-family:'Plus Jakarta Sans',sans-serif;
+background:#f1f5f9;
+padding:20px;
+color:#1e293b;
+}
+
+h2{
+text-align:center;
+margin-bottom:20px;
+}
+
+.dashboard{
+display:grid;
+grid-template-columns:1fr 1fr 1fr;
+gap:10px;
+margin-bottom:20px;
+}
+
+.box{
+background:white;
+padding:15px;
+border-radius:12px;
+text-align:center;
+box-shadow:0 3px 6px rgba(0,0,0,0.08);
+}
+
+.big{
+font-size:28px;
+font-weight:800;
+}
+
+.card{
+background:white;
+padding:20px;
+border-radius:12px;
+margin-bottom:15px;
+box-shadow:0 3px 6px rgba(0,0,0,0.08);
+}
+
+input,select{
+width:100%;
+padding:10px;
+margin-top:8px;
+border-radius:6px;
+border:1px solid #cbd5e1;
+}
+
+button{
+padding:10px;
+border:none;
+border-radius:6px;
+cursor:pointer;
+font-weight:bold;
+}
+
+.btn{
+background:#2563eb;
+color:white;
+}
+
+.btn-warning{
+background:#f59e0b;
+color:white;
+}
+
+.btn-danger{
+background:#ef4444;
+color:white;
+}
+
+.btn-edit{
+background:#10b981;
+color:white;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:10px;
+}
+
+th,td{
+padding:10px;
+border-bottom:1px solid #e2e8f0;
+text-align:center;
+}
+
+.warning{
+color:#ef4444;
+font-weight:bold;
+}
 </style>
 </head>
 
 <body>
 
-<h2>📦 Sistem Gudang SMS</h2>
+<h2>📦 SISTEM GUDANG v2</h2>
 
-<div class="card">
-<b>Total Stok:</b> <span id="totalStok">0</span><br>
-<b>Jenis Barang:</b> <span id="totalJenis">0</span>
+<div class="dashboard">
+<div class="box">Total Stok<div id="totalStok" class="big">0</div></div>
+<div class="box">Jenis Barang<div id="totalJenis" class="big">0</div></div>
+<div class="box">Stok Warning<div id="stokWarning" class="big">0</div></div>
 </div>
 
 <div class="card">
@@ -33,7 +121,7 @@ th, td { border-bottom:1px solid #eee; padding:10px; text-align:center; }
 <option value="keluar">Barang Keluar</option>
 </select>
 <input id="jumlah" type="number" placeholder="Jumlah">
-<button onclick="prosesSimpan()">Simpan</button>
+<button class="btn" onclick="prosesSimpan()">Simpan</button>
 </div>
 
 <div class="card">
@@ -43,6 +131,8 @@ th, td { border-bottom:1px solid #eee; padding:10px; text-align:center; }
 
 <div class="card">
 <h3>Riwayat Transaksi</h3>
+<button class="btn-warning" onclick="backupExcel()">Backup Excel</button>
+
 <table>
 <thead>
 <tr>
@@ -59,90 +149,132 @@ th, td { border-bottom:1px solid #eee; padding:10px; text-align:center; }
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <script>
-const firebaseConfig = {
-apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
-authDomain: "gudang-sms-4c81c.firebaseapp.com",
-databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
-projectId: "gudang-sms-4c81c",
-storageBucket: "gudang-sms-4c81c.appspot.com",
-appId: "1:598362736106:web:c8e2732d6ac7613931de93"
+const firebaseConfig={
+apiKey:"AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
+authDomain:"gudang-sms-4c81c.firebaseapp.com",
+databaseURL:"https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
+projectId:"gudang-sms-4c81c",
+storageBucket:"gudang-sms-4c81c.appspot.com",
+appId:"1:598362736106:web:c8e2732d6ac7613931de93"
 };
 
 firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+const db=firebase.database();
 
-function prosesSimpan() {
-const barang = document.getElementById("barang").value.trim().toUpperCase();
-const jumlah = parseInt(document.getElementById("jumlah").value);
-const jenis = document.getElementById("jenis").value;
+let editId=null;
+const MIN_STOK=5;
 
-if (!barang || !jumlah) {
-alert("Isi data dengan benar");
-return;
+function prosesSimpan(){
+const barang=document.getElementById("barang").value.trim().toUpperCase();
+const jumlah=parseInt(document.getElementById("jumlah").value);
+const jenis=document.getElementById("jenis").value;
+
+if(!barang||!jumlah)return alert("Isi data!");
+
+const data={
+barang,jumlah,jenis,
+tanggal:new Date().toISOString().slice(0,10)
+};
+
+if(editId){
+db.ref("riwayat/"+editId).set(data);
+editId=null;
+}else{
+db.ref("riwayat").push(data);
 }
 
-db.ref("riwayat").push({
-barang: barang,
-jumlah: jumlah,
-jenis: jenis,
-tanggal: new Date().toISOString().slice(0,10)
-});
+document.getElementById("barang").value="";
+document.getElementById("jumlah").value="";
 }
 
-function hapusData(id) {
-db.ref("riwayat/" + id).remove();
+function editData(id,barang,jenis,jumlah){
+editId=id;
+document.getElementById("barang").value=barang;
+document.getElementById("jenis").value=jenis;
+document.getElementById("jumlah").value=jumlah;
 }
 
-function muatData() {
-db.ref("riwayat").on("value", snapshot => {
-let html = "";
-let stok = {};
-let total = 0;
-
-snapshot.forEach(child => {
-const d = child.val();
-if (!d) return;
-
-const jenis = d.jenis || "masuk";
-const jumlah = parseInt(d.jumlah) || 0;
-
-if (jenis === "masuk") {
-stok[d.barang] = (stok[d.barang] || 0) + jumlah;
-total += jumlah;
-} else {
-stok[d.barang] = (stok[d.barang] || 0) - jumlah;
-total -= jumlah;
+function hapusData(id){
+db.ref("riwayat/"+id).remove();
 }
 
-html += `
+function backupExcel(){
+const table=document.querySelector("table");
+const wb=XLSX.utils.table_to_book(table);
+XLSX.writeFile(wb,"Backup_Gudang.xlsx");
+}
+
+function autoBackup(dataArray){
+const ws=XLSX.utils.json_to_sheet(dataArray);
+const wb=XLSX.utils.book_new();
+XLSX.utils.book_append_sheet(wb,ws,"Backup");
+XLSX.writeFile(wb,"AutoBackupGudang.xlsx");
+}
+
+function muatData(){
+db.ref("riwayat").on("value",snap=>{
+let html="";
+let stok={};
+let total=0;
+let warningCount=0;
+let backupData=[];
+
+snap.forEach(child=>{
+const d=child.val();
+if(!d)return;
+
+backupData.push(d);
+
+const jumlah=parseInt(d.jumlah)||0;
+
+if(d.jenis==="masuk"){
+stok[d.barang]=(stok[d.barang]||0)+jumlah;
+total+=jumlah;
+}else{
+stok[d.barang]=(stok[d.barang]||0)-jumlah;
+total-=jumlah;
+}
+
+html+=`
 <tr>
-<td>${d.tanggal || "-"}</td>
+<td>${d.tanggal}</td>
 <td>${d.barang}</td>
-<td>${jenis}</td>
+<td>${d.jenis}</td>
 <td>${jumlah}</td>
-<td><button onclick="hapusData('${child.key}')">Hapus</button></td>
+<td>
+<button class="btn-edit" onclick="editData('${child.key}','${d.barang}','${d.jenis}',${jumlah})">Edit</button>
+<button class="btn-danger" onclick="hapusData('${child.key}')">Hapus</button>
+</td>
 </tr>`;
 });
 
-document.getElementById("riwayatBody").innerHTML =
-html || "<tr><td colspan='5'>Tidak ada data</td></tr>";
+document.getElementById("riwayatBody").innerHTML=html;
 
-document.getElementById("totalStok").innerText = total;
-document.getElementById("totalJenis").innerText = Object.keys(stok).length;
+let ringkasan="";
+for(let b in stok){
+const val=stok[b];
+if(val<=MIN_STOK)warningCount++;
 
-let ringkasan = "";
-for (let b in stok) {
-ringkasan += `<div class="stok-item">${b} <b>${stok[b]}</b></div>`;
+ringkasan+=`
+<div style="display:flex;justify-content:space-between;padding:6px">
+<span>${b}</span>
+<b class="${val<=MIN_STOK?'warning':''}">${val}</b>
+</div>`;
 }
 
-document.getElementById("ringkasanStok").innerHTML =
-ringkasan || "Belum ada stok";
+document.getElementById("ringkasanStok").innerHTML=ringkasan;
+document.getElementById("totalStok").innerText=total;
+document.getElementById("totalJenis").innerText=Object.keys(stok).length;
+document.getElementById("stokWarning").innerText=warningCount;
+
+if(backupData.length>0)autoBackup(backupData);
 });
 }
 
-window.onload = muatData;
+window.onload=muatData;
 </script>
 
 </body>
