@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Sistem Gudang</title>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+body{
+font-family:Arial;
+background:#f4f6f9;
+margin:0;
+}
+
+.sidebar{
+width:220px;
+background:#1e2a38;
+color:white;
+position:fixed;
+top:0;
+bottom:0;
+padding:20px;
+}
+
+.sidebar div{
+padding:10px;
+cursor:pointer;
+}
+
+.sidebar div:hover{
+background:#2f3e50;
+}
+
+.content{
+margin-left:240px;
+padding:20px;
+}
+
+.card{
+background:white;
+padding:15px;
+margin-bottom:15px;
+border-radius:8px;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+}
+
+th,td{
+border:1px solid #ddd;
+padding:8px;
+}
+
+button{
+padding:6px 10px;
+cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+<h3>GUDANG</h3>
+<div onclick="show('dashboard')">Dashboard</div>
+<div onclick="show('master')">Master Barang</div>
+<div onclick="show('masuk')">Barang Masuk</div>
+<div onclick="show('keluar')">Barang Keluar</div>
+<div onclick="show('stok')">Stok Barang</div>
+<div onclick="show('riwayat')">Riwayat</div>
+</div>
+
+<div class="content">
+
+<div id="dashboard" class="card">
+<h2>Dashboard</h2>
+Total Barang: <span id="totalBarang">0</span><br>
+Total Stok: <span id="totalStok">0</span>
+</div>
+
+<div id="master" class="card" style="display:none">
+<h2>Master Barang</h2>
+
+<input id="kode" placeholder="Kode Barang">
+<input id="nama" placeholder="Nama Barang">
+<input id="unit" placeholder="Unit">
+<input id="min" type="number" placeholder="Stok Minimum">
+<input id="supplier" placeholder="Supplier">
+<button onclick="simpanBarang()">Simpan</button>
+
+<table>
+<thead>
+<tr>
+<th>Kode</th>
+<th>Nama</th>
+<th>Unit</th>
+<th>Min</th>
+<th>Aksi</th>
+</tr>
+</thead>
+<tbody id="tblBarang"></tbody>
+</table>
+</div>
+
+<div id="masuk" class="card" style="display:none">
+<h2>Barang Masuk</h2>
+<input id="kodeMasuk" placeholder="Kode Barang">
+<input id="jumlahMasuk" type="number" placeholder="Jumlah">
+<input id="po" placeholder="No PO">
+<input id="prs" placeholder="No PRS">
+<button onclick="barangMasuk()">Simpan</button>
+</div>
+
+<div id="keluar" class="card" style="display:none">
+<h2>Barang Keluar</h2>
+<input id="kodeKeluar" placeholder="Kode Barang">
+<input id="jumlahKeluar" type="number" placeholder="Jumlah">
+<input id="dept" placeholder="Departemen">
+<button onclick="barangKeluar()">Simpan</button>
+</div>
+
+<div id="stok" class="card" style="display:none">
+<h2>Stok Barang</h2>
+<table>
+<thead>
+<tr>
+<th>Kode</th>
+<th>Nama</th>
+<th>Stok</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody id="tblStok"></tbody>
+</table>
+</div>
+
+<div id="riwayat" class="card" style="display:none">
+<h2>Riwayat Transaksi</h2>
+<button onclick="laporanPDF()">Cetak Laporan Bulanan</button>
+<table>
+<thead>
+<tr>
+<th>Tanggal</th>
+<th>Kode</th>
+<th>Jenis</th>
+<th>Jumlah</th>
+<th>Aksi</th>
+</tr>
+</thead>
+<tbody id="tblRiwayat"></tbody>
+</table>
+</div>
+
+</div>
+
+<script>
+const firebaseConfig = {
+apiKey:"APIKEY",
+databaseURL:"URL",
+projectId:"ID"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db=firebase.database();
+
+function show(id){
+["dashboard","master","masuk","keluar","stok","riwayat"]
+.forEach(x=>document.getElementById(x).style.display="none");
+document.getElementById(id).style.display="block";
+}
+
+function simpanBarang(){
+let data={
+kode:kode.value,
+nama:nama.value,
+unit:unit.value,
+min:parseInt(min.value||0),
+supplier:supplier.value,
+stok:0
+};
+db.ref("barang/"+data.kode).set(data);
+}
+
+db.ref("barang").on("value",snap=>{
+tblBarang.innerHTML="";
+tblStok.innerHTML="";
+let totalBarang=0;
+let totalStok=0;
+
+snap.forEach(c=>{
+let d=c.val();
+totalBarang++;
+totalStok+=d.stok||0;
+
+tblBarang.innerHTML+=`
+<tr>
+<td>${d.kode}</td>
+<td>${d.nama}</td>
+<td>${d.unit}</td>
+<td>${d.min}</td>
+<td><button onclick="hapusBarang('${d.kode}')">Hapus</button></td>
+</tr>`;
+
+let status=d.stok<=d.min?"⚠ Minimum":"Aman";
+
+tblStok.innerHTML+=`
+<tr>
+<td>${d.kode}</td>
+<td>${d.nama}</td>
+<td>${d.stok}</td>
+<td>${status}</td>
+</tr>`;
+});
+
+totalBarangEl.textContent=totalBarang;
+totalStokEl.textContent=totalStok;
+});
+
+function hapusBarang(k){
+db.ref("barang/"+k).remove();
+}
+
+function barangMasuk(){
+let k=kodeMasuk.value;
+let j=parseInt(jumlahMasuk.value);
+
+db.ref("barang/"+k).once("value",s=>{
+let d=s.val();
+d.stok+=j;
+db.ref("barang/"+k).set(d);
+
+db.ref("riwayat").push({
+tanggal:new Date().toLocaleDateString(),
+kode:k,
+jenis:"MASUK",
+jumlah:j
+});
+});
+}
+
+function barangKeluar(){
+let k=kodeKeluar.value;
+let j=parseInt(jumlahKeluar.value);
+
+db.ref("barang/"+k).once("value",s=>{
+let d=s.val();
+d.stok-=j;
+db.ref("barang/"+k).set(d);
+
+db.ref("riwayat").push({
+tanggal:new Date().toLocaleDateString(),
+kode:k,
+jenis:"KELUAR",
+jumlah:j
+});
+});
+}
+
+db.ref("riwayat").on("value",snap=>{
+tblRiwayat.innerHTML="";
+snap.forEach(c=>{
+let d=c.val();
+tblRiwayat.innerHTML+=`
+<tr>
+<td>${d.tanggal}</td>
+<td>${d.kode}</td>
+<td>${d.jenis}</td>
+<td>${d.jumlah}</td>
+<td><button onclick="hapusRiwayat('${c.key}')">Hapus</button></td>
+</tr>`;
+});
+});
+
+function hapusRiwayat(k){
+db.ref("riwayat/"+k).remove();
+}
+
+function laporanPDF(){
+const {jsPDF}=window.jspdf;
+let doc=new jsPDF();
+doc.text("Laporan Bulanan",20,20);
+doc.save("laporan.pdf");
+}
+</script>
+
+</body>
+</html>
