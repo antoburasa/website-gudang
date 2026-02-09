@@ -3,136 +3,72 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sistem Gudang v2</title>
+<title>Sistem Gudang v3</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <style>
-body{
-font-family:'Plus Jakarta Sans',sans-serif;
-background:#f1f5f9;
-padding:20px;
-color:#1e293b;
-}
-
-h2{
-text-align:center;
-margin-bottom:20px;
-}
-
-.dashboard{
-display:grid;
-grid-template-columns:1fr 1fr 1fr;
-gap:10px;
-margin-bottom:20px;
-}
-
-.box{
-background:white;
-padding:15px;
-border-radius:12px;
-text-align:center;
-box-shadow:0 3px 6px rgba(0,0,0,0.08);
-}
-
-.big{
-font-size:28px;
-font-weight:800;
-}
-
-.card{
-background:white;
-padding:20px;
-border-radius:12px;
-margin-bottom:15px;
-box-shadow:0 3px 6px rgba(0,0,0,0.08);
-}
-
-input,select{
-width:100%;
-padding:10px;
-margin-top:8px;
-border-radius:6px;
-border:1px solid #cbd5e1;
-}
-
-button{
-padding:10px;
-border:none;
-border-radius:6px;
-cursor:pointer;
-font-weight:bold;
-}
-
-.btn{
-background:#2563eb;
-color:white;
-}
-
-.btn-warning{
-background:#f59e0b;
-color:white;
-}
-
-.btn-danger{
-background:#ef4444;
-color:white;
-}
-
-.btn-edit{
-background:#10b981;
-color:white;
-}
-
-table{
-width:100%;
-border-collapse:collapse;
-margin-top:10px;
-}
-
-th,td{
-padding:10px;
-border-bottom:1px solid #e2e8f0;
-text-align:center;
-}
-
-.warning{
-color:#ef4444;
-font-weight:bold;
-}
+body{font-family:Inter;background:#f1f5f9;padding:20px;color:#0f172a}
+.card{background:white;padding:18px;border-radius:14px;margin-bottom:15px;box-shadow:0 4px 10px rgba(0,0,0,.05)}
+.dashboard{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.box{text-align:center}
+.big{font-size:26px;font-weight:800}
+input,select,button{padding:10px;margin-top:6px;border-radius:8px;border:1px solid #e2e8f0;width:100%}
+button{background:#2563eb;color:white;border:none;font-weight:bold;cursor:pointer}
+.warning{color:#ef4444;font-weight:bold}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{padding:8px;border-bottom:1px solid #eee;text-align:center}
 </style>
 </head>
 
 <body>
 
-<h2>📦 SISTEM GUDANG v2</h2>
+<h2>📦 SISTEM GUDANG v3</h2>
 
 <div class="dashboard">
-<div class="box">Total Stok<div id="totalStok" class="big">0</div></div>
-<div class="box">Jenis Barang<div id="totalJenis" class="big">0</div></div>
-<div class="box">Stok Warning<div id="stokWarning" class="big">0</div></div>
+<div class="card box">Total Stok<div id="totalStok" class="big">0</div></div>
+<div class="card box">Jenis Barang<div id="totalJenis" class="big">0</div></div>
+<div class="card box">Warning<div id="stokWarning" class="big">0</div></div>
+<div class="card box">Bulan Ini<div id="lapBulanan" class="big">0</div></div>
 </div>
 
 <div class="card">
-<h3>Input Transaksi</h3>
-<input id="barang" placeholder="Nama barang">
+<h3>Input / Scan Barang</h3>
+<input id="barang" placeholder="Nama / Barcode barang">
 <select id="jenis">
 <option value="masuk">Barang Masuk</option>
 <option value="keluar">Barang Keluar</option>
 </select>
 <input id="jumlah" type="number" placeholder="Jumlah">
-<button class="btn" onclick="prosesSimpan()">Simpan</button>
+<button onclick="prosesSimpan()">Simpan</button>
+<button onclick="mulaiScan()">Scan Barcode</button>
+<div id="reader" style="margin-top:10px"></div>
+</div>
+
+<div class="card">
+<h3>Filter Riwayat</h3>
+<input type="date" id="tglAwal">
+<input type="date" id="tglAkhir">
+<button onclick="muatData()">Terapkan Filter</button>
+<button onclick="backupExcel()">Backup Excel</button>
+</div>
+
+<div class="card">
+<h3>Grafik Stok</h3>
+<canvas id="chartStok"></canvas>
 </div>
 
 <div class="card">
 <h3>Stok Saat Ini</h3>
-<div id="ringkasanStok">Memuat data...</div>
+<div id="ringkasanStok"></div>
 </div>
 
 <div class="card">
 <h3>Riwayat Transaksi</h3>
-<button class="btn-warning" onclick="backupExcel()">Backup Excel</button>
-
 <table>
 <thead>
 <tr>
@@ -149,7 +85,6 @@ font-weight:bold;
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <script>
 const firebaseConfig={
@@ -166,18 +101,15 @@ const db=firebase.database();
 
 let editId=null;
 const MIN_STOK=5;
+let chart;
 
 function prosesSimpan(){
 const barang=document.getElementById("barang").value.trim().toUpperCase();
 const jumlah=parseInt(document.getElementById("jumlah").value);
 const jenis=document.getElementById("jenis").value;
+if(!barang||!jumlah)return alert("Isi data");
 
-if(!barang||!jumlah)return alert("Isi data!");
-
-const data={
-barang,jumlah,jenis,
-tanggal:new Date().toISOString().slice(0,10)
-};
+const data={barang,jumlah,jenis,tanggal:new Date().toISOString().slice(0,10)};
 
 if(editId){
 db.ref("riwayat/"+editId).set(data);
@@ -185,50 +117,51 @@ editId=null;
 }else{
 db.ref("riwayat").push(data);
 }
-
-document.getElementById("barang").value="";
-document.getElementById("jumlah").value="";
 }
 
-function editData(id,barang,jenis,jumlah){
+function hapusData(id){ db.ref("riwayat/"+id).remove(); }
+
+function editData(id,b,j,n){
 editId=id;
-document.getElementById("barang").value=barang;
-document.getElementById("jenis").value=jenis;
-document.getElementById("jumlah").value=jumlah;
-}
-
-function hapusData(id){
-db.ref("riwayat/"+id).remove();
+barang.value=b;
+jenis.value=j;
+jumlah.value=n;
 }
 
 function backupExcel(){
 const table=document.querySelector("table");
 const wb=XLSX.utils.table_to_book(table);
-XLSX.writeFile(wb,"Backup_Gudang.xlsx");
+XLSX.writeFile(wb,"BackupGudang.xlsx");
 }
 
-function autoBackup(dataArray){
-const ws=XLSX.utils.json_to_sheet(dataArray);
-const wb=XLSX.utils.book_new();
-XLSX.utils.book_append_sheet(wb,ws,"Backup");
-XLSX.writeFile(wb,"AutoBackupGudang.xlsx");
+function mulaiScan(){
+const qr=new Html5Qrcode("reader");
+qr.start({facingMode:"environment"},{fps:10,qrbox:200},
+(txt)=>{barang.value=txt;qr.stop();});
 }
 
 function muatData(){
+const awal=tglAwal.value;
+const akhir=tglAkhir.value;
+
 db.ref("riwayat").on("value",snap=>{
 let html="";
 let stok={};
 let total=0;
-let warningCount=0;
-let backupData=[];
+let warning=0;
+let bulanan=0;
 
 snap.forEach(child=>{
 const d=child.val();
 if(!d)return;
 
-backupData.push(d);
+if(awal && d.tanggal<awal) return;
+if(akhir && d.tanggal>akhir) return;
 
 const jumlah=parseInt(d.jumlah)||0;
+const bulanIni=new Date().toISOString().slice(0,7);
+
+if(d.tanggal.startsWith(bulanIni)) bulanan+=jumlah;
 
 if(d.jenis==="masuk"){
 stok[d.barang]=(stok[d.barang]||0)+jumlah;
@@ -245,32 +178,41 @@ html+=`
 <td>${d.jenis}</td>
 <td>${jumlah}</td>
 <td>
-<button class="btn-edit" onclick="editData('${child.key}','${d.barang}','${d.jenis}',${jumlah})">Edit</button>
-<button class="btn-danger" onclick="hapusData('${child.key}')">Hapus</button>
+<button onclick="editData('${child.key}','${d.barang}','${d.jenis}',${jumlah})">Edit</button>
+<button onclick="hapusData('${child.key}')">Hapus</button>
 </td>
 </tr>`;
 });
 
-document.getElementById("riwayatBody").innerHTML=html;
+riwayatBody.innerHTML=html;
 
-let ringkasan="";
+let ring="";
+let labels=[];
+let dataChart=[];
+
 for(let b in stok){
 const val=stok[b];
-if(val<=MIN_STOK)warningCount++;
+if(val<=MIN_STOK)warning++;
+labels.push(b);
+dataChart.push(val);
 
-ringkasan+=`
-<div style="display:flex;justify-content:space-between;padding:6px">
+ring+=`<div style="display:flex;justify-content:space-between">
 <span>${b}</span>
 <b class="${val<=MIN_STOK?'warning':''}">${val}</b>
 </div>`;
 }
 
-document.getElementById("ringkasanStok").innerHTML=ringkasan;
-document.getElementById("totalStok").innerText=total;
-document.getElementById("totalJenis").innerText=Object.keys(stok).length;
-document.getElementById("stokWarning").innerText=warningCount;
+ringkasanStok.innerHTML=ring;
+totalStok.innerText=total;
+totalJenis.innerText=Object.keys(stok).length;
+stokWarning.innerText=warning;
+lapBulanan.innerText=bulanan;
 
-if(backupData.length>0)autoBackup(backupData);
+if(chart)chart.destroy();
+chart=new Chart(document.getElementById("chartStok"),{
+type:"bar",
+data:{labels:labels,datasets:[{label:"Stok",data:dataChart}]}
+});
 });
 }
 
