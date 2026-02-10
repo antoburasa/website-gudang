@@ -1,291 +1,238 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>Sistem Gudang</title>
+<title>GUDANG RAWMATERIAL SMS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
-body{
-font-family:Arial;
-background:#f4f6f9;
-margin:0;
-}
-
-.sidebar{
-width:220px;
-background:#1e2a38;
-color:white;
-position:fixed;
-top:0;
-bottom:0;
-padding:20px;
-}
-
-.sidebar div{
-padding:10px;
-cursor:pointer;
-}
-
-.sidebar div:hover{
-background:#2f3e50;
-}
-
-.content{
-margin-left:240px;
-padding:20px;
-}
-
-.card{
-background:white;
-padding:15px;
-margin-bottom:15px;
-border-radius:8px;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
-}
-
-table{
-width:100%;
-border-collapse:collapse;
-}
-
-th,td{
-border:1px solid #ddd;
-padding:8px;
-}
-
-button{
-padding:6px 10px;
-cursor:pointer;
-}
+body{font-family:Arial;background:#f5f6fa;margin:0}
+.header{background:#1e3a8a;color:white;padding:15px;text-align:center}
+.menu{display:flex;background:#fff;border-bottom:1px solid #ddd}
+.menu button{flex:1;padding:12px;border:none;background:white}
+.menu button:hover{background:#f0f0f0}
+.page{display:none;padding:15px}
+.card{background:white;padding:15px;border-radius:10px;margin-bottom:15px}
+input,select{width:100%;padding:10px;margin-top:5px}
+button.primary{background:#2563eb;color:white;padding:10px;border:none;margin-top:10px;width:100%}
+table{width:100%;border-collapse:collapse}
+th,td{border-bottom:1px solid #eee;padding:8px;text-align:left}
 </style>
 </head>
-
 <body>
 
-<div class="sidebar">
-<h3>GUDANG</h3>
-<div onclick="show('dashboard')">Dashboard</div>
-<div onclick="show('master')">Master Barang</div>
-<div onclick="show('masuk')">Barang Masuk</div>
-<div onclick="show('keluar')">Barang Keluar</div>
-<div onclick="show('stok')">Stok Barang</div>
-<div onclick="show('riwayat')">Riwayat</div>
+<div class="header">
+<h2>GUDANG RAWMATERIAL SMS</h2>
 </div>
 
-<div class="content">
-
-<div id="dashboard" class="card">
-<h2>Dashboard</h2>
-Total Barang: <span id="totalBarang">0</span><br>
-Total Stok: <span id="totalStok">0</span>
+<div class="menu">
+<button onclick="show('dashboard')">Dashboard</button>
+<button onclick="show('master')">Master Barang</button>
+<button onclick="show('prs')">PRS</button>
+<button onclick="show('masuk')">Barang Masuk</button>
+<button onclick="show('keluar')">Barang Keluar</button>
+<button onclick="show('stok')">Stok</button>
+<button onclick="show('riwayat')">Riwayat</button>
 </div>
 
-<div id="master" class="card" style="display:none">
-<h2>Master Barang</h2>
+<!-- DASHBOARD -->
+<div id="dashboard" class="page">
+<div class="card">
+<h3>Total Barang</h3>
+<div id="totalBarang">0</div>
+</div>
+<div class="card">
+<h3>Total Stok</h3>
+<div id="totalStok">0</div>
+</div>
+</div>
 
+<!-- MASTER BARANG -->
+<div id="master" class="page">
+<div class="card">
+<h3>Tambah Barang</h3>
 <input id="kode" placeholder="Kode Barang">
 <input id="nama" placeholder="Nama Barang">
-<input id="unit" placeholder="Unit">
-<input id="min" type="number" placeholder="Stok Minimum">
+
+<input list="unitList" id="unit" placeholder="Unit">
+<datalist id="unitList">
+<option>PCS</option>
+<option>SET</option>
+<option>SHEET</option>
+<option>KG</option>
+<option>TON</option>
+<option>M3</option>
+<option>CM</option>
+<option>METER</option>
+</datalist>
+
+<select id="gudang">
+<option>General Store 1</option>
+<option>General Store 2</option>
+<option>Gudang 3</option>
+<option>Ingredients</option>
+</select>
+
+<input id="stokMin" type="number" placeholder="Stok Minimum">
 <input id="supplier" placeholder="Supplier">
-<button onclick="simpanBarang()">Simpan</button>
 
-<table>
-<thead>
-<tr>
-<th>Kode</th>
-<th>Nama</th>
-<th>Unit</th>
-<th>Min</th>
-<th>Aksi</th>
-</tr>
-</thead>
-<tbody id="tblBarang"></tbody>
-</table>
+<button class="primary" onclick="simpanBarang()">Simpan</button>
 </div>
 
-<div id="masuk" class="card" style="display:none">
-<h2>Barang Masuk</h2>
+<div class="card">
+<h3>Daftar Barang</h3>
+<table>
+<thead>
+<tr><th>Kode</th><th>Nama</th><th>Stok</th></tr>
+</thead>
+<tbody id="listBarang"></tbody>
+</table>
+</div>
+</div>
+
+<!-- PRS -->
+<div id="prs" class="page">
+<div class="card">
+<h3>Buat PRS</h3>
+<input id="chargeTo" placeholder="Charge To">
+<button class="primary" onclick="buatPRS()">Buat PRS</button>
+<div id="noPRS"></div>
+</div>
+</div>
+
+<!-- BARANG MASUK -->
+<div id="masuk" class="page">
+<div class="card">
+<h3>Barang Masuk</h3>
 <input id="kodeMasuk" placeholder="Kode Barang">
-<input id="jumlahMasuk" type="number" placeholder="Jumlah">
-<input id="po" placeholder="No PO">
-<input id="prs" placeholder="No PRS">
-<button onclick="barangMasuk()">Simpan</button>
+<input id="qtyMasuk" type="number" placeholder="Qty">
+<select id="tujuan">
+<option value="STOK">STOK</option>
+<option value="USER">USER</option>
+</select>
+<button class="primary" onclick="barangMasuk()">Simpan</button>
+</div>
 </div>
 
-<div id="keluar" class="card" style="display:none">
-<h2>Barang Keluar</h2>
+<!-- BARANG KELUAR -->
+<div id="keluar" class="page">
+<div class="card">
+<h3>Barang Keluar</h3>
 <input id="kodeKeluar" placeholder="Kode Barang">
-<input id="jumlahKeluar" type="number" placeholder="Jumlah">
-<input id="dept" placeholder="Departemen">
-<button onclick="barangKeluar()">Simpan</button>
+<input id="qtyKeluar" type="number" placeholder="Qty">
+<button class="primary" onclick="barangKeluar()">Simpan</button>
+</div>
 </div>
 
-<div id="stok" class="card" style="display:none">
-<h2>Stok Barang</h2>
+<!-- STOK -->
+<div id="stok" class="page">
+<div class="card">
+<h3>Stok Barang</h3>
+<div id="stokList"></div>
+</div>
+</div>
+
+<!-- RIWAYAT -->
+<div id="riwayat" class="page">
+<div class="card">
+<h3>Riwayat</h3>
 <table>
 <thead>
-<tr>
-<th>Kode</th>
-<th>Nama</th>
-<th>Stok</th>
-<th>Status</th>
-</tr>
+<tr><th>Tanggal</th><th>Barang</th><th>Jenis</th><th>Qty</th></tr>
 </thead>
-<tbody id="tblStok"></tbody>
+<tbody id="riwayatList"></tbody>
 </table>
 </div>
-
-<div id="riwayat" class="card" style="display:none">
-<h2>Riwayat Transaksi</h2>
-<button onclick="laporanPDF()">Cetak Laporan Bulanan</button>
-<table>
-<thead>
-<tr>
-<th>Tanggal</th>
-<th>Kode</th>
-<th>Jenis</th>
-<th>Jumlah</th>
-<th>Aksi</th>
-</tr>
-</thead>
-<tbody id="tblRiwayat"></tbody>
-</table>
-</div>
-
 </div>
 
 <script>
 const firebaseConfig = {
-apiKey:"APIKEY",
-databaseURL:"URL",
-projectId:"ID"
+apiKey:"AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
+databaseURL:"https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
+projectId:"gudang-sms-4c81c"
 };
 
 firebase.initializeApp(firebaseConfig);
-const db=firebase.database();
+const db = firebase.database();
 
 function show(id){
-["dashboard","master","masuk","keluar","stok","riwayat"]
-.forEach(x=>document.getElementById(x).style.display="none");
+document.querySelectorAll(".page").forEach(p=>p.style.display="none");
 document.getElementById(id).style.display="block";
 }
 
+show("dashboard");
+
 function simpanBarang(){
-let data={
-kode:kode.value,
+let kode=kode.value;
+db.ref("barang/"+kode).set({
+kode:kode,
 nama:nama.value,
 unit:unit.value,
-min:parseInt(min.value||0),
-supplier:supplier.value,
-stok:0
-};
-db.ref("barang/"+data.kode).set(data);
+gudang:gudang.value,
+stok:0,
+stokMin:stokMin.value,
+supplier:supplier.value
+});
 }
 
 db.ref("barang").on("value",snap=>{
-tblBarang.innerHTML="";
-tblStok.innerHTML="";
-let totalBarang=0;
-let totalStok=0;
-
-snap.forEach(c=>{
-let d=c.val();
-totalBarang++;
-totalStok+=d.stok||0;
-
-tblBarang.innerHTML+=`
-<tr>
-<td>${d.kode}</td>
-<td>${d.nama}</td>
-<td>${d.unit}</td>
-<td>${d.min}</td>
-<td><button onclick="hapusBarang('${d.kode}')">Hapus</button></td>
-</tr>`;
-
-let status=d.stok<=d.min?"⚠ Minimum":"Aman";
-
-tblStok.innerHTML+=`
-<tr>
-<td>${d.kode}</td>
-<td>${d.nama}</td>
-<td>${d.stok}</td>
-<td>${status}</td>
-</tr>`;
+let html="",total=0,count=0,stokHtml="";
+snap.forEach(d=>{
+let b=d.val();
+count++;
+total+=parseInt(b.stok||0);
+html+=`<tr><td>${b.kode}</td><td>${b.nama}</td><td>${b.stok}</td></tr>`;
+stokHtml+=`${b.nama} : ${b.stok}<br>`;
 });
-
-totalBarangEl.textContent=totalBarang;
-totalStokEl.textContent=totalStok;
+listBarang.innerHTML=html;
+stokList.innerHTML=stokHtml;
+totalBarang.innerText=count;
+totalStok.innerText=total;
 });
-
-function hapusBarang(k){
-db.ref("barang/"+k).remove();
-}
 
 function barangMasuk(){
-let k=kodeMasuk.value;
-let j=parseInt(jumlahMasuk.value);
-
-db.ref("barang/"+k).once("value",s=>{
-let d=s.val();
-d.stok+=j;
-db.ref("barang/"+k).set(d);
-
-db.ref("riwayat").push({
-tanggal:new Date().toLocaleDateString(),
-kode:k,
-jenis:"MASUK",
-jumlah:j
-});
-});
+let kode=kodeMasuk.value;
+let qty=parseInt(qtyMasuk.value);
+db.ref("barang/"+kode+"/stok").transaction(s=>(s||0)+qty);
+simpanRiwayat(kode,"MASUK",qty);
 }
 
 function barangKeluar(){
-let k=kodeKeluar.value;
-let j=parseInt(jumlahKeluar.value);
+let kode=kodeKeluar.value;
+let qty=parseInt(qtyKeluar.value);
+db.ref("barang/"+kode+"/stok").transaction(s=>(s||0)-qty);
+simpanRiwayat(kode,"KELUAR",qty);
+}
 
-db.ref("barang/"+k).once("value",s=>{
-let d=s.val();
-d.stok-=j;
-db.ref("barang/"+k).set(d);
-
-db.ref("riwayat").push({
-tanggal:new Date().toLocaleDateString(),
-kode:k,
-jenis:"KELUAR",
-jumlah:j
-});
+function simpanRiwayat(kode,jenis,qty){
+db.ref("transaksi").push({
+kode:kode,
+jenis:jenis,
+qty:qty,
+tanggal:new Date().toISOString().slice(0,10)
 });
 }
 
-db.ref("riwayat").on("value",snap=>{
-tblRiwayat.innerHTML="";
-snap.forEach(c=>{
-let d=c.val();
-tblRiwayat.innerHTML+=`
-<tr>
-<td>${d.tanggal}</td>
-<td>${d.kode}</td>
-<td>${d.jenis}</td>
-<td>${d.jumlah}</td>
-<td><button onclick="hapusRiwayat('${c.key}')">Hapus</button></td>
-</tr>`;
+db.ref("transaksi").on("value",snap=>{
+let html="";
+snap.forEach(d=>{
+let t=d.val();
+html+=`<tr><td>${t.tanggal}</td><td>${t.kode}</td><td>${t.jenis}</td><td>${t.qty}</td></tr>`;
 });
+riwayatList.innerHTML=html;
 });
 
-function hapusRiwayat(k){
-db.ref("riwayat/"+k).remove();
-}
-
-function laporanPDF(){
-const {jsPDF}=window.jspdf;
-let doc=new jsPDF();
-doc.text("Laporan Bulanan",20,20);
-doc.save("laporan.pdf");
+function buatPRS(){
+let id="PRS-"+new Date().getFullYear()+"-"+Date.now().toString().slice(-4);
+db.ref("prs/"+id).set({
+no:id,
+chargeTo:chargeTo.value,
+tanggal:new Date().toISOString().slice(0,10)
+});
+noPRS.innerText="PRS dibuat: "+id;
 }
 </script>
 
