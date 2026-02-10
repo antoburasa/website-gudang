@@ -1,207 +1,267 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<title>Gudang Raw Material SMS</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gudang Raw Material SMS - Pro Version</title>
 
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-<style>
-body{font-family:Arial;background:#f4f6f8;margin:0}
-nav{background:#1e3a8a;padding:10px}
-nav button{margin:3px;padding:8px;border:0;background:white;border-radius:6px;cursor:pointer}
-.card{background:white;margin:15px;padding:15px;border-radius:10px}
-input,select{width:100%;padding:8px;margin:5px 0}
-table{width:100%;border-collapse:collapse}
-th,td{border:1px solid #ddd;padding:6px}
-.warn{background:#fee2e2}
-</style>
+    <style>
+        :root { --primary: #1e3a8a; --secondary: #3b82f6; --danger: #ef4444; --light: #f4f6f8; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--light); margin: 0; padding-bottom: 50px; }
+        nav { background: var(--primary); padding: 12px; position: sticky; top: 0; z-index: 100; display: flex; flex-wrap: wrap; gap: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        nav button { flex: 1; min-width: 100px; padding: 10px; border: 0; background: white; border-radius: 6px; cursor: pointer; font-weight: bold; color: var(--primary); transition: 0.3s; }
+        nav button:hover { background: #e2e8f0; }
+        .card { background: white; margin: 15px auto; padding: 20px; border-radius: 10px; max-width: 900px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        h2, h3 { color: var(--primary); margin-top: 0; }
+        input, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        button.btn-save { width: 100%; padding: 12px; background: var(--secondary); color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin-top: 10px; }
+        button.btn-save:hover { background: var(--primary); }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
+        th, td { border: 1px solid #eee; padding: 12px; text-align: left; }
+        th { background: #f8fafc; color: #64748b; }
+        .warn { background: #fee2e2 !important; color: #b91c1c; font-weight: bold; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        .in { background: #dcfce7; color: #15803d; }
+        .out { background: #fee2e2; color: #b91c1c; }
+        @media (max-width: 600px) { th, td { padding: 8px; font-size: 12px; } }
+    </style>
 </head>
 
 <body>
 
 <nav>
-<button onclick="dashboard()">Dashboard</button>
-<button onclick="master()">Master Barang</button>
-<button onclick="masuk()">Barang Masuk</button>
-<button onclick="keluar()">Barang Keluar</button>
-<button onclick="stok()">Stok</button>
-<button onclick="riwayat()">Riwayat</button>
+    <button onclick="dashboard()">Dashboard</button>
+    <button onclick="master()">Master</button>
+    <button onclick="masuk()">Barang Masuk</button>
+    <button onclick="keluar()">Barang Keluar</button>
+    <button onclick="stok()">Stok</button>
+    <button onclick="riwayat()">Riwayat</button>
 </nav>
 
 <div id="app"></div>
 
 <script>
-/* ================= FIREBASE ================= */
-firebase.initializeApp({
-  apiKey:"AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
-  databaseURL:"https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId:"gudang-sms-4c81c"
-});
-const db=firebase.database();
-const app=document.getElementById("app");
+/* ================= CONFIG FIREBASE ================= */
+const firebaseConfig = {
+    apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
+    databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "gudang-sms-4c81c"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const app = document.getElementById("app");
 
-/* ================= DATA ================= */
-const daftarGudang=["General Store 1","General Store 2","Gudang 3","Ingredients"];
+/* ================= DATA GUDANG ================= */
+const daftarGudang = ["General Store 1", "General Store 2", "Gudang 3", "Ingredients"];
+
+/* ================= UTILS ================= */
+function clearListeners() {
+    db.ref("barang").off();
+    db.ref("transaksi").off();
+}
 
 /* ================= DASHBOARD ================= */
-function dashboard(){
-db.ref("barang").once("value",s=>{
-let total=0,jenis=0,perGudang={};
-s.forEach(c=>{
-let b=c.val();
-total+=b.stok||0;
-jenis++;
-perGudang[b.gudang]=(perGudang[b.gudang]||0)+(b.stok||0);
-});
-let html=`<div class="card">
-<h2>Dashboard</h2>
-Total Stok: <b>${total}</b><br>
-Jenis Barang: <b>${jenis}</b><hr>`;
-for(let g in perGudang){
-html+=${g}: <b>${perGudang[g]}</b><br>;
-}
-html+="</div>";
-app.innerHTML=html;
-});
-}
-
-/* ================= MASTER ================= */
-function master(){
-app.innerHTML=`
-<div class="card">
-<h3>Master Barang</h3>
-Nama<input id="nama">
-Kode<input id="kode">
-Unit<input id="unit">
-Minimum<input id="min" type="number">
-Gudang<select id="gudang"></select>
-<button onclick="simpanBarang()">Simpan</button>
-</div>
-<div class="card"><div id="listBarang"></div></div>`;
-loadGudang();
-loadMaster();
+function dashboard() {
+    clearListeners();
+    db.ref("barang").once("value", s => {
+        let total = 0, jenis = 0, perGudang = {};
+        s.forEach(c => {
+            let b = c.val();
+            total += b.stok || 0;
+            jenis++;
+            perGudang[b.gudang] = (perGudang[b.gudang] || 0) + (b.stok || 0);
+        });
+        let html = `
+        <div class="card">
+            <h2>Dashboard</h2>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div style="background:#eff6ff; padding:15px; border-radius:8px">Total Unit: <br><strong>${total}</strong></div>
+                <div style="background:#f0fdf4; padding:15px; border-radius:8px">Jenis Barang: <br><strong>${jenis}</strong></div>
+            </div>
+            <hr style="border:0; border-top:1px solid #eee; margin:20px 0">
+            <h3>Stok per Gudang</h3>`;
+        for (let g in perGudang) {
+            html += `<div style="display:flex; justify-content:space-between; margin-bottom:8px">
+                        <span>${g}</span> <b>${perGudang[g]}</b>
+                     </div>`;
+        }
+        html += "</div>";
+        app.innerHTML = html;
+    });
 }
 
-function loadGudang(){
-gudang.innerHTML="";
-daftarGudang.forEach(g=>gudang.innerHTML+=<option>${g}</option>);
+/* ================= MASTER BARANG ================= */
+function master() {
+    clearListeners();
+    app.innerHTML = `
+    <div class="card">
+        <h3>Input Master Barang</h3>
+        <input id="nama" placeholder="Nama Barang">
+        <input id="kode" placeholder="Kode Barang">
+        <input id="unit" placeholder="Satuan (Pcs, Kg, Box)">
+        <input id="min" type="number" placeholder="Stok Minimum">
+        <select id="gudang">${daftarGudang.map(g => <option>${g}</option>).join("")}</select>
+        <button class="btn-save" onclick="simpanBarang()">Simpan Master</button>
+    </div>
+    <div class="card">
+        <h3>Daftar Master</h3>
+        <div id="listBarang" style="overflow-x:auto"></div>
+    </div>`;
+    loadMaster();
 }
 
-function simpanBarang(){
-db.ref("barang").push({
-nama:nama.value,
-kode:kode.value,
-unit:unit.value,
-gudang:gudang.value,
-stok:0,
-min:parseInt(min.value||0)
-});
-master();
+function simpanBarang() {
+    const data = {
+        nama: nama.value,
+        kode: kode.value,
+        unit: unit.value,
+        gudang: gudang.value,
+        stok: 0,
+        min: parseInt(min.value || 0)
+    };
+    if(!data.nama || !data.kode) return alert("Nama dan Kode wajib diisi!");
+    db.ref("barang").push(data);
+    alert("Barang berhasil didaftarkan");
+    master();
 }
 
-function loadMaster(){
-db.ref("barang").on("value",s=>{
-let h="<table><tr><th>Nama</th><th>Gudang</th><th>Stok</th><th>Min</th></tr>";
-s.forEach(c=>{
-let b=c.val();
-h+=`<tr class="${b.stok<=b.min?'warn':''}">
-<td>${b.nama}</td><td>${b.gudang}</td>
-<td>${b.stok}</td><td>${b.min}</td></tr>`;
-});
-h+="</table>";
-listBarang.innerHTML=h;
-});
+function loadMaster() {
+    db.ref("barang").on("value", s => {
+        let h = "<table><tr><th>Kode</th><th>Nama</th><th>Gudang</th><th>Min</th></tr>";
+        s.forEach(c => {
+            let b = c.val();
+            h += <tr><td>${b.kode}</td><td>${b.nama}</td><td>${b.gudang}</td><td>${b.min} ${b.unit}</td></tr>;
+        });
+        h += "</table>";
+        document.getElementById("listBarang").innerHTML = h;
+    });
 }
 
 /* ================= TRANSAKSI ================= */
-function masuk(){formTrx("Masuk")}
-function keluar(){formTrx("Keluar")}
+function masuk() { formTrx("Masuk") }
+function keluar() { formTrx("Keluar") }
 
-function formTrx(t){
-app.innerHTML=`
-<div class="card">
-<h3>Barang ${t}</h3>
-Petugas<input id="petugas">
-Barang<select id="bsel"></select>
-Qty<input id="qty" type="number">
-<button onclick="trx('${t}')">Simpan</button>
-</div>`;
-loadBarang();
+function formTrx(t) {
+    clearListeners();
+    app.innerHTML = `
+    <div class="card">
+        <h3 style="color:${t==='Masuk'?'green':'red'}">Barang ${t}</h3>
+        <input id="petugas" placeholder="Nama Petugas">
+        <label>Pilih Barang:</label>
+        <select id="bsel"></select>
+        <input id="qty" type="number" placeholder="Jumlah (Qty)">
+        <button class="btn-save" style="background:${t==='Masuk'?'#22c55e':'#ef4444'}" onclick="trx('${t}')">
+            Proses ${t}
+        </button>
+    </div>`;
+    loadDaftarBarangDrop();
 }
 
-function loadBarang(){
-db.ref("barang").once("value",s=>{
-bsel.innerHTML="";
-s.forEach(c=>{
-bsel.innerHTML+=<option value="${c.key}">${c.val().nama} - ${c.val().gudang}</option>;
-});
-});
+function loadDaftarBarangDrop() {
+    db.ref("barang").once("value", s => {
+        let select = document.getElementById("bsel");
+        s.forEach(c => {
+            let b = c.val();
+            select.innerHTML += <option value="${c.key}">${b.nama} (${b.gudang}) - Stok: ${b.stok}</option>;
+        });
+    });
 }
 
-function trx(t){
-let ref=db.ref("barang/"+bsel.value);
-ref.once("value",s=>{
-let b=s.val();
-let qtyN=parseInt(qty.value);
-let stok=t==="Masuk"?(b.stok||0)+qtyN:(b.stok||0)-qtyN;
-ref.update({stok});
-db.ref("transaksi").push({
-tipe:t,barang:b.nama,gudang:b.gudang,
-qty:qtyN,petugas:petugas.value,tanggal:Date.now()
-});
-alert("Tersimpan");
-});
+function trx(t) {
+    const bID = document.getElementById("bsel").value;
+    const qtyN = parseInt(document.getElementById("qty").value);
+    const pet = document.getElementById("petugas").value;
+
+    if (!bID || !qtyN || !pet) return alert("Mohon lengkapi data!");
+
+    let ref = db.ref("barang/" + bID);
+    ref.once("value", s => {
+        let b = s.val();
+        let stokLama = b.stok || 0;
+        
+        // Cek jika barang keluar tapi stok tidak cukup
+        if (t === "Keluar" && stokLama < qtyN) {
+            return alert("Gagal! Stok tidak mencukupi. Stok saat ini: " + stokLama);
+        }
+
+        let stokBaru = t === "Masuk" ? stokLama + qtyN : stokLama - qtyN;
+        
+        ref.update({ stok: stokBaru });
+        db.ref("transaksi").push({
+            tipe: t, 
+            barang: b.nama, 
+            gudang: b.gudang,
+            qty: qtyN, 
+            petugas: pet, 
+            tanggal: Date.now()
+        });
+        
+        alert("Transaksi " + t + " Berhasil!");
+        t === "Masuk" ? masuk() : keluar();
+    });
 }
 
-/* ================= STOK ================= */
-function stok(){
-db.ref("barang").on("value",s=>{
-let h="<div class='card'><h3>Stok</h3><table>";
-h+="<tr><th>Barang</th><th>Gudang</th><th>Stok</th></tr>";
-s.forEach(c=>{
-let b=c.val();
-h+=`<tr class="${b.stok<=b.min?'warn':''}">
-<td>${b.nama}</td><td>${b.gudang}</td><td>${b.stok}</td></tr>`;
-});
-h+="</table></div>";
-app.innerHTML=h;
-});
+/* ================= STOK MONITORING ================= */
+function stok() {
+    clearListeners();
+    app.innerHTML = <div class='card'><h3>Monitoring Stok</h3><div id="stokTable" style="overflow-x:auto">Memuat...</div></div>;
+    db.ref("barang").on("value", s => {
+        let h = "<table><tr><th>Barang</th><th>Gudang</th><th>Stok</th><th>Status</th></tr>";
+        s.forEach(c => {
+            let b = c.val();
+            let isLow = b.stok <= b.min;
+            h += `<tr class="${isLow ? 'warn' : ''}">
+                <td>${b.nama}<br><small>${b.kode}</small></td>
+                <td>${b.gudang}</td>
+                <td>${b.stok} ${b.unit}</td>
+                <td>${isLow ? 'RE-ORDER' : 'AMAN'}</td>
+            </tr>`;
+        });
+        h += "</table>";
+        document.getElementById("stokTable").innerHTML = h;
+    });
 }
 
 /* ================= RIWAYAT ================= */
-function riwayat(){
-app.innerHTML=`
-<div class="card">
-<h3>Riwayat</h3>
-Filter Gudang<select id="fg" onchange="loadRiwayat()">
-<option value="">Semua</option>
-${daftarGudang.map(g=><option>${g}</option>).join("")}
-</select>
-<div id="listR"></div>
-</div>`;
-loadRiwayat();
+function riwayat() {
+    clearListeners();
+    app.innerHTML = `
+    <div class="card">
+        <h3>Log Transaksi</h3>
+        <select id="fg" onchange="loadRiwayat()">
+            <option value="">Semua Gudang</option>
+            ${daftarGudang.map(g => <option>${g}</option>).join("")}
+        </select>
+        <div id="listR" style="overflow-x:auto"></div>
+    </div>`;
+    loadRiwayat();
 }
 
-function loadRiwayat(){
-db.ref("transaksi").on("value",s=>{
-let f=fg.value;
-let h="<table><tr><th>Tanggal</th><th>Tipe</th><th>Barang</th><th>Gudang</th><th>Qty</th><th>Petugas</th></tr>";
-s.forEach(c=>{
-let d=c.val();
-if(f && d.gudang!==f) return;
-h+=`<tr>
-<td>${new Date(d.tanggal).toLocaleString()}</td>
-<td>${d.tipe}</td><td>${d.barang}</td>
-<td>${d.gudang}</td><td>${d.qty}</td><td>${d.petugas}</td>
-</tr>`;
-});
-h+="</table>";
-listR.innerHTML=h;
-});
+function loadRiwayat() {
+    db.ref("transaksi").orderByChild("tanggal").on("value", s => {
+        let filter = document.getElementById("fg").value;
+        let h = "<table><tr><th>Waktu</th><th>Tipe</th><th>Barang</th><th>Qty</th><th>User</th></tr>";
+        let rows = [];
+        s.forEach(c => {
+            let d = c.val();
+            if (filter && d.gudang !== filter) return;
+            rows.unshift(`<tr>
+                <td>${new Date(d.tanggal).toLocaleString('id-ID')}</td>
+                <td><span class="badge ${d.tipe === 'Masuk' ? 'in' : 'out'}">${d.tipe}</span></td>
+                <td>${d.barang}<br><small>${d.gudang}</small></td>
+                <td>${d.qty}</td>
+                <td>${d.petugas}</td>
+            </tr>`);
+        });
+        h += rows.join("") + "</table>";
+        document.getElementById("listR").innerHTML = h;
+    });
 }
 
+// Jalankan Dashboard saat pertama buka
 dashboard();
 </script>
 
