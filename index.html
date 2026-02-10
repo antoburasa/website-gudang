@@ -1,22 +1,21 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Gudang Rawmaterial SMS</title>
+<title>Gudang Raw Material SMS</title>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 body{font-family:Arial;background:#f4f6f8;margin:0}
-nav{background:#1e3a8a;padding:10px;display:flex;flex-wrap:wrap}
+nav{background:#1e3a8a;padding:10px}
 nav button{margin:3px;padding:8px;border:0;background:white;border-radius:6px;cursor:pointer}
 .card{background:white;margin:15px;padding:15px;border-radius:10px}
 input,select{width:100%;padding:8px;margin:5px 0}
 table{width:100%;border-collapse:collapse}
-th,td{border:1px solid #ddd;padding:6px;text-align:center}
-.warning{color:red;font-weight:bold}
+th,td{border:1px solid #ddd;padding:6px}
+.warn{background:#fee2e2}
 </style>
 </head>
 
@@ -24,7 +23,6 @@ th,td{border:1px solid #ddd;padding:6px;text-align:center}
 
 <nav>
 <button onclick="dashboard()">Dashboard</button>
-<button onclick="grafikGudang()">Grafik</button>
 <button onclick="master()">Master Barang</button>
 <button onclick="masuk()">Barang Masuk</button>
 <button onclick="keluar()">Barang Keluar</button>
@@ -35,58 +33,41 @@ th,td{border:1px solid #ddd;padding:6px;text-align:center}
 <div id="app"></div>
 
 <script>
-const firebaseConfig={
-apiKey:"AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
-databaseURL:"https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
-projectId:"gudang-sms-4c81c"
-};
-
-firebase.initializeApp(firebaseConfig);
+/* ================= FIREBASE ================= */
+firebase.initializeApp({
+  apiKey:"AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
+  databaseURL:"https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"gudang-sms-4c81c"
+});
 const db=firebase.database();
 const app=document.getElementById("app");
 
-const daftarGudang=[
-"General Store 1",
-"General Store 2",
-"Gudang 3",
-"Ingredients"
-];
+/* ================= DATA ================= */
+const daftarGudang=["General Store 1","General Store 2","Gudang 3","Ingredients"];
 
-function dropdownGudang(id){
-let html=<option value="ALL">Semua Gudang</option>;
-daftarGudang.forEach(g=>html+=<option>${g}</option>);
-document.getElementById(id).innerHTML=html;
-}
-
-/* DASHBOARD */
+/* ================= DASHBOARD ================= */
 function dashboard(){
-app.innerHTML=`
-<div class="card">
-<h2>Dashboard Gudang</h2>
-Filter Gudang
-<select id="filterGudang" onchange="dashboard()"></select>
-<div id="dash"></div>
-</div>`;
-dropdownGudang("filterGudang");
-
-let gFilter=document.getElementById("filterGudang").value;
-
 db.ref("barang").once("value",s=>{
-let total=0,jenis=0;
+let total=0,jenis=0,perGudang={};
 s.forEach(c=>{
 let b=c.val();
-if(gFilter==="ALL"||b.gudang===gFilter){
 total+=b.stok||0;
 jenis++;
-}
+perGudang[b.gudang]=(perGudang[b.gudang]||0)+(b.stok||0);
 });
-dash.innerHTML=`
+let html=`<div class="card">
+<h2>Dashboard</h2>
 Total Stok: <b>${total}</b><br>
-Jenis Barang: <b>${jenis}</b>`;
+Jenis Barang: <b>${jenis}</b><hr>`;
+for(let g in perGudang){
+html+=${g}: <b>${perGudang[g]}</b><br>;
+}
+html+="</div>";
+app.innerHTML=html;
 });
 }
 
-/* MASTER BARANG */
+/* ================= MASTER ================= */
 function master(){
 app.innerHTML=`
 <div class="card">
@@ -94,14 +75,18 @@ app.innerHTML=`
 Nama<input id="nama">
 Kode<input id="kode">
 Unit<input id="unit">
+Minimum<input id="min" type="number">
 Gudang<select id="gudang"></select>
-Minimum Stok<input id="minstok" type="number">
 <button onclick="simpanBarang()">Simpan</button>
 </div>
 <div class="card"><div id="listBarang"></div></div>`;
+loadGudang();
+loadMaster();
+}
+
+function loadGudang(){
 gudang.innerHTML="";
 daftarGudang.forEach(g=>gudang.innerHTML+=<option>${g}</option>);
-loadMaster();
 }
 
 function simpanBarang(){
@@ -111,30 +96,41 @@ kode:kode.value,
 unit:unit.value,
 gudang:gudang.value,
 stok:0,
-min:parseInt(minstok.value)||0
+min:parseInt(min.value||0)
 });
 master();
 }
 
 function loadMaster(){
 db.ref("barang").on("value",s=>{
-let html="<table><tr><th>Nama</th><th>Kode</th><th>Gudang</th><th>Stok</th><th>Min</th></tr>";
+let h="<table><tr><th>Nama</th><th>Gudang</th><th>Stok</th><th>Min</th></tr>";
 s.forEach(c=>{
 let b=c.val();
-html+=`<tr>
-<td>${b.nama}</td>
-<td>${b.kode}</td>
-<td>${b.gudang}</td>
-<td>${b.stok}</td>
-<td>${b.min}</td>
-</tr>`;
+h+=`<tr class="${b.stok<=b.min?'warn':''}">
+<td>${b.nama}</td><td>${b.gudang}</td>
+<td>${b.stok}</td><td>${b.min}</td></tr>`;
 });
-html+="</table>";
-listBarang.innerHTML=html;
+h+="</table>";
+listBarang.innerHTML=h;
 });
 }
 
-/* BARANG MASUK & KELUAR */
+/* ================= TRANSAKSI ================= */
+function masuk(){formTrx("Masuk")}
+function keluar(){formTrx("Keluar")}
+
+function formTrx(t){
+app.innerHTML=`
+<div class="card">
+<h3>Barang ${t}</h3>
+Petugas<input id="petugas">
+Barang<select id="bsel"></select>
+Qty<input id="qty" type="number">
+<button onclick="trx('${t}')">Simpan</button>
+</div>`;
+loadBarang();
+}
+
 function loadBarang(){
 db.ref("barang").once("value",s=>{
 bsel.innerHTML="";
@@ -144,139 +140,65 @@ bsel.innerHTML+=<option value="${c.key}">${c.val().nama} - ${c.val().gudang}</op
 });
 }
 
-function masuk(){
-app.innerHTML=`
-<div class="card">
-<h3>Barang Masuk</h3>
-Petugas<input id="petugas">
-Barang<select id="bsel"></select>
-Qty<input id="qty" type="number">
-<button onclick="trxMasuk()">Simpan</button>
-</div>`;
-loadBarang();
-}
-
-function keluar(){
-app.innerHTML=`
-<div class="card">
-<h3>Barang Keluar</h3>
-Petugas<input id="petugas">
-Barang<select id="bsel"></select>
-Qty<input id="qty" type="number">
-<button onclick="trxKeluar()">Simpan</button>
-</div>`;
-loadBarang();
-}
-
-function trxMasuk(){
+function trx(t){
 let ref=db.ref("barang/"+bsel.value);
 ref.once("value",s=>{
 let b=s.val();
-ref.update({stok:(b.stok||0)+parseInt(qty.value)});
+let qtyN=parseInt(qty.value);
+let stok=t==="Masuk"?(b.stok||0)+qtyN:(b.stok||0)-qtyN;
+ref.update({stok});
 db.ref("transaksi").push({
-tipe:"Masuk",
-barang:b.nama,
-gudang:b.gudang,
-qty:qty.value,
-petugas:petugas.value,
-tanggal:Date.now()
+tipe:t,barang:b.nama,gudang:b.gudang,
+qty:qtyN,petugas:petugas.value,tanggal:Date.now()
 });
 alert("Tersimpan");
 });
 }
 
-function trxKeluar(){
-let ref=db.ref("barang/"+bsel.value);
-ref.once("value",s=>{
-let b=s.val();
-ref.update({stok:(b.stok||0)-parseInt(qty.value)});
-db.ref("transaksi").push({
-tipe:"Keluar",
-barang:b.nama,
-gudang:b.gudang,
-qty:qty.value,
-petugas:petugas.value,
-tanggal:Date.now()
-});
-alert("Tersimpan");
-});
-}
-
-/* STOK + WARNING */
+/* ================= STOK ================= */
 function stok(){
 db.ref("barang").on("value",s=>{
-let html="<div class='card'><h3>Stok Barang</h3><table>";
-html+="<tr><th>Barang</th><th>Gudang</th><th>Stok</th><th>Status</th></tr>";
+let h="<div class='card'><h3>Stok</h3><table>";
+h+="<tr><th>Barang</th><th>Gudang</th><th>Stok</th></tr>";
 s.forEach(c=>{
 let b=c.val();
-html+=`<tr>
-<td>${b.nama}</td>
-<td>${b.gudang}</td>
-<td class="${b.stok<=b.min?'warning':''}">${b.stok}</td>
-<td>${b.stok<=b.min?'⚠️ MINIMUM':'OK'}</td>
-</tr>`;
+h+=`<tr class="${b.stok<=b.min?'warn':''}">
+<td>${b.nama}</td><td>${b.gudang}</td><td>${b.stok}</td></tr>`;
 });
-html+="</table></div>";
-app.innerHTML=html;
+h+="</table></div>";
+app.innerHTML=h;
 });
 }
 
-/* RIWAYAT + FILTER */
+/* ================= RIWAYAT ================= */
 function riwayat(){
 app.innerHTML=`
 <div class="card">
 <h3>Riwayat</h3>
-Filter Gudang
-<select id="filterRiwayatGudang" onchange="riwayat()"></select>
-<div id="tbl"></div>
+Filter Gudang<select id="fg" onchange="loadRiwayat()">
+<option value="">Semua</option>
+${daftarGudang.map(g=><option>${g}</option>).join("")}
+</select>
+<div id="listR"></div>
 </div>`;
-dropdownGudang("filterRiwayatGudang");
+loadRiwayat();
+}
 
-let gFilter=document.getElementById("filterRiwayatGudang").value;
-
+function loadRiwayat(){
 db.ref("transaksi").on("value",s=>{
-let html="<table><tr><th>Tanggal</th><th>Tipe</th><th>Barang</th><th>Gudang</th><th>Qty</th><th>Petugas</th></tr>";
+let f=fg.value;
+let h="<table><tr><th>Tanggal</th><th>Tipe</th><th>Barang</th><th>Gudang</th><th>Qty</th><th>Petugas</th></tr>";
 s.forEach(c=>{
 let d=c.val();
-if(gFilter==="ALL"||d.gudang===gFilter){
-html+=`<tr>
+if(f && d.gudang!==f) return;
+h+=`<tr>
 <td>${new Date(d.tanggal).toLocaleString()}</td>
-<td>${d.tipe}</td>
-<td>${d.barang}</td>
-<td>${d.gudang}</td>
-<td>${d.qty}</td>
-<td>${d.petugas}</td>
+<td>${d.tipe}</td><td>${d.barang}</td>
+<td>${d.gudang}</td><td>${d.qty}</td><td>${d.petugas}</td>
 </tr>`;
-}
 });
-html+="</table>";
-tbl.innerHTML=html;
-});
-}
-
-/* GRAFIK */
-function grafikGudang(){
-app.innerHTML=`
-<div class="card">
-<h3>Grafik Stok per Gudang</h3>
-<canvas id="chart"></canvas>
-</div>`;
-
-let data={};
-daftarGudang.forEach(g=>data[g]=0);
-
-db.ref("barang").once("value",s=>{
-s.forEach(c=>{
-let b=c.val();
-data[b.gudang]+=b.stok||0;
-});
-new Chart(chart,{
-type:"bar",
-data:{
-labels:Object.keys(data),
-datasets:[{label:"Total Stok",data:Object.values(data),backgroundColor:"#1e40af"}]
-}
-});
+h+="</table>";
+listR.innerHTML=h;
 });
 }
 
