@@ -1,258 +1,217 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Gudang Rawmaterial SMS</title>
+from flask import Flask, render_template_string, request, redirect, url_for
+import sqlite3
+import datetime
 
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+app = Flask(__name__)
+DB = "prs.db"
 
-  <style>
-    body{font-family:Arial;background:#f4f6f8;margin:0}
-    .menu{background:#1f2937;color:white;padding:10px}
-    .menu button{margin-right:10px}
-    .page{display:none;padding:20px}
-    table{background:white;border-collapse:collapse;width:100%}
-    th,td{padding:6px;border:1px solid #ccc}
-    input,select{padding:4px}
-    .printArea{background:white;padding:30px}
-  </style>
-</head>
-<body>
+# ================= DB =================
+def init_db():
+    conn = sqlite3.connect(DB)
+    c = conn.cursor()
 
-<div class="menu">
-  <button onclick="showPage('dashboard')">Dashboard</button>
-  <button onclick="showPage('master')">Master Barang</button>
-  <button onclick="showPage('prs')">Buat PRS</button>
-  <button onclick="showPage('listprs')">List PRS</button>
-</div>
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS barang(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nama TEXT,
+        uom TEXT
+    )
+    """)
 
-<!-- DASHBOARD -->
-<div id="dashboard" class="page">
-  <h2>Gudang Rawmaterial SMS</h2>
-</div>
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS prs(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nomor TEXT,
+        tanggal TEXT,
+        divisi TEXT
+    )
+    """)
 
-<!-- MASTER -->
-<div id="master" class="page">
-  <h2>Master Barang</h2>
-  <input id="kode" placeholder="Kode">
-  <input id="nama" placeholder="Nama">
-  <input id="unit" placeholder="Unit">
-  <button onclick="simpanMaster()">Simpan</button>
-  <br><br>
-  <tbody id="masterList"></tbody>
-</div>
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS prs_detail(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        prs_id INTEGER,
+        barang_id INTEGER,
+        qty INTEGER
+    )
+    """)
 
-<!-- BUAT PRS -->
-<div id="prs" class="page">
-  <h2>FORM PRS</h2>
+    conn.commit()
+    conn.close()
 
-  No PRS<br>
-  <input id="noPrs" readonly><br><br>
+init_db()
 
-  Tanggal<br>
-  <input type="date" id="prsTanggal"><br><br>
+# ================= MASTER BARANG =================
+@app.route("/barang", methods=["GET", "POST"])
+def barang():
+    conn = sqlite3.connect(DB)
+    c = conn.cursor()
 
-  Charge To<br>
-  <input id="prsCharge"><br><br>
+    if request.method == "POST":
+        nama = request.form["nama"]
+        uom = request.form["uom"]
+        c.execute("INSERT INTO barang(nama,uom) VALUES(?,?)", (nama, uom))
+        conn.commit()
 
-  User<br>
-  <input id="prsUser"><br><br>
+    data = c.execute("SELECT * FROM barang").fetchall()
+    conn.close()
 
-  Departemen<br>
-  <input id="prsDept"><br><br>
+    return render_template_string("""
+    <h2>Master Barang</h2>
+    <form method="post">
+        Nama Barang <input name="nama">
+        UOM <input name="uom">
+        <button>Simpan</button>
+    </form>
+    <hr>
+    <a href="/">Kembali</a>
+    <table border=1>
+    <tr><th>ID</th><th>Nama</th><th>UOM</th></tr>
+    {% for d in data %}
+    <tr>
+        <td>{{d[0]}}</td>
+        <td>{{d[1]}}</td>
+        <td>{{d[2]}}</td>
+    </tr>
+    {% endfor %}
+    </table>
+    """, data=data)
 
-  <table>
-    <thead>
-      <tr>
-        <th>Kode</th>
-        <th>Nama</th>
-        <th>Unit</th>
-        <th>Qty</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody id="prsTable"></tbody>
-  </table>
+# ================= BUAT PRS =================
+@app.route("/buat_prs", methods=["GET", "POST"])
+def buat_prs():
+    conn = sqlite3.connect(DB)
+    c = conn.cursor()
 
-  <br>
-  <button onclick="addPrsRow()">+ Barang</button>
-  <button onclick="simpanPRS()">Simpan PRS</button>
-</div>
+    barang = c.execute("SELECT * FROM barang").fetchall()
 
-<!-- LIST PRS -->
-<div id="listprs" class="page">
-  <h2>LIST PRS</h2>
-  <table>
-    <thead>
-      <tr>
+    if request.method == "POST":
+        nomor = request.form["nomor"]
+        divisi = request.form["divisi"]
+        tanggal = datetime.date.today()
+
+        c.execute(
+            "INSERT INTO prs(nomor,tanggal,divisi) VALUES(?,?,?)",
+            (nomor, tanggal, divisi),
+        )
+        prs_id = c.lastrowid
+
+        for b in barang:
+            field = "qty_" + str(b[0])
+            if request.form[field] != "":
+                qty = request.form[field]
+                c.execute(
+                    "INSERT INTO prs_detail(prs_id,barang_id,qty) VALUES(?,?,?)",
+                    (prs_id, b[0], qty),
+                )
+
+        conn.commit()
+        return redirect("/")
+
+    conn.close()
+
+    return render_template_string("""
+    <h2>Buat PRS</h2>
+    <form method="post">
+        Nomor PRS <input name="nomor"><br><br>
+        Divisi <input name="divisi"><br><br>
+
+        <table border=1>
+        <tr>
+            <th>Barang</th>
+            <th>UOM</th>
+            <th>Qty</th>
+        </tr>
+        {% for b in barang %}
+        <tr>
+            <td>{{b[1]}}</td>
+            <td>{{b[2]}}</td>
+            <td>
+                <input name="qty_{{b[0]}}" style="width:60px">
+            </td>
+        </tr>
+        {% endfor %}
+        </table>
+        <br>
+        <button>Simpan PRS</button>
+    </form>
+    """, barang=barang)
+
+# ================= LIST PRS =================
+@app.route("/")
+def index():
+    conn = sqlite3.connect(DB)
+    c = conn.cursor()
+    data = c.execute("SELECT * FROM prs ORDER BY id DESC").fetchall()
+    conn.close()
+
+    return render_template_string("""
+    <h2>DATA PRS</h2>
+    <a href="/barang">Master Barang</a> |
+    <a href="/buat_prs">Buat PRS</a>
+    <hr>
+
+    <table border=1>
+    <tr>
         <th>No PRS</th>
         <th>Tanggal</th>
-        <th>User</th>
-        <th>Departemen</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody id="listPRSTable"></tbody>
-  </table>
-</div>
-
-<!-- PRINT -->
-<div id="printPage" class="page printArea"></div>
-
-<script>
-/* FIREBASE CONFIG */
-var firebaseConfig={
-  apiKey:"APIKEY",
-  authDomain:"PROJECT.firebaseapp.com",
-  projectId:"PROJECTID"
-};
-firebase.initializeApp(firebaseConfig);
-var db=firebase.firestore();
-
-/* NAV */
-function showPage(id){
-  document.querySelectorAll(".page").forEach(p=>p.style.display="none");
-  document.getElementById(id).style.display="block";
-
-  if(id==="prs"){
-    generatePRS();
-    document.getElementById("prsTable").innerHTML="";
-    addPrsRow();
-  }
-
-  if(id==="listprs") loadListPRS();
-}
-showPage("dashboard");
-
-/* MASTER */
-function simpanMaster(){
-  const kode=kode.value;
-  db.collection("master_barang").doc(kode).set({
-    kode:kode,
-    nama:nama.value,
-    unit:unit.value
-  }).then(()=>alert("Tersimpan"));
-}
-
-/* PRS */
-function generatePRS(){
-  document.getElementById("noPrs").value="PRS-"+Date.now();
-}
-
-async function addPrsRow(){
-  const snap=await db.collection("master_barang").get();
-  let opt="";
-  snap.forEach(d=>{
-    const x=d.data();
-    opt+=`<option value="${x.kode}|${x.nama}|${x.unit}">
-      ${x.kode}-${x.nama}
-    </option>`;
-  });
-
-  const tr=document.createElement("tr");
-  tr.innerHTML=`
-    <td><select onchange="isiBarang(this)">${opt}</select></td>
-    <td><input readonly></td>
-    <td><input readonly></td>
-    <td><input type="number"></td>
-    <td><button onclick="this.closest('tr').remove()">X</button></td>
-  `;
-  prsTable.appendChild(tr);
-}
-
-function isiBarang(s){
-  const v=s.value.split("|");
-  const r=s.closest("tr");
-  r.cells[1].children[0].value=v[1];
-  r.cells[2].children[0].value=v[2];
-}
-
-async function simpanPRS(){
-  const header={
-    no:noPrs.value,
-    tanggal:prsTanggal.value,
-    charge:prsCharge.value,
-    user:prsUser.value,
-    dept:prsDept.value
-  };
-
-  await db.collection("prs_header").doc(header.no).set(header);
-
-  const rows=document.querySelectorAll("#prsTable tr");
-  for(const r of rows){
-    await db.collection("prs_detail").add({
-      no:header.no,
-      kode:r.cells[0].children[0].value.split("|")[0],
-      nama:r.cells[1].children[0].value,
-      unit:r.cells[2].children[0].value,
-      qty:r.cells[3].children[0].value
-    });
-  }
-
-  alert("PRS tersimpan");
-  showPage("listprs");
-}
-
-/* LIST PRS */
-async function loadListPRS(){
-  const body=document.getElementById("listPRSTable");
-  body.innerHTML="";
-
-  const snap=await db.collection("prs_header").get();
-  snap.forEach(doc=>{
-    const d=doc.data();
-    body.innerHTML+=`
-      <tr>
-        <td>${d.no}</td>
-        <td>${d.tanggal}</td>
-        <td>${d.user}</td>
-        <td>${d.dept}</td>
-        <td>
-          <button onclick="printPRS('${d.no}')">PRINT</button>
-        </td>
-      </tr>`;
-  });
-}
-
-/* PRINT PRS */
-async function printPRS(no){
-  const header=(await db.collection("prs_header").doc(no).get()).data();
-
-  const snap=await db.collection("prs_detail").where("no","==",no).get();
-
-  let rows="";
-  snap.forEach(d=>{
-    const x=d.data();
-    rows+=`
-      <tr>
-        <td>${x.kode}</td>
-        <td>${x.nama}</td>
-        <td>${x.unit}</td>
-        <td>${x.qty}</td>
-      </tr>`;
-  });
-
-  document.getElementById("printPage").innerHTML=`
-    <h2>PURCHASE REQUISITION SLIP</h2>
-    No PRS: ${header.no}<br>
-    Tanggal: ${header.tanggal}<br>
-    User: ${header.user}<br>
-    Departemen: ${header.dept}<br><br>
-
-    <table>
-      <tr>
-        <th>Kode</th>
-        <th>Nama</th>
-        <th>Unit</th>
-        <th>Qty</th>
-      </tr>
-      ${rows}
+        <th>Divisi</th>
+        <th>Print</th>
+    </tr>
+    {% for d in data %}
+    <tr>
+        <td>{{d[1]}}</td>
+        <td>{{d[2]}}</td>
+        <td>{{d[3]}}</td>
+        <td><a href="/print/{{d[0]}}">Print</a></td>
+    </tr>
+    {% endfor %}
     </table>
-  `;
+    """, data=data)
 
-  showPage("printPage");
-  window.print();
-}
-</script>
-</body>
-</html>
+# ================= PRINT =================
+@app.route("/print/<int:id>")
+def print_prs(id):
+    conn = sqlite3.connect(DB)
+    c = conn.cursor()
+
+    prs = c.execute("SELECT * FROM prs WHERE id=?", (id,)).fetchone()
+
+    detail = c.execute("""
+    SELECT barang.nama, barang.uom, prs_detail.qty
+    FROM prs_detail
+    JOIN barang ON barang.id = prs_detail.barang_id
+    WHERE prs_detail.prs_id=?
+    """, (id,)).fetchall()
+
+    conn.close()
+
+    return render_template_string("""
+    <h3 style="text-align:center">PURCHASE REQUEST SLIP</h3>
+    <hr>
+    No PRS : {{prs[1]}}<br>
+    Tanggal : {{prs[2]}}<br>
+    Divisi : {{prs[3]}}<br><br>
+
+    <table border=1 width="100%" cellspacing=0 cellpadding=5>
+    <tr>
+        <th>No</th>
+        <th>Description</th>
+        <th>UOM</th>
+        <th>Qty</th>
+    </tr>
+    {% for d in detail %}
+    <tr>
+        <td>{{loop.index}}</td>
+        <td>{{d[0]}}</td>
+        <td>{{d[1]}}</td>
+        <td>{{d[2]}}</td>
+    </tr>
+    {% endfor %}
+    </table>
+
+    <br><br>
+    <button onclick="window.print()">PRINT</button>
+    """, prs=prs, detail=detail)
+
+app.run(debug=True)
