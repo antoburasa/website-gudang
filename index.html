@@ -27,7 +27,6 @@ th,td{border:1px solid #ddd;padding:6px}
 <button onclick="keluar()">Barang Keluar</button>
 <button onclick="stok()">Stok</button>
 <button onclick="riwayat()">Riwayat</button>
-<button onclick="prs()">PRS</button>
 </nav>
 
 <div id="app"></div>
@@ -43,6 +42,13 @@ firebase.initializeApp(firebaseConfig);
 const db=firebase.database();
 const app=document.getElementById("app");
 
+const daftarGudang=[
+"General Store 1",
+"General Store 2",
+"Gudang 3",
+"Ingredients"
+];
+
 function dashboard(){
 db.ref("barang").once("value",s=>{
 let total=0,jenis=0;
@@ -52,7 +58,7 @@ jenis++;
 });
 app.innerHTML=`
 <div class="card">
-<h2>Dashboard</h2>
+<h2>Dashboard Gudang</h2>
 Total Stok: <b>${total}</b><br>
 Jenis Barang: <b>${jenis}</b>
 </div>`;
@@ -66,12 +72,19 @@ app.innerHTML=`
 Nama<input id="nama">
 Kode<input id="kode">
 Unit<input id="unit">
+Gudang<select id="gudang"></select>
 <button onclick="simpanBarang()">Simpan</button>
 </div>
-<div class="card">
-<div id="listBarang"></div>
-</div>`;
+<div class="card"><div id="listBarang"></div></div>`;
+loadGudangDropdown();
 loadMaster();
+}
+
+function loadGudangDropdown(){
+gudang.innerHTML="";
+daftarGudang.forEach(g=>{
+gudang.innerHTML+=`<option>${g}</option>`;
+});
 }
 
 function simpanBarang(){
@@ -79,6 +92,7 @@ db.ref("barang").push({
 nama:nama.value,
 kode:kode.value,
 unit:unit.value,
+gudang:gudang.value,
 stok:0
 });
 master();
@@ -86,10 +100,15 @@ master();
 
 function loadMaster(){
 db.ref("barang").on("value",s=>{
-let html="<table><tr><th>Nama</th><th>Kode</th><th>Unit</th></tr>";
+let html="<table><tr><th>Nama</th><th>Kode</th><th>Gudang</th><th>Stok</th></tr>";
 s.forEach(c=>{
 let b=c.val();
-html+=`<tr><td>${b.nama}</td><td>${b.kode}</td><td>${b.unit}</td></tr>`;
+html+=`<tr>
+<td>${b.nama}</td>
+<td>${b.kode}</td>
+<td>${b.gudang}</td>
+<td>${b.stok}</td>
+</tr>`;
 });
 html+="</table>";
 listBarang.innerHTML=html;
@@ -124,7 +143,9 @@ function loadBarang(){
 db.ref("barang").once("value",s=>{
 bsel.innerHTML="";
 s.forEach(c=>{
-bsel.innerHTML+=`<option value="${c.key}">${c.val().nama}</option>`;
+bsel.innerHTML+=`<option value="${c.key}">
+${c.val().nama} - ${c.val().gudang}
+</option>`;
 });
 });
 }
@@ -138,6 +159,7 @@ ref.update({stok:stok});
 db.ref("transaksi").push({
 tipe:"Masuk",
 barang:b.nama,
+gudang:b.gudang,
 qty:qty.value,
 petugas:petugas.value,
 tanggal:Date.now()
@@ -155,6 +177,7 @@ ref.update({stok:stok});
 db.ref("transaksi").push({
 tipe:"Keluar",
 barang:b.nama,
+gudang:b.gudang,
 qty:qty.value,
 petugas:petugas.value,
 tanggal:Date.now()
@@ -166,9 +189,13 @@ alert("Tersimpan");
 function stok(){
 db.ref("barang").on("value",s=>{
 let html="<div class='card'><h3>Stok Barang</h3><table>";
-html+="<tr><th>Barang</th><th>Stok</th></tr>";
+html+="<tr><th>Barang</th><th>Gudang</th><th>Stok</th></tr>";
 s.forEach(c=>{
-html+=`<tr><td>${c.val().nama}</td><td>${c.val().stok}</td></tr>`;
+html+=`<tr>
+<td>${c.val().nama}</td>
+<td>${c.val().gudang}</td>
+<td>${c.val().stok}</td>
+</tr>`;
 });
 html+="</table></div>";
 app.innerHTML=html;
@@ -178,13 +205,14 @@ app.innerHTML=html;
 function riwayat(){
 db.ref("transaksi").on("value",s=>{
 let html="<div class='card'><h3>Riwayat</h3><table>";
-html+="<tr><th>Tanggal</th><th>Tipe</th><th>Barang</th><th>Qty</th><th>Petugas</th></tr>";
+html+="<tr><th>Tanggal</th><th>Tipe</th><th>Barang</th><th>Gudang</th><th>Qty</th><th>Petugas</th></tr>";
 s.forEach(c=>{
 let d=c.val();
 html+=`<tr>
 <td>${new Date(d.tanggal).toLocaleString()}</td>
 <td>${d.tipe}</td>
 <td>${d.barang}</td>
+<td>${d.gudang}</td>
 <td>${d.qty}</td>
 <td>${d.petugas}</td>
 </tr>`;
@@ -192,18 +220,6 @@ html+=`<tr>
 html+="</table></div>";
 app.innerHTML=html;
 });
-}
-
-function prs(){
-let nomor="PRS-"+new Date().getFullYear()+"-"+Date.now().toString().slice(-4);
-app.innerHTML=`
-<div class="card">
-<h3>PRS</h3>
-No PRS: <b>${nomor}</b><br>
-User<input>
-Keterangan<input>
-<button onclick="window.print()">Print</button>
-</div>`;
 }
 
 dashboard();
