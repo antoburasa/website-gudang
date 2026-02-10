@@ -3,95 +3,213 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SMS GUDANG v1.3 - FIXED</title>
+    <title>SMS GUDANG v1.8 - Master Barang Ready</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        :root { --p: #1e40af; --s: #64748b; --g: #10b981; --r: #ef4444; --w: #f59e0b; --bg: #f8fafc; }
+        :root { --p: #1e40af; --s: #64748b; --g: #10b981; --r: #ef4444; --bg: #f8fafc; }
+        * { box-sizing: border-box; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); margin: 0; display: flex; height: 100vh; overflow: hidden; }
-        .sidebar { width: 260px; background: white; border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; padding: 20px; }
-        .logo { font-weight: 800; font-size: 20px; color: var(--p); margin-bottom: 40px; display: flex; align-items: center; gap: 10px; }
+        
+        .sidebar { width: 260px; background: white; border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; padding: 20px; flex-shrink: 0; }
+        .logo { font-weight: 800; font-size: 20px; color: var(--p); margin-bottom: 30px; display: flex; align-items: center; gap: 10px; }
         .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 15px; border-radius: 12px; color: var(--s); cursor: pointer; margin-bottom: 8px; transition: 0.3s; font-weight: 600; }
         .nav-item:hover { background: #f1f5f9; color: var(--p); }
         .nav-item.active { background: var(--p); color: white; }
+        
         .content { flex: 1; overflow-y: auto; padding: 30px; }
         .page { display: none; }
         .page.active { display: block; animation: fadeIn 0.3s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .stat-card { background: white; padding: 20px; border-radius: 20px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .stat-card { background: white; padding: 20px; border-radius: 20px; border: 1px solid #e2e8f0; }
         .stat-value { font-size: 28px; font-weight: 800; color: #1e293b; }
-        .card { background: white; padding: 25px; border-radius: 20px; border: 1px solid #e2e8f0; margin-bottom: 20px; }
-        input, select { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; margin-top: 5px; box-sizing: border-box; }
-        button { padding: 12px; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn-p { background: var(--p); color: white; width: 100%; margin-top: 15px; }
-        table { width: 100%; border-collapse: collapse; }
+        
+        .card { background: white; padding: 25px; border-radius: 20px; border: 1px solid #e2e8f0; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.01); }
+        label { display: block; font-size: 13px; font-weight: 700; color: var(--s); margin-bottom: 5px; margin-top: 15px; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; font-family: inherit; }
+        
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 10px; font-weight: 800; cursor: pointer; color: white; transition: 0.2s; margin-top: 15px; }
+        .btn-blue { background: var(--p); }
+        .btn-red { background: var(--r); }
+        .btn-green { background: var(--g); margin-top: 5px; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th { text-align: left; padding: 12px; background: #f8fafc; font-size: 11px; color: var(--s); text-transform: uppercase; border-bottom: 2px solid #f1f5f9; }
         td { padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
-        .badge-low { background: #fef2f2; color: var(--r); padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; }
-        @media print { .sidebar, .no-print { display: none !important; } }
     </style>
 </head>
 <body>
 
-    <div class="sidebar no-print">
+    <div class="sidebar">
         <div class="logo"><i class="fas fa-warehouse"></i> SMS GUDANG</div>
         <div class="nav-menu">
-            <div class="nav-item active" onclick="bukaHalaman('dashboard', this)"><i class="fas fa-chart-pie"></i> Dashboard</div>
-            <div class="nav-item" onclick="bukaHalaman('stok', this)"><i class="fas fa-boxes-stacked"></i> Data Stok Barang</div>
-            <div class="nav-item" onclick="bukaHalaman('masuk', this)"><i class="fas fa-arrow-down"></i> Barang Masuk</div>
-            <div class="nav-item" onclick="bukaHalaman('keluar', this)"><i class="fas fa-arrow-up"></i> Barang Keluar</div>
-            <div class="nav-item" onclick="bukaHalaman('riwayat', this)"><i class="fas fa-history"></i> Riwayat Transaksi</div>
+            <div class="nav-item active" onclick="buka('dashboard', this)"><i class="fas fa-chart-pie"></i> Dashboard</div>
+            <div class="nav-item" onclick="buka('master', this)"><i class="fas fa-folder-plus"></i> Master Barang</div>
+            <div class="nav-item" onclick="buka('masuk', this)"><i class="fas fa-arrow-down"></i> Barang Masuk</div>
+            <div class="nav-item" onclick="buka('keluar', this)"><i class="fas fa-arrow-up"></i> Barang Keluar</div>
+            <div class="nav-item" onclick="buka('riwayat', this)"><i class="fas fa-history"></i> Riwayat</div>
         </div>
     </div>
 
     <div class="content">
-        <div id="p-dashboard" class="page active">
-            <h1>Dashboard</h1>
+        <div id="pg-dashboard" class="page active">
+            <h1>Ringkasan Stok</h1>
             <div class="stats-grid">
                 <div class="stat-card"><div>Total Unit</div><div id="totStok" class="stat-value">0</div></div>
                 <div class="stat-card"><div>Jenis Barang</div><div id="totJenis" class="stat-value">0</div></div>
             </div>
             <div class="card">
-                <h3><i class="fas fa-bell" style="color:var(--w)"></i> Peringatan Stok Low</h3>
-                <div id="notifArea">Semua stok aman.</div>
-            </div>
-        </div>
-
-        <div id="p-stok" class="page">
-            <h1>Data Stok Barang</h1>
-            <div class="card">
+                <h3>Stok Saat Ini</h3>
                 <table>
-                    <thead><tr><th>Nama Barang</th><th>Stok Akhir</th><th>Min</th><th>Status</th></tr></thead>
+                    <thead><tr><th>Nama Barang</th><th>Jumlah</th><th>Status</th></tr></thead>
                     <tbody id="bodyStok"></tbody>
                 </table>
             </div>
         </div>
 
-        <div id="p-masuk" class="page">
-            <h1>Input Barang Masuk</h1>
+        <div id="pg-master" class="page">
+            <h1>Kelola Master Barang</h1>
             <div class="card" style="max-width:500px">
-                <label>Nama Barang</label><input type="text" id="in_b">
-                <label>Stok Min</label><input type="number" id="in_m" value="10">
-                <label>Supplier</label><input type="text" id="in_s">
-                <label>Dept</label><input type="text" id="in_d">
-                <label>Jumlah</label><input type="number" id="in_j">
-                <button class="btn-p" onclick="gasSimpan('masuk')">SIMPAN MASUK</button>
+                <label>Nama Barang Baru</label><input type="text" id="m_nama" placeholder="Contoh: SEMEN TIGA RODA">
+                <label>Stok Minimum (Peringatan)</label><input type="number" id="m_min" value="10">
+                <button class="btn btn-blue" onclick="tambahMaster()">DAFTARKAN BARANG</button>
+            </div>
+            <div class="card">
+                <table>
+                    <thead><tr><th>Nama Barang</th><th>Min. Stok</th><th>Aksi</th></tr></thead>
+                    <tbody id="bodyMaster"></tbody>
+                </table>
             </div>
         </div>
 
-        <div id="p-keluar" class="page">
-            <h1>Input Barang Keluar</h1>
+        <div id="pg-masuk" class="page">
+            <h1>Barang Masuk (+)</h1>
             <div class="card" style="max-width:500px">
-                <label>Nama Barang</label><input type="text" id="out_b">
-                <label>Jumlah</label><input type="number" id="out_j">
-                <button class="btn-p" style="background:var(--r)" onclick="gasSimpan('keluar')">SIMPAN KELUAR</button>
+                <label>Pilih Barang</label>
+                <select id="in_pilih" class="dropdownBarang"></select>
+                <label>Supplier / Info</label><input type="text" id="in_info">
+                <label>Jumlah</label><input type="number" id="in_qty">
+                <button class="btn btn-blue" onclick="simpan('masuk')">SIMPAN MASUK</button>
             </div>
         </div>
 
-        <div id="p-riwayat" class="page">
+        <div id="pg-keluar" class="page">
+            <h1>Barang Keluar (-)</h1>
+            <div class="card" style="max-width:500px">
+                <label>Pilih Barang</label>
+                <select id="out_pilih" class="dropdownBarang"></select>
+                <label>Penerima / Dept</label><input type="text" id="out_info">
+                <label>Jumlah</label><input type="number" id="out_qty">
+                <button class="btn btn-red" onclick="simpan('keluar')">SIMPAN KELUAR</button>
+            </div>
+        </div>
+
+        <div id="pg-riwayat" class="page">
             <h1>Riwayat Transaksi</h1>
             <div class="card">
                 <table>
-                    <thead><tr><th>Tgl</th><th>Bar
+                    <thead><tr><th>Tgl</th><th>Barang</th><th>Tipe</th><th>Qty</th><th>Aksi</th></tr></thead>
+                    <tbody id="bodyRiwayat"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
+            authDomain: "gudang-sms-4c81c.firebaseapp.com",
+            databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "gudang-sms-4c81c",
+            storageBucket: "gudang-sms-4c81c.appspot.com",
+            appId: "1:598362736106:web:c8e2732d6ac7613931de93"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        function buka(id, el) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById('pg-' + id).classList.add('active');
+            el.classList.add('active');
+        }
+
+        // --- MASTER BARANG ---
+        function tambahMaster() {
+            const nama = document.getElementById('m_nama').value.toUpperCase().trim();
+            const min = parseInt(document.getElementById('m_min').value);
+            if(!nama || isNaN(min)) return alert("Isi Nama & Stok Min!");
+            db.ref("master_barang").push({ nama, min }).then(() => {
+                alert("Berhasil Terdaftar!");
+                document.getElementById('m_nama').value = "";
+            });
+        }
+
+        // --- SIMPAN TRANSAKSI ---
+        function simpan(tipe) {
+            const b = document.getElementById(tipe === 'masuk' ? 'in_pilih' : 'out_pilih').value;
+            const q = parseInt(document.getElementById(tipe === 'masuk' ? 'in_qty' : 'out_qty').value);
+            const i = document.getElementById(tipe === 'masuk' ? 'in_info' : 'out_info').value.toUpperCase();
+
+            if(!b || isNaN(q)) return alert("Pilih Barang & Isi Jumlah!");
+
+            db.ref("riwayat").push({
+                barang: b, jumlah: q, jenis: tipe, info: i,
+                tanggal: new Date().toISOString().slice(0, 10)
+            }).then(() => {
+                alert("Berhasil!");
+                document.querySelectorAll('input').forEach(input => { if(input.id !== 'm_min') input.value = ""; });
+            });
+        }
+
+        // --- ENGINE SINKRONISASI DATA ---
+        db.ref().on("value", (snap) => {
+            const data = snap.val() || {};
+            const master = data.master_barang || {};
+            const riwayat = data.riwayat || {};
+
+            // Render Master & Dropdown
+            let hMst = ""; let hOpt = "<option value=''>-- PILIH BARANG --</option>";
+            let mapMin = {};
+            for(let id in master) {
+                hMst += <tr><td>${master[id].nama}</td><td>${master[id].min}</td><td><button onclick="hapusMst('${id}')" style="color:red;border:none;background:none;cursor:pointer">Hapus</button></td></tr>;
+                hOpt += <option value="${master[id].nama}">${master[id].nama}</option>;
+                mapMin[master[id].nama] = master[id].min;
+            }
+            document.getElementById('bodyMaster').innerHTML = hMst;
+            document.querySelectorAll('.dropdownBarang').forEach(d => d.innerHTML = hOpt);
+
+            // Hitung Stok & Riwayat
+            let stok = {}; let hRiw = ""; let tot = 0;
+            let riwKeys = Object.keys(riwayat).reverse();
+            riwKeys.forEach(id => {
+                const r = riwayat[id]; const q = parseInt(r.jumlah);
+                if(r.jenis === 'masuk') { stok[r.barang] = (stok[r.barang]||0) + q; tot += q; }
+                else { stok[r.barang] = (stok[r.barang]||0) - q; tot -= q; }
+                hRiw += <tr><td>${r.tanggal}</td><td>${r.barang}</td><td style="color:${r.jenis==='masuk'?'green':'red'}">${r.jenis.toUpperCase()}</td><td>${r.jumlah}</td><td><button onclick="hapusRiw('${id}')" style="color:red;border:none;background:none;cursor:pointer">X</button></td></tr>;
+            });
+
+            // Render Tabel Stok Dashboard
+            let hStok = "";
+            for(let b in stok) {
+                let m = mapMin[b] || 0;
+                hStok += <tr><td><b>${b}</b></td><td>${stok[b]} Unit</td><td>${stok[b] <= m ? '<span style="color:red">LOW</span>' : 'AMAN'}</td></tr>;
+            }
+
+            document.getElementById('bodyRiwayat').innerHTML = hRiw;
+            document.getElementById('bodyStok').innerHTML = hStok;
+            document.getElementById('totStok').innerText = tot;
+            document.getElementById('totJenis').innerText = Object.keys(stok).length;
+        });
+
+        function hapusMst(id) { if(confirm("Hapus?")) db.ref("master_barang/" + id).remove(); }
+        function hapusRiw(id) { if(confirm("Hapus?")) db.ref("riwayat/" + id).remove(); }
+    </script>
+</body>
+</html>
