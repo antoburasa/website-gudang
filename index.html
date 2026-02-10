@@ -3,156 +3,139 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PT. SMS - Inventory</title>
+<title>Dashboard Gudang</title>
 
-<!-- Firebase v8 -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
 <script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-<style>
-body{font-family:Inter,sans-serif;background:#f3f4f6}
-@media print {.no-print{display:none}}
-</style>
 </head>
+<body class="bg-gray-100">
 
-<body>
-
-<header class="bg-blue-800 text-white text-center p-6">
-<h1 class="text-2xl font-bold">PT. SAMUDRA MANDIRI SENTOSA</h1>
-<p class="text-xs tracking-widest">INVENTORY SYSTEM</p>
+<header class="bg-blue-800 text-white p-4 text-center font-bold">
+INVENTORY MANAGEMENT SYSTEM
 </header>
 
-<div class="max-w-6xl mx-auto p-4 space-y-6">
+<nav class="flex justify-center gap-3 bg-white shadow p-3 text-sm">
+<button onclick="show('master')" class="px-3 py-1 bg-blue-600 text-white rounded">Master</button>
+<button onclick="show('masuk')" class="px-3 py-1 bg-green-600 text-white rounded">Masuk</button>
+<button onclick="show('keluar')" class="px-3 py-1 bg-red-600 text-white rounded">Keluar</button>
+<button onclick="show('stok')" class="px-3 py-1 bg-gray-700 text-white rounded">Stok</button>
+<button onclick="show('riwayat')" class="px-3 py-1 bg-purple-600 text-white rounded">Riwayat</button>
+</nav>
 
-<!-- STAT -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-<div class="bg-white p-4 rounded shadow">
-<p class="text-xs text-gray-500">Jenis Barang</p>
-<h2 id="statJenis" class="text-3xl font-bold text-blue-600">0</h2>
-</div>
-<div class="bg-white p-4 rounded shadow">
-<p class="text-xs text-gray-500">Total Unit</p>
-<h2 id="statTotal" class="text-3xl font-bold text-green-600">0</h2>
-</div>
-<div class="bg-white p-4 rounded shadow">
-<p class="text-xs text-gray-500">Stok Menipis</p>
-<h2 id="statTipis" class="text-3xl font-bold text-red-600">0</h2>
-</div>
-</div>
+<div class="max-w-6xl mx-auto p-4">
 
-<!-- FORM -->
-<div class="grid md:grid-cols-2 gap-6 no-print">
+<!-- MASTER BARANG -->
+<section id="master">
+<h2 class="font-bold mb-2">Master Barang</h2>
+<input id="mNama" placeholder="Nama Barang" class="border p-2 w-full mb-2">
+<input id="mSatuan" placeholder="Satuan" class="border p-2 w-full mb-2">
+<input id="mMin" type="number" placeholder="Stok Minimum" class="border p-2 w-full mb-2">
+<button onclick="tambahMaster()" class="bg-blue-600 text-white px-4 py-2 rounded">Simpan</button>
+<ul id="listMaster" class="mt-4 text-sm"></ul>
+</section>
 
-<!-- MASUK -->
-<div class="bg-white p-6 rounded shadow">
-<h3 class="font-bold mb-3 text-green-600"><i class="fa fa-box"></i> Barang Masuk</h3>
-<input id="inNama" class="w-full p-2 border rounded mb-2" placeholder="Nama Barang">
-<input id="inQty" type="number" class="w-full p-2 border rounded mb-2" placeholder="Jumlah">
-<input id="inSatuan" class="w-full p-2 border rounded mb-3" placeholder="Satuan (pcs/kg)">
-<button onclick="barangMasuk()" class="w-full bg-green-600 text-white py-2 rounded">Simpan</button>
-</div>
+<!-- BARANG MASUK -->
+<section id="masuk" class="hidden">
+<h2 class="font-bold mb-2">Barang Masuk</h2>
+<input id="inNama" placeholder="Nama Barang" class="border p-2 w-full mb-2">
+<input id="inQty" type="number" placeholder="Jumlah" class="border p-2 w-full mb-2">
+<button onclick="barangMasuk()" class="bg-green-600 text-white px-4 py-2 rounded">Simpan</button>
+</section>
 
-<!-- KELUAR -->
-<div class="bg-white p-6 rounded shadow">
-<h3 class="font-bold mb-3 text-red-600"><i class="fa fa-truck"></i> Barang Keluar</h3>
-<input id="outNama" class="w-full p-2 border rounded mb-2" placeholder="Nama Barang">
-<input id="outQty" type="number" class="w-full p-2 border rounded mb-3" placeholder="Jumlah">
-<button onclick="barangKeluar()" class="w-full bg-red-600 text-white py-2 rounded">Kurangi</button>
-</div>
+<!-- BARANG KELUAR -->
+<section id="keluar" class="hidden">
+<h2 class="font-bold mb-2">Barang Keluar</h2>
+<input id="outNama" placeholder="Nama Barang" class="border p-2 w-full mb-2">
+<input id="outQty" type="number" placeholder="Jumlah" class="border p-2 w-full mb-2">
+<button onclick="barangKeluar()" class="bg-red-600 text-white px-4 py-2 rounded">Kurangi</button>
+</section>
 
-</div>
-
-<!-- TABEL -->
-<div class="bg-white rounded shadow overflow-x-auto">
-<table class="w-full text-sm">
-<thead class="bg-gray-100">
-<tr>
-<th class="p-3">Nama</th>
-<th class="p-3 text-center">Stok</th>
-<th class="p-3 text-right">Satuan</th>
-</tr>
-</thead>
-<tbody id="tabel"></tbody>
+<!-- STOK -->
+<section id="stok" class="hidden">
+<h2 class="font-bold mb-2">Stok Barang</h2>
+<table class="w-full text-sm bg-white">
+<thead><tr class="bg-gray-200"><th>Nama</th><th>Stok</th></tr></thead>
+<tbody id="tabelStok"></tbody>
 </table>
-</div>
+</section>
+
+<!-- RIWAYAT -->
+<section id="riwayat" class="hidden">
+<h2 class="font-bold mb-2">Riwayat Transaksi</h2>
+<ul id="listRiwayat" class="text-sm bg-white p-2"></ul>
+</section>
 
 </div>
 
 <script>
-/* ===== FIREBASE CONFIG ===== */
 firebase.initializeApp({
- apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
- authDomain: "gudang-sms-4c81c.firebaseapp.com",
- databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
- projectId: "gudang-sms-4c81c",
- storageBucket: "gudang-sms-4c81c.appspot.com",
- appId: "1:598362736106:web:c8e2732d6ac7613931de93"
+ apiKey:"AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
+ databaseURL:"https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app"
+});
+const db=firebase.database();
+
+function show(id){
+document.querySelectorAll("section").forEach(s=>s.classList.add("hidden"));
+document.getElementById(id).classList.remove("hidden");
+}
+
+function key(n){return n.replace(/\s+/g,'_').toLowerCase();}
+
+function tambahMaster(){
+const nama=mNama.value.trim();
+if(!nama)return alert("Isi nama");
+db.ref("masterBarang/"+key(nama)).set({
+nama,
+satuan:mSatuan.value||"pcs",
+stokMin:parseInt(mMin.value)||0
+});
+mNama.value=mSatuan.value=mMin.value="";
+}
+
+db.ref("masterBarang").on("value",s=>{
+let h="";
+s.forEach(c=>h+=<li>• ${c.val().nama}</li>);
+listMaster.innerHTML=h;
 });
 
-const db = firebase.database();
-
-/* ===== BARANG MASUK ===== */
 function barangMasuk(){
-const nama = inNama.value.trim();
-const qty = parseInt(inQty.value);
-const satuan = inSatuan.value || "pcs";
-
-if(!nama || qty<=0) return alert("Isi data dengan benar");
-
-const key = nama.replace(/\s+/g,'_').toLowerCase();
-const ref = db.ref("stok/"+key);
-
-ref.once("value").then(s=>{
-const stok = s.exists()?s.val().stok:0;
-ref.set({nama,stok:stok+qty,satuan});
-inNama.value=inQty.value=inSatuan.value="";
+const nama=inNama.value; const q=+inQty.value;
+if(!nama||q<=0)return;
+const k=key(nama);
+db.ref("stok/"+k).once("value").then(s=>{
+const stok=s.exists()?s.val().stok:0;
+db.ref("stok/"+k).set({nama,stok:stok+q});
+db.ref("transaksi").push({tanggal:new Date().toLocaleString(),jenis:"Masuk",barang:nama,qty:q});
 });
 }
 
-/* ===== BARANG KELUAR ===== */
 function barangKeluar(){
-const nama = outNama.value.trim();
-const qty = parseInt(outQty.value);
-if(!nama || qty<=0) return alert("Isi data");
-
-const key = nama.replace(/\s+/g,'_').toLowerCase();
-const ref = db.ref("stok/"+key);
-
-ref.once("value").then(s=>{
-if(!s.exists()) return alert("Barang tidak ada");
-if(s.val().stok < qty) return alert("Stok kurang");
-
-ref.update({stok:s.val().stok-qty});
-outNama.value=outQty.value="";
+const nama=outNama.value; const q=+outQty.value;
+const k=key(nama);
+db.ref("stok/"+k).once("value").then(s=>{
+if(!s.exists()||s.val().stok<q)return alert("Stok kurang");
+db.ref("stok/"+k).update({stok:s.val().stok-q});
+db.ref("transaksi").push({tanggal:new Date().toLocaleString(),jenis:"Keluar",barang:nama,qty:q});
 });
 }
 
-/* ===== LOAD DATA ===== */
-db.ref("stok").on("value",snap=>{
-let html="",jenis=0,total=0,tipis=0;
-
-snap.forEach(c=>{
-const d=c.val();
-jenis++; total+=d.stok;
-if(d.stok<10) tipis++;
-
-html+=`
-<tr class="border-b">
-<td class="p-3">${d.nama}</td>
-<td class="p-3 text-center font-bold">${d.stok}</td>
-<td class="p-3 text-right">${d.satuan}</td>
-</tr>`;
+db.ref("stok").on("value",s=>{
+let h="";
+s.forEach(c=>h+=<tr><td>${c.val().nama}</td><td>${c.val().stok}</td></tr>);
+tabelStok.innerHTML=h;
 });
 
-tabel.innerHTML=html;
-statJenis.innerText=jenis;
-statTotal.innerText=total;
-statTipis.innerText=tipis;
+db.ref("transaksi").on("value",s=>{
+let h="";
+s.forEach(c=>{
+const d=c.val();
+h+=<li>${d.tanggal} | ${d.jenis} | ${d.barang} (${d.qty})</li>;
+});
+listRiwayat.innerHTML=h;
 });
 </script>
 
 </body>
-</html
+</html>
