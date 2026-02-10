@@ -1,240 +1,215 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<title>GUDANG RAWMATERIAL SMS</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GUDANG RAWMATERIAL SMS</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
-<style>
-body{font-family:Arial;background:#f5f6fa;margin:0}
-.header{background:#1e3a8a;color:white;padding:15px;text-align:center}
-.menu{display:flex;background:#fff;border-bottom:1px solid #ddd}
-.menu button{flex:1;padding:12px;border:none;background:white}
-.menu button:hover{background:#f0f0f0}
-.page{display:none;padding:15px}
-.card{background:white;padding:15px;border-radius:10px;margin-bottom:15px}
-input,select{width:100%;padding:10px;margin-top:5px}
-button.primary{background:#2563eb;color:white;padding:10px;border:none;margin-top:10px;width:100%}
-table{width:100%;border-collapse:collapse}
-th,td{border-bottom:1px solid #eee;padding:8px;text-align:left}
-</style>
+  <style>
+    body{font-family:Arial;background:#f4f6f8;margin:0}
+    .menu{background:#1f2937;color:white;padding:10px}
+    .menu button{margin-right:10px}
+    .page{display:none;padding:20px}
+    table{background:white;border-collapse:collapse}
+    th,td{padding:6px;border:1px solid #ccc}
+    input,select{padding:4px}
+  </style>
 </head>
 <body>
 
-<div class="header">
-<h2>GUDANG RAWMATERIAL SMS</h2>
-</div>
-
 <div class="menu">
-<button onclick="show('dashboard')">Dashboard</button>
-<button onclick="show('master')">Master Barang</button>
-<button onclick="show('prs')">PRS</button>
-<button onclick="show('masuk')">Barang Masuk</button>
-<button onclick="show('keluar')">Barang Keluar</button>
-<button onclick="show('stok')">Stok</button>
-<button onclick="show('riwayat')">Riwayat</button>
+  <button onclick="showPage('dashboard')">Dashboard</button>
+  <button onclick="showPage('master')">Master Barang</button>
+  <button onclick="showPage('prs')">PRS</button>
 </div>
 
 <!-- DASHBOARD -->
 <div id="dashboard" class="page">
-<div class="card">
-<h3>Total Barang</h3>
-<div id="totalBarang">0</div>
-</div>
-<div class="card">
-<h3>Total Stok</h3>
-<div id="totalStok">0</div>
-</div>
+  <h2>Dashboard Gudang Rawmaterial SMS</h2>
+  Sistem siap digunakan.
 </div>
 
 <!-- MASTER BARANG -->
 <div id="master" class="page">
-<div class="card">
-<h3>Tambah Barang</h3>
-<input id="kode" placeholder="Kode Barang">
-<input id="nama" placeholder="Nama Barang">
+  <h2>Master Barang</h2>
 
-<input list="unitList" id="unit" placeholder="Unit">
-<datalist id="unitList">
-<option>PCS</option>
-<option>SET</option>
-<option>SHEET</option>
-<option>KG</option>
-<option>TON</option>
-<option>M3</option>
-<option>CM</option>
-<option>METER</option>
-</datalist>
+  <input id="kode" placeholder="Kode">
+  <input id="nama" placeholder="Nama">
+  <input id="unit" placeholder="Unit">
+  <button onclick="simpanMaster()">Simpan</button>
 
-<select id="gudang">
-<option>General Store 1</option>
-<option>General Store 2</option>
-<option>Gudang 3</option>
-<option>Ingredients</option>
-</select>
+  <br><br>
 
-<input id="stokMin" type="number" placeholder="Stok Minimum">
-<input id="supplier" placeholder="Supplier">
-
-<button class="primary" onclick="simpanBarang()">Simpan</button>
-</div>
-
-<div class="card">
-<h3>Daftar Barang</h3>
-<table>
-<thead>
-<tr><th>Kode</th><th>Nama</th><th>Stok</th></tr>
-</thead>
-<tbody id="listBarang"></tbody>
-</table>
-</div>
+  <table width="100%">
+    <thead>
+      <tr>
+        <th>Kode</th>
+        <th>Nama</th>
+        <th>Unit</th>
+      </tr>
+    </thead>
+    <tbody id="masterList"></tbody>
+  </table>
 </div>
 
 <!-- PRS -->
 <div id="prs" class="page">
-<div class="card">
-<h3>Buat PRS</h3>
-<input id="chargeTo" placeholder="Charge To">
-<button class="primary" onclick="buatPRS()">Buat PRS</button>
-<div id="noPRS"></div>
-</div>
-</div>
+  <h2>FORM PRS</h2>
 
-<!-- BARANG MASUK -->
-<div id="masuk" class="page">
-<div class="card">
-<h3>Barang Masuk</h3>
-<input id="kodeMasuk" placeholder="Kode Barang">
-<input id="qtyMasuk" type="number" placeholder="Qty">
-<select id="tujuan">
-<option value="STOK">STOK</option>
-<option value="USER">USER</option>
-</select>
-<button class="primary" onclick="barangMasuk()">Simpan</button>
-</div>
-</div>
+  <label>No PRS</label><br>
+  <input id="noPrs" readonly><br><br>
 
-<!-- BARANG KELUAR -->
-<div id="keluar" class="page">
-<div class="card">
-<h3>Barang Keluar</h3>
-<input id="kodeKeluar" placeholder="Kode Barang">
-<input id="qtyKeluar" type="number" placeholder="Qty">
-<button class="primary" onclick="barangKeluar()">Simpan</button>
-</div>
-</div>
+  <label>Tanggal</label><br>
+  <input type="date" id="prsTanggal"><br><br>
 
-<!-- STOK -->
-<div id="stok" class="page">
-<div class="card">
-<h3>Stok Barang</h3>
-<div id="stokList"></div>
-</div>
-</div>
+  <label>Charge To</label><br>
+  <input id="prsCharge"><br><br>
 
-<!-- RIWAYAT -->
-<div id="riwayat" class="page">
-<div class="card">
-<h3>Riwayat</h3>
-<table>
-<thead>
-<tr><th>Tanggal</th><th>Barang</th><th>Jenis</th><th>Qty</th></tr>
-</thead>
-<tbody id="riwayatList"></tbody>
-</table>
-</div>
+  <label>User</label><br>
+  <input id="prsUser"><br><br>
+
+  <label>Departemen</label><br>
+  <input id="prsDept"><br><br>
+
+  <table width="100%">
+    <thead>
+      <tr>
+        <th>Kode Barang</th>
+        <th>Nama</th>
+        <th>Unit</th>
+        <th>Qty</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="prsTable"></tbody>
+  </table>
+
+  <br>
+  <button onclick="addPrsRow()">+ Tambah Barang</button>
+  <button onclick="simpanPRS()">Simpan PRS</button>
 </div>
 
 <script>
-const firebaseConfig = {
-apiKey:"AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
-databaseURL:"https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
-projectId:"gudang-sms-4c81c"
+/* ================= FIREBASE CONFIG ================= */
+/* GANTI DENGAN CONFIG FIREBASE KAMU */
+var firebaseConfig = {
+  apiKey: "APIKEY",
+  authDomain: "PROJECT.firebaseapp.com",
+  projectId: "PROJECTID"
 };
 
 firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+var db = firebase.firestore();
 
-function show(id){
-document.querySelectorAll(".page").forEach(p=>p.style.display="none");
-document.getElementById(id).style.display="block";
+/* ================= NAVIGATION ================= */
+function showPage(id){
+  document.querySelectorAll(".page").forEach(p=>p.style.display="none");
+  document.getElementById(id).style.display="block";
+
+  if(id==="master") loadMaster();
+  if(id==="prs"){
+    generatePRS();
+    document.getElementById("prsTable").innerHTML="";
+    addPrsRow();
+  }
 }
 
-show("dashboard");
+showPage("dashboard");
 
-function simpanBarang(){
-let kode=kode.value;
-db.ref("barang/"+kode).set({
-kode:kode,
-nama:nama.value,
-unit:unit.value,
-gudang:gudang.value,
-stok:0,
-stokMin:stokMin.value,
-supplier:supplier.value
-});
+/* ================= MASTER BARANG ================= */
+function simpanMaster(){
+  const kode=document.getElementById("kode").value;
+  const nama=document.getElementById("nama").value;
+  const unit=document.getElementById("unit").value;
+
+  db.collection("master_barang").doc(kode).set({
+    kode,nama,unit
+  }).then(()=>{
+    alert("Tersimpan");
+    loadMaster();
+  });
 }
 
-db.ref("barang").on("value",snap=>{
-let html="",total=0,count=0,stokHtml="";
-snap.forEach(d=>{
-let b=d.val();
-count++;
-total+=parseInt(b.stok||0);
-html+=`<tr><td>${b.kode}</td><td>${b.nama}</td><td>${b.stok}</td></tr>`;
-stokHtml+=`${b.nama} : ${b.stok}<br>`;
-});
-listBarang.innerHTML=html;
-stokList.innerHTML=stokHtml;
-totalBarang.innerText=count;
-totalStok.innerText=total;
-});
+async function loadMaster(){
+  const tbody=document.getElementById("masterList");
+  tbody.innerHTML="";
 
-function barangMasuk(){
-let kode=kodeMasuk.value;
-let qty=parseInt(qtyMasuk.value);
-db.ref("barang/"+kode+"/stok").transaction(s=>(s||0)+qty);
-simpanRiwayat(kode,"MASUK",qty);
+  const snap=await db.collection("master_barang").get();
+  snap.forEach(doc=>{
+    const d=doc.data();
+    tbody.innerHTML+=`
+      <tr>
+        <td>${d.kode}</td>
+        <td>${d.nama}</td>
+        <td>${d.unit}</td>
+      </tr>`;
+  });
 }
 
-function barangKeluar(){
-let kode=kodeKeluar.value;
-let qty=parseInt(qtyKeluar.value);
-db.ref("barang/"+kode+"/stok").transaction(s=>(s||0)-qty);
-simpanRiwayat(kode,"KELUAR",qty);
+/* ================= PRS ================= */
+function generatePRS(){
+  document.getElementById("noPrs").value="PRS-"+Date.now();
 }
 
-function simpanRiwayat(kode,jenis,qty){
-db.ref("transaksi").push({
-kode:kode,
-jenis:jenis,
-qty:qty,
-tanggal:new Date().toISOString().slice(0,10)
-});
+async function addPrsRow(){
+  const masterSnap=await db.collection("master_barang").get();
+
+  let options="";
+  masterSnap.forEach(doc=>{
+    const d=doc.data();
+    options+=`<option value="${d.kode}|${d.nama}|${d.unit}">
+      ${d.kode} - ${d.nama}
+    </option>`;
+  });
+
+  const tr=document.createElement("tr");
+  tr.innerHTML=`
+    <td>
+      <select onchange="isiBarang(this)">
+        <option value="">Pilih</option>
+        ${options}
+      </select>
+    </td>
+    <td><input readonly></td>
+    <td><input readonly></td>
+    <td><input type="number"></td>
+    <td><button onclick="this.closest('tr').remove()">Hapus</button></td>
+  `;
+
+  document.getElementById("prsTable").appendChild(tr);
 }
 
-db.ref("transaksi").on("value",snap=>{
-let html="";
-snap.forEach(d=>{
-let t=d.val();
-html+=`<tr><td>${t.tanggal}</td><td>${t.kode}</td><td>${t.jenis}</td><td>${t.qty}</td></tr>`;
-});
-riwayatList.innerHTML=html;
-});
+function isiBarang(select){
+  const val=select.value.split("|");
+  const row=select.closest("tr");
 
-function buatPRS(){
-let id="PRS-"+new Date().getFullYear()+"-"+Date.now().toString().slice(-4);
-db.ref("prs/"+id).set({
-no:id,
-chargeTo:chargeTo.value,
-tanggal:new Date().toISOString().slice(0,10)
-});
-noPRS.innerText="PRS dibuat: "+id;
+  row.cells[1].children[0].value=val[1];
+  row.cells[2].children[0].value=val[2];
+}
+
+async function simpanPRS(){
+  const no=document.getElementById("noPrs").value;
+  const tanggal=document.getElementById("prsTanggal").value;
+  const charge=document.getElementById("prsCharge").value;
+  const user=document.getElementById("prsUser").value;
+  const dept=document.getElementById("prsDept").value;
+
+  const rows=document.querySelectorAll("#prsTable tr");
+
+  for(const r of rows){
+    const kode=r.cells[0].children[0].value.split("|")[0];
+    const nama=r.cells[1].children[0].value;
+    const unit=r.cells[2].children[0].value;
+    const qty=r.cells[3].children[0].value;
+
+    await db.collection("prs").add({
+      no,tanggal,charge,user,dept,kode,nama,unit,qty,status:"PRS"
+    });
+  }
+
+  alert("PRS berhasil disimpan");
+  showPage("dashboard");
 }
 </script>
-
 </body>
 </html>
