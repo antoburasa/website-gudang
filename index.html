@@ -3,138 +3,221 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard Gudang</title>
+<title>Inventory Gudang</title>
 
+<!-- Firebase v8 -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-<script src="https://cdn.tailwindcss.com"></script>
 
+<!-- XLSX -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<style>
+body{margin:0;font-family:Arial;background:#f4f6f8}
+header{background:#0d6efd;color:#fff;padding:15px;text-align:center}
+nav{display:flex;background:#fff;border-bottom:1px solid #ddd}
+nav button{flex:1;padding:12px;border:none;background:#fff;font-weight:bold;cursor:pointer}
+nav button.active{background:#0d6efd;color:#fff}
+.container{padding:15px}
+.page{display:none}
+.card{background:#fff;padding:15px;border-radius:10px;margin-bottom:15px}
+input,select,button{width:100%;padding:10px;margin-top:8px}
+button.primary{background:#0d6efd;color:#fff;border:none}
+button.danger{background:#dc3545;color:#fff;border:none}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{border:1px solid #ddd;padding:6px;text-align:center}
+th{background:#f1f1f1}
+</style>
 </head>
-<body class="bg-gray-100">
 
-<header class="bg-blue-800 text-white p-4 text-center font-bold">
-INVENTORY MANAGEMENT SYSTEM
+<body>
+
+<header>
+<h2>📦 INVENTORY MANAGEMENT SYSTEM</h2>
 </header>
 
-<nav class="flex justify-center gap-3 bg-white shadow p-3 text-sm">
-<button onclick="show('master')" class="px-3 py-1 bg-blue-600 text-white rounded">Master</button>
-<button onclick="show('masuk')" class="px-3 py-1 bg-green-600 text-white rounded">Masuk</button>
-<button onclick="show('keluar')" class="px-3 py-1 bg-red-600 text-white rounded">Keluar</button>
-<button onclick="show('stok')" class="px-3 py-1 bg-gray-700 text-white rounded">Stok</button>
-<button onclick="show('riwayat')" class="px-3 py-1 bg-purple-600 text-white rounded">Riwayat</button>
+<nav>
+<button onclick="showPage('dash')" class="active">Dashboard</button>
+<button onclick="showPage('master')">Master</button>
+<button onclick="showPage('masuk')">Masuk</button>
+<button onclick="showPage('keluar')">Keluar</button>
+<button onclick="showPage('stok')">Stok</button>
+<button onclick="showPage('riwayat')">Riwayat</button>
 </nav>
 
-<div class="max-w-6xl mx-auto p-4">
+<div class="container">
 
-<!-- MASTER BARANG -->
-<section id="master">
-<h2 class="font-bold mb-2">Master Barang</h2>
-<input id="mNama" placeholder="Nama Barang" class="border p-2 w-full mb-2">
-<input id="mSatuan" placeholder="Satuan" class="border p-2 w-full mb-2">
-<input id="mMin" type="number" placeholder="Stok Minimum" class="border p-2 w-full mb-2">
-<button onclick="tambahMaster()" class="bg-blue-600 text-white px-4 py-2 rounded">Simpan</button>
-<ul id="listMaster" class="mt-4 text-sm"></ul>
-</section>
+<!-- DASHBOARD -->
+<div id="dash" class="page" style="display:block">
+<div class="card">
+<p>Total Barang: <b id="dBarang">0</b></p>
+<p>Total Stok: <b id="dStok">0</b></p>
+<p>Total Transaksi: <b id="dTrans">0</b></p>
+</div>
+</div>
 
-<!-- BARANG MASUK -->
-<section id="masuk" class="hidden">
-<h2 class="font-bold mb-2">Barang Masuk</h2>
-<input id="inNama" placeholder="Nama Barang" class="border p-2 w-full mb-2">
-<input id="inQty" type="number" placeholder="Jumlah" class="border p-2 w-full mb-2">
-<button onclick="barangMasuk()" class="bg-green-600 text-white px-4 py-2 rounded">Simpan</button>
-</section>
+<!-- MASTER -->
+<div id="master" class="page">
+<div class="card">
+<h3>Master Barang</h3>
+<input id="mbNama" placeholder="Nama Barang">
+<input id="mbSatuan" placeholder="Satuan (pcs/kg)">
+<button class="primary" onclick="tambahBarang()">Simpan</button>
+<table>
+<thead><tr><th>Barang</th><th>Satuan</th><th>Aksi</th></tr></thead>
+<tbody id="listBarang"></tbody>
+</table>
+</div>
+</div>
 
-<!-- BARANG KELUAR -->
-<section id="keluar" class="hidden">
-<h2 class="font-bold mb-2">Barang Keluar</h2>
-<input id="outNama" placeholder="Nama Barang" class="border p-2 w-full mb-2">
-<input id="outQty" type="number" placeholder="Jumlah" class="border p-2 w-full mb-2">
-<button onclick="barangKeluar()" class="bg-red-600 text-white px-4 py-2 rounded">Kurangi</button>
-</section>
+<!-- MASUK -->
+<div id="masuk" class="page">
+<div class="card">
+<h3>Barang Masuk</h3>
+<select id="bmBarang"></select>
+<input id="bmJumlah" type="number" placeholder="Jumlah">
+<button class="primary" onclick="barangMasuk()">Simpan</button>
+</div>
+</div>
+
+<!-- KELUAR -->
+<div id="keluar" class="page">
+<div class="card">
+<h3>Barang Keluar</h3>
+<select id="bkBarang"></select>
+<input id="bkJumlah" type="number" placeholder="Jumlah">
+<button class="danger" onclick="barangKeluar()">Simpan</button>
+</div>
+</div>
 
 <!-- STOK -->
-<section id="stok" class="hidden">
-<h2 class="font-bold mb-2">Stok Barang</h2>
-<table class="w-full text-sm bg-white">
-<thead><tr class="bg-gray-200"><th>Nama</th><th>Stok</th></tr></thead>
-<tbody id="tabelStok"></tbody>
+<div id="stok" class="page">
+<div class="card">
+<h3>Stok Barang</h3>
+<table>
+<thead><tr><th>Barang</th><th>Stok</th><th>Satuan</th></tr></thead>
+<tbody id="listStok"></tbody>
 </table>
-</section>
+</div>
+</div>
 
 <!-- RIWAYAT -->
-<section id="riwayat" class="hidden">
-<h2 class="font-bold mb-2">Riwayat Transaksi</h2>
-<ul id="listRiwayat" class="text-sm bg-white p-2"></ul>
-</section>
+<div id="riwayat" class="page">
+<div class="card">
+<h3>Riwayat Transaksi</h3>
+<button onclick="exportExcel()">Export Excel</button>
+<table>
+<thead><tr><th>Barang</th><th>Jenis</th><th>Jumlah</th><th>Waktu</th></tr></thead>
+<tbody id="listRiwayat"></tbody>
+</table>
+</div>
+</div>
 
 </div>
 
 <script>
-firebase.initializeApp({
- apiKey:"AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
- databaseURL:"https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app"
-});
-const db=firebase.database();
+/* ================= FIREBASE CONFIG ================= */
+const firebaseConfig = {
+  apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89GpilOio-tTB3o",
+  authDomain: "gudang-sms-4c81c.firebaseapp.com",
+  databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "gudang-sms-4c81c",
+  storageBucket: "gudang-sms-4c81c.appspot.com",
+  messagingSenderId: "598362736106",
+  appId: "1:598362736106:web:c0e2732d6ac7513931de93"
+};
 
-function show(id){
-document.querySelectorAll("section").forEach(s=>s.classList.add("hidden"));
-document.getElementById(id).classList.remove("hidden");
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+/* ================= NAV ================= */
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.style.display='none');
+  document.getElementById(id).style.display='block';
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
 }
 
-function key(n){return n.replace(/\s+/g,'_').toLowerCase();}
-
-function tambahMaster(){
-const nama=mNama.value.trim();
-if(!nama)return alert("Isi nama");
-db.ref("masterBarang/"+key(nama)).set({
-nama,
-satuan:mSatuan.value||"pcs",
-stokMin:parseInt(mMin.value)||0
-});
-mNama.value=mSatuan.value=mMin.value="";
+/* ================= MASTER ================= */
+function tambahBarang(){
+  const nama = mbNama.value.trim();
+  const satuan = mbSatuan.value.trim() || 'pcs';
+  if(!nama) return alert('Nama barang kosong');
+  db.ref('barang/'+nama).set({stok:0,satuan:satuan});
+  mbNama.value=''; mbSatuan.value='';
 }
 
-db.ref("masterBarang").on("value",s=>{
-let h="";
-s.forEach(c=>h+=<li>• ${c.val().nama}</li>);
-listMaster.innerHTML=h;
-});
+function hapusBarang(n){
+  if(confirm('Hapus barang?')){
+    db.ref('barang/'+n).remove();
+  }
+}
 
+/* ================= MASUK ================= */
 function barangMasuk(){
-const nama=inNama.value; const q=+inQty.value;
-if(!nama||q<=0)return;
-const k=key(nama);
-db.ref("stok/"+k).once("value").then(s=>{
-const stok=s.exists()?s.val().stok:0;
-db.ref("stok/"+k).set({nama,stok:stok+q});
-db.ref("transaksi").push({tanggal:new Date().toLocaleString(),jenis:"Masuk",barang:nama,qty:q});
-});
+  const b = bmBarang.value;
+  const j = parseInt(bmJumlah.value);
+  if(!b || !j) return alert('Lengkapi data');
+  db.ref('barang/'+b+'/stok').transaction(s=>(s||0)+j);
+  db.ref('transaksi').push({barang:b,jenis:'Masuk',jumlah:j,waktu:new Date().toLocaleString()});
+  bmJumlah.value='';
 }
 
+/* ================= KELUAR ================= */
 function barangKeluar(){
-const nama=outNama.value; const q=+outQty.value;
-const k=key(nama);
-db.ref("stok/"+k).once("value").then(s=>{
-if(!s.exists()||s.val().stok<q)return alert("Stok kurang");
-db.ref("stok/"+k).update({stok:s.val().stok-q});
-db.ref("transaksi").push({tanggal:new Date().toLocaleString(),jenis:"Keluar",barang:nama,qty:q});
-});
+  const b = bkBarang.value;
+  const j = parseInt(bkJumlah.value);
+  if(!b || !j) return alert('Lengkapi data');
+  db.ref('barang/'+b+'/stok').once('value',s=>{
+    if((s.val()||0)<j) return alert('Stok kurang');
+    db.ref('barang/'+b+'/stok').transaction(x=>x-j);
+    db.ref('transaksi').push({barang:b,jenis:'Keluar',jumlah:j,waktu:new Date().toLocaleString()});
+    bkJumlah.value='';
+  });
 }
 
-db.ref("stok").on("value",s=>{
-let h="";
-s.forEach(c=>h+=<tr><td>${c.val().nama}</td><td>${c.val().stok}</td></tr>);
-tabelStok.innerHTML=h;
+/* ================= LOAD BARANG ================= */
+db.ref('barang').on('value',snap=>{
+  let html='',opt='',stokHtml='',totalStok=0,count=0;
+  snap.forEach(c=>{
+    count++;
+    const d=c.val();
+    totalStok+=d.stok;
+    html+=`<tr><td>${c.key}</td><td>${d.satuan}</td>
+    <td><button onclick="hapusBarang('${c.key}')">Hapus</button></td></tr>`;
+    opt+=<option value="${c.key}">${c.key}</option>;
+    stokHtml+=<tr><td>${c.key}</td><td>${d.stok}</td><td>${d.satuan}</td></tr>;
+  });
+  listBarang.innerHTML=html;
+  bmBarang.innerHTML=bkBarang.innerHTML=opt;
+  listStok.innerHTML=stokHtml;
+  dBarang.innerText=count;
+  dStok.innerText=totalStok;
 });
 
-db.ref("transaksi").on("value",s=>{
-let h="";
-s.forEach(c=>{
-const d=c.val();
-h+=<li>${d.tanggal} | ${d.jenis} | ${d.barang} (${d.qty})</li>;
+/* ================= TRANSAKSI ================= */
+let excelData=[];
+db.ref('transaksi').on('value',snap=>{
+  let html='',count=0;
+  excelData=[];
+  snap.forEach(c=>{
+    count++;
+    const d=c.val();
+    excelData.push(d);
+    html+=`<tr><td>${d.barang}</td><td>${d.jenis}</td>
+    <td>${d.jumlah}</td><td>${d.waktu}</td></tr>`;
+  });
+  listRiwayat.innerHTML=html;
+  dTrans.innerText=count;
 });
-listRiwayat.innerHTML=h;
-});
+
+/* ================= EXPORT ================= */
+function exportExcel(){
+  const ws=XLSX.utils.json_to_sheet(excelData);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"Riwayat");
+  XLSX.writeFile(wb,"laporan-gudang.xlsx");
+}
 </script>
 
 </body>
