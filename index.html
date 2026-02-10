@@ -1,175 +1,149 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gudang SMS - Fix Version</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <style>
-        body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 10px; }
-        nav { background: #1a365d; padding: 10px; display: flex; flex-wrap: wrap; gap: 5px; border-radius: 8px; }
-        nav button { flex: 1; padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; background: white; color: #1a365d; }
-        .card { background: white; padding: 20px; border-radius: 10px; margin-top: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        .btn-action { width: 100%; padding: 15px; background: #2563eb; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #eee; padding: 10px; text-align: left; }
-        .status-msg { padding: 10px; margin-top: 5px; font-size: 12px; color: #666; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistem Gudang SMS v1.0</title>
+
+<style>
+body { font-family: Arial; background:#f4f7fa; padding:20px; }
+.card { background:white; padding:20px; border-radius:10px; margin-bottom:15px; }
+button { padding:10px; background:#007bff; color:white; border:none; border-radius:6px; cursor:pointer; }
+input, select { width:100%; padding:10px; margin-top:8px; }
+table { width:100%; border-collapse:collapse; margin-top:10px; }
+th, td { border-bottom:1px solid #eee; padding:10px; text-align:center; }
+.stok-item { display:flex; justify-content:space-between; padding:6px; }
+</style>
 </head>
+
 <body>
 
-<nav>
-    <button onclick="master()">📦 Master</button>
-    <button onclick="formTrx('Masuk')">📥 Masuk</button>
-    <button onclick="formTrx('Keluar')">📤 Keluar</button>
-    <button onclick="stok()">📊 Stok</button>
-    <button onclick="riwayat()">📜 Riwayat</button>
-</nav>
+<h2>📦 Sistem Gudang SMS</h2>
 
-<div id="status" class="status-msg">System Ready.</div>
-<div id="app"></div>
+<div class="card">
+<b>Total Stok:</b> <span id="totalStok">0</span><br>
+<b>Jenis Barang:</b> <span id="totalJenis">0</span>
+</div>
+
+<div class="card">
+<h3>Input Transaksi</h3>
+<input id="barang" placeholder="Nama barang">
+<select id="jenis">
+<option value="masuk">Barang Masuk</option>
+<option value="keluar">Barang Keluar</option>
+</select>
+<input id="jumlah" type="number" placeholder="Jumlah">
+<button onclick="prosesSimpan()">Simpan</button>
+</div>
+
+<div class="card">
+<h3>Stok Saat Ini</h3>
+<div id="ringkasanStok">Memuat data...</div>
+</div>
+
+<div class="card">
+<h3>Riwayat Transaksi</h3>
+<table>
+<thead>
+<tr>
+<th>Tanggal</th>
+<th>Barang</th>
+<th>Jenis</th>
+<th>Jumlah</th>
+<th>Aksi</th>
+</tr>
+</thead>
+<tbody id="riwayatBody"></tbody>
+</table>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
-// KONFIGURASI SESUAI GAMBAR ANDA
 const firebaseConfig = {
-    apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
-    databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "gudang-sms-4c81c"
+apiKey: "AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
+authDomain: "gudang-sms-4c81c.firebaseapp.com",
+databaseURL: "https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
+projectId: "gudang-sms-4c81c",
+storageBucket: "gudang-sms-4c81c.appspot.com",
+appId: "1:598362736106:web:c8e2732d6ac7613931de93"
 };
 
-// Inisialisasi
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-}
+firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-const app = document.getElementById("app");
-const statusDiv = document.getElementById("status");
 
-function setStatus(msg) { statusDiv.innerText = "Status: " + msg; }
+function prosesSimpan() {
+const barang = document.getElementById("barang").value.trim().toUpperCase();
+const jumlah = parseInt(document.getElementById("jumlah").value);
+const jenis = document.getElementById("jenis").value;
 
-/* --- FUNGSI MASTER BARANG --- */
-function master() {
-    setStatus("Membuka Master Barang...");
-    app.innerHTML = `
-    <div class="card">
-        <h3>Tambah Barang Baru</h3>
-        <input id="nama" placeholder="Nama Barang (Contoh: Semen)">
-        <input id="kode" placeholder="Kode Barang">
-        <input id="unit" placeholder="Satuan (Pcs/Kg)">
-        <input id="min" type="number" placeholder="Stok Minimal">
-        <select id="gudang">
-            <option>General Store 1</option>
-            <option>General Store 2</option>
-            <option>Gudang 3</option>
-            <option>Ingredients</option>
-        </select>
-        <button class="btn-action" onclick="simpanBarang()">Simpan ke Database</button>
-    </div>
-    <div id="listBarang" class="card">Memuat data...</div>`;
-    loadMaster();
+if (!barang || !jumlah) {
+alert("Isi data dengan benar");
+return;
 }
 
-function simpanBarang() {
-    const data = {
-        nama: document.getElementById("nama").value,
-        kode: document.getElementById("kode").value,
-        unit: document.getElementById("unit").value,
-        gudang: document.getElementById("gudang").value,
-        stok: 0,
-        min: parseInt(document.getElementById("min").value || 0)
-    };
-
-    if(!data.nama || !data.kode) return alert("Isi Nama dan Kode!");
-
-    db.ref("barang").push(data)
-        .then(() => { alert("Berhasil disimpan!"); master(); })
-        .catch(e => alert("Error: " + e.message));
+db.ref("riwayat").push({
+barang: barang,
+jumlah: jumlah,
+jenis: jenis,
+tanggal: new Date().toISOString().slice(0,10)
+});
 }
 
-function loadMaster() {
-    db.ref("barang").on("value", s => {
-        let h = "<h3>Daftar Barang</h3><table><tr><th>Nama</th><th>Gudang</th><th>Stok</th></tr>";
-        s.forEach(c => {
-            let b = c.val();
-            h += <tr><td>${b.nama}</td><td>${b.gudang}</td><td>${b.stok} ${b.unit}</td></tr>;
-        });
-        h += "</table>";
-        document.getElementById("listBarang").innerHTML = h;
-    });
+function hapusData(id) {
+db.ref("riwayat/" + id).remove();
 }
 
-/* --- FUNGSI TRANSAKSI --- */
-function formTrx(tipe) {
-    setStatus("Membuka Form " + tipe);
-    app.innerHTML = `
-    <div class="card">
-        <h3>Barang ${tipe}</h3>
-        <input id="petugas" placeholder="Nama Petugas">
-        <select id="barangPilih"><option>Memuat barang...</option></select>
-        <input id="qty" type="number" placeholder="Jumlah">
-        <button class="btn-action" onclick="prosesTrx('${tipe}')">Proses ${tipe}</button>
-    </div>`;
-    
-    db.ref("barang").once("value", s => {
-        let sel = document.getElementById("barangPilih");
-        sel.innerHTML = "";
-        s.forEach(c => {
-            sel.innerHTML += <option value="${c.key}">${c.val().nama} (${c.val().gudang})</option>;
-        });
-    });
+function muatData() {
+db.ref("riwayat").on("value", snapshot => {
+let html = "";
+let stok = {};
+let total = 0;
+
+snapshot.forEach(child => {
+const d = child.val();
+if (!d) return;
+
+const jenis = d.jenis || "masuk";
+const jumlah = parseInt(d.jumlah) || 0;
+
+if (jenis === "masuk") {
+stok[d.barang] = (stok[d.barang] || 0) + jumlah;
+total += jumlah;
+} else {
+stok[d.barang] = (stok[d.barang] || 0) - jumlah;
+total -= jumlah;
 }
 
-function prosesTrx(tipe) {
-    const id = document.getElementById("barangPilih").value;
-    const qty = parseInt(document.getElementById("qty").value);
-    const pet = document.getElementById("petugas").value;
+html += `
+<tr>
+<td>${d.tanggal || "-"}</td>
+<td>${d.barang}</td>
+<td>${jenis}</td>
+<td>${jumlah}</td>
+<td><button onclick="hapusData('${child.key}')">Hapus</button></td>
+</tr>`;
+});
 
-    if(!id || !qty || !pet) return alert("Lengkapi form!");
+document.getElementById("riwayatBody").innerHTML =
+html || "<tr><td colspan='5'>Tidak ada data</td></tr>";
 
-    const ref = db.ref("barang/" + id);
-    ref.once("value", s => {
-        let b = s.val();
-        let stokSkrg = b.stok || 0;
-        
-        if(tipe === "Keluar" && stokSkrg < qty) return alert("Stok tidak cukup!");
+document.getElementById("totalStok").innerText = total;
+document.getElementById("totalJenis").innerText = Object.keys(stok).length;
 
-        let stokBaru = (tipe === "Masuk") ? stokSkrg + qty : stokSkrg - qty;
-
-        ref.update({ stok: stokBaru }).then(() => {
-            db.ref("transaksi").push({
-                tipe: tipe, barang: b.nama, qty: qty, petugas: pet, tanggal: Date.now()
-            });
-            alert("Berhasil!");
-            formTrx(tipe);
-        });
-    });
+let ringkasan = "";
+for (let b in stok) {
+ringkasan += `<div class="stok-item">${b} <b>${stok[b]}</b></div>`;
 }
 
-/* --- FUNGSI STOK & RIWAYAT --- */
-function stok() {
-    setStatus("Melihat Stok...");
-    app.innerHTML = <div class="card" id="viewStok">Memuat...</div>;
-    loadMaster(); // Menggunakan fungsi yang sama untuk tampilan tabel
+document.getElementById("ringkasanStok").innerHTML =
+ringkasan || "Belum ada stok";
+});
 }
 
-function riwayat() {
-    setStatus("Melihat Riwayat...");
-    app.innerHTML = <div class="card" id="viewR">Memuat...</div>;
-    db.ref("transaksi").limitToLast(20).on("value", s => {
-        let h = "<h3>20 Transaksi Terakhir</h3><table><tr><th>Tipe</th><th>Barang</th><th>Qty</th></tr>";
-        s.forEach(c => {
-            let d = c.val();
-            h += <tr><td>${d.tipe}</td><td>${d.barang}</td><td>${d.qty}</td></tr>;
-        });
-        h += "</table>";
-        document.getElementById("viewR").innerHTML = h;
-    });
-}
-
-// Jalankan Master di awal
-master();
+window.onload = muatData;
 </script>
+
 </body>
 </html>
