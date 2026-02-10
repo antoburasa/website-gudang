@@ -1,217 +1,169 @@
-from flask import Flask, render_template_string, request, redirect, url_for
-import sqlite3
-import datetime
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Gudang RawMaterial SMS</title>
 
-app = Flask(__name__)
-DB = "prs.db"
+<style>
+body{font-family:Arial;margin:20px;background:#f4f6f8}
+.card{background:white;padding:15px;margin-bottom:15px;border-radius:8px}
+table{border-collapse:collapse;width:100%}
+th,td{border:1px solid #ccc;padding:6px}
+button{padding:6px 10px;margin:3px}
+input,select{padding:5px;margin:3px}
+</style>
+</head>
 
-# ================= DB =================
-def init_db():
-    conn = sqlite3.connect(DB)
-    c = conn.cursor()
+<body>
 
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS barang(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nama TEXT,
-        uom TEXT
-    )
-    """)
+<h2>Gudang RawMaterial SMS</h2>
 
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS prs(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nomor TEXT,
-        tanggal TEXT,
-        divisi TEXT
-    )
-    """)
+<div class="card">
+<h3>Dashboard Stok</h3>
+<div id="stok"></div>
+</div>
 
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS prs_detail(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        prs_id INTEGER,
-        barang_id INTEGER,
-        qty INTEGER
-    )
-    """)
+<div class="card">
+<h3>Buat PRS</h3>
 
-    conn.commit()
-    conn.close()
+Nomor PRS:
+<input id="prsno" readonly>
 
-init_db()
+Divisi:
+<input id="divisi">
 
-# ================= MASTER BARANG =================
-@app.route("/barang", methods=["GET", "POST"])
-def barang():
-    conn = sqlite3.connect(DB)
-    c = conn.cursor()
+<table id="tbl">
+<tr>
+<th>Barang</th>
+<th>UOM</th>
+<th>Qty</th>
+<th>Status</th>
+</tr>
+</table>
 
-    if request.method == "POST":
-        nama = request.form["nama"]
-        uom = request.form["uom"]
-        c.execute("INSERT INTO barang(nama,uom) VALUES(?,?)", (nama, uom))
-        conn.commit()
+<button onclick="addRow()">Tambah Item</button>
+<br><br>
+<button onclick="simpanPRS()">Simpan PRS</button>
+<button onclick="window.print()">Print</button>
+</div>
 
-    data = c.execute("SELECT * FROM barang").fetchall()
-    conn.close()
+<div class="card">
+<h3>List PRS</h3>
+<div id="list"></div>
+</div>
 
-    return render_template_string("""
-    <h2>Master Barang</h2>
-    <form method="post">
-        Nama Barang <input name="nama">
-        UOM <input name="uom">
-        <button>Simpan</button>
-    </form>
-    <hr>
-    <a href="/">Kembali</a>
-    <table border=1>
-    <tr><th>ID</th><th>Nama</th><th>UOM</th></tr>
-    {% for d in data %}
-    <tr>
-        <td>{{d[0]}}</td>
-        <td>{{d[1]}}</td>
-        <td>{{d[2]}}</td>
-    </tr>
-    {% endfor %}
-    </table>
-    """, data=data)
+<script>
+let masterBarang=[
+{kode:"BRG001",nama:"Cat Putih",uom:"Can",stok:10},
+{kode:"BRG002",nama:"Thinner",uom:"Can",stok:5},
+{kode:"BRG003",nama:"Kuas 3",uom:"Pcs",stok:20}
+]
 
-# ================= BUAT PRS =================
-@app.route("/buat_prs", methods=["GET", "POST"])
-def buat_prs():
-    conn = sqlite3.connect(DB)
-    c = conn.cursor()
+function autoPRS(){
+let n=localStorage.getItem("prs_counter")||1
+document.getElementById("prsno").value="PRS"+String(n).padStart(4,"0")
+}
+autoPRS()
 
-    barang = c.execute("SELECT * FROM barang").fetchall()
+function nextPRS(){
+let n=parseInt(localStorage.getItem("prs_counter")||1)
+n++
+localStorage.setItem("prs_counter",n)
+autoPRS()
+}
 
-    if request.method == "POST":
-        nomor = request.form["nomor"]
-        divisi = request.form["divisi"]
-        tanggal = datetime.date.today()
+function addRow(){
+let t=document.getElementById("tbl")
+let r=t.insertRow()
 
-        c.execute(
-            "INSERT INTO prs(nomor,tanggal,divisi) VALUES(?,?,?)",
-            (nomor, tanggal, divisi),
-        )
-        prs_id = c.lastrowid
+let c1=r.insertCell()
+let c2=r.insertCell()
+let c3=r.insertCell()
+let c4=r.insertCell()
 
-        for b in barang:
-            field = "qty_" + str(b[0])
-            if request.form[field] != "":
-                qty = request.form[field]
-                c.execute(
-                    "INSERT INTO prs_detail(prs_id,barang_id,qty) VALUES(?,?,?)",
-                    (prs_id, b[0], qty),
-                )
+let sel=document.createElement("select")
+masterBarang.forEach(b=>{
+let o=document.createElement("option")
+o.value=b.kode
+o.text=b.nama
+sel.appendChild(o)
+})
 
-        conn.commit()
-        return redirect("/")
+sel.onchange=function(){
+let b=masterBarang.find(x=>x.kode==sel.value)
+c2.innerHTML=b.uom
+}
 
-    conn.close()
+c1.appendChild(sel)
+c2.innerHTML=masterBarang[0].uom
+c3.innerHTML="<input type='number' value='1'>"
+c4.innerHTML="<select><option>Pending</option><option>Diproses</option><option>Selesai</option></select>"
+}
 
-    return render_template_string("""
-    <h2>Buat PRS</h2>
-    <form method="post">
-        Nomor PRS <input name="nomor"><br><br>
-        Divisi <input name="divisi"><br><br>
+addRow()
 
-        <table border=1>
-        <tr>
-            <th>Barang</th>
-            <th>UOM</th>
-            <th>Qty</th>
-        </tr>
-        {% for b in barang %}
-        <tr>
-            <td>{{b[1]}}</td>
-            <td>{{b[2]}}</td>
-            <td>
-                <input name="qty_{{b[0]}}" style="width:60px">
-            </td>
-        </tr>
-        {% endfor %}
-        </table>
-        <br>
-        <button>Simpan PRS</button>
-    </form>
-    """, barang=barang)
+function simpanPRS(){
+let data=JSON.parse(localStorage.getItem("prs")||"[]")
+let prsno=document.getElementById("prsno").value
+let divisi=document.getElementById("divisi").value
 
-# ================= LIST PRS =================
-@app.route("/")
-def index():
-    conn = sqlite3.connect(DB)
-    c = conn.cursor()
-    data = c.execute("SELECT * FROM prs ORDER BY id DESC").fetchall()
-    conn.close()
+let rows=document.getElementById("tbl").rows
 
-    return render_template_string("""
-    <h2>DATA PRS</h2>
-    <a href="/barang">Master Barang</a> |
-    <a href="/buat_prs">Buat PRS</a>
-    <hr>
+for(let i=1;i<rows.length;i++){
+let barang=rows[i].cells[0].children[0]
+let qty=rows[i].cells[2].children[0].value
+let status=rows[i].cells[3].children[0].value
+let b=masterBarang.find(x=>x.kode==barang.value)
 
-    <table border=1>
-    <tr>
-        <th>No PRS</th>
-        <th>Tanggal</th>
-        <th>Divisi</th>
-        <th>Print</th>
-    </tr>
-    {% for d in data %}
-    <tr>
-        <td>{{d[1]}}</td>
-        <td>{{d[2]}}</td>
-        <td>{{d[3]}}</td>
-        <td><a href="/print/{{d[0]}}">Print</a></td>
-    </tr>
-    {% endfor %}
-    </table>
-    """, data=data)
+data.push({
+prs:prsno,
+divisi:divisi,
+barang:b.nama,
+kode:b.kode,
+uom:b.uom,
+qty:qty,
+status:status
+})
+}
 
-# ================= PRINT =================
-@app.route("/print/<int:id>")
-def print_prs(id):
-    conn = sqlite3.connect(DB)
-    c = conn.cursor()
+localStorage.setItem("prs",JSON.stringify(data))
+nextPRS()
+renderList()
+renderStok()
+alert("PRS disimpan")
+}
 
-    prs = c.execute("SELECT * FROM prs WHERE id=?", (id,)).fetchone()
+function renderList(){
+let data=JSON.parse(localStorage.getItem("prs")||"[]")
+let html="<table><tr><th>PRS</th><th>Barang</th><th>Qty</th><th>Status</th></tr>"
+data.forEach(d=>{
+html+=`<tr onclick='detail("${d.prs}")'>
+<td>${d.prs}</td>
+<td>${d.barang}</td>
+<td>${d.qty}</td>
+<td>${d.status}</td>
+</tr>`
+})
+html+="</table>"
+document.getElementById("list").innerHTML=html
+}
+renderList()
 
-    detail = c.execute("""
-    SELECT barang.nama, barang.uom, prs_detail.qty
-    FROM prs_detail
-    JOIN barang ON barang.id = prs_detail.barang_id
-    WHERE prs_detail.prs_id=?
-    """, (id,)).fetchall()
+function detail(no){
+let data=JSON.parse(localStorage.getItem("prs")||"[]")
+let f=data.filter(x=>x.prs==no)
+alert("DETAIL PRS "+no+"\n\n"+JSON.stringify(f,null,2))
+}
 
-    conn.close()
+function renderStok(){
+let html=""
+masterBarang.forEach(b=>{
+html+=b.nama+" : "+b.stok+"<br>"
+})
+document.getElementById("stok").innerHTML=html
+}
+renderStok()
+</script>
 
-    return render_template_string("""
-    <h3 style="text-align:center">PURCHASE REQUEST SLIP</h3>
-    <hr>
-    No PRS : {{prs[1]}}<br>
-    Tanggal : {{prs[2]}}<br>
-    Divisi : {{prs[3]}}<br><br>
-
-    <table border=1 width="100%" cellspacing=0 cellpadding=5>
-    <tr>
-        <th>No</th>
-        <th>Description</th>
-        <th>UOM</th>
-        <th>Qty</th>
-    </tr>
-    {% for d in detail %}
-    <tr>
-        <td>{{loop.index}}</td>
-        <td>{{d[0]}}</td>
-        <td>{{d[1]}}</td>
-        <td>{{d[2]}}</td>
-    </tr>
-    {% endfor %}
-    </table>
-
-    <br><br>
-    <button onclick="window.print()">PRINT</button>
-    """, prs=prs, detail=detail)
-
-app.run(debug=True)
+</body>
+</html>
