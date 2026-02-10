@@ -2,206 +2,211 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Gudang RawMaterial SMS</title>
+<title>Gudang Rawmaterial SMS</title>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <style>
-body{font-family:Arial;background:#eef2f7;margin:0}
-.menu{background:#1f2937;color:white;padding:10px}
-.menu button{margin:4px;padding:8px}
-.card{background:white;margin:10px;padding:15px;border-radius:8px}
-table{border-collapse:collapse;width:100%}
-th,td{border:1px solid #ccc;padding:6px}
-input,select{padding:5px;margin:3px}
+body{font-family:Arial;background:#f4f6f8;margin:0}
+nav{background:#1e3a8a;padding:10px}
+nav button{margin:3px;padding:8px;border:0;background:white;border-radius:6px}
+.card{background:white;margin:15px;padding:15px;border-radius:10px}
+input,select{width:100%;padding:8px;margin:5px 0}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #ddd;padding:6px}
 </style>
 </head>
 
 <body>
 
-<div class="menu">
-<button onclick="view('dash')">Dashboard</button>
-<button onclick="view('master')">Master Barang</button>
-<button onclick="view('masuk')">Barang Masuk</button>
-<button onclick="view('keluar')">Barang Keluar</button>
-<button onclick="view('prs')">PRS</button>
-<button onclick="view('stok')">Stok</button>
-<button onclick="view('log')">Riwayat</button>
-</div>
+<nav>
+<button onclick="dashboard()">Dashboard</button>
+<button onclick="master()">Master Barang</button>
+<button onclick="masuk()">Barang Masuk</button>
+<button onclick="keluar()">Barang Keluar</button>
+<button onclick="stok()">Stok</button>
+<button onclick="riwayat()">Riwayat</button>
+<button onclick="prs()">PRS</button>
+</nav>
 
 <div id="app"></div>
 
 <script>
-let DB={
-barang:JSON.parse(localStorage.getItem("barang")||"[]"),
-transaksi:JSON.parse(localStorage.getItem("trx")||"[]"),
-prs:JSON.parse(localStorage.getItem("prs")||"[]")
-}
+const firebaseConfig={
+apiKey:"AIzaSyDbf4nf0iQleiB3R8Un89Gpi1Oio-tTB3o",
+databaseURL:"https://gudang-sms-4c81c-default-rtdb.asia-southeast1.firebasedatabase.app",
+projectId:"gudang-sms-4c81c"
+};
 
-function save(){
-localStorage.setItem("barang",JSON.stringify(DB.barang))
-localStorage.setItem("trx",JSON.stringify(DB.transaksi))
-localStorage.setItem("prs",JSON.stringify(DB.prs))
-}
-
-function view(v){
-if(v=="dash")dashboard()
-if(v=="master")master()
-if(v=="masuk")masuk()
-if(v=="keluar")keluar()
-if(v=="stok")stok()
-if(v=="log")log()
-if(v=="prs")prs()
-}
-
-view("dash")
+firebase.initializeApp(firebaseConfig);
+const db=firebase.database();
+const app=document.getElementById("app");
 
 function dashboard(){
-let total=DB.barang.length
-document.getElementById("app").innerHTML=
-`<div class="card">
+db.ref("barang").once("value",s=>{
+let total=0,jenis=0;
+s.forEach(c=>{
+total+=c.val().stok||0;
+jenis++;
+});
+app.innerHTML=`
+<div class="card">
 <h2>Dashboard</h2>
-Total Barang: ${total}
-</div>`
+Total Stok: <b>${total}</b><br>
+Jenis Barang: <b>${jenis}</b>
+</div>`;
+});
 }
 
 function master(){
-let html=`<div class="card">
+app.innerHTML=`
+<div class="card">
 <h3>Master Barang</h3>
-Kode <input id="kode">
-Nama <input id="nama">
-UOM <input id="uom">
-Gudang 
-<select id="gudang">
-<option>GS1</option>
-<option>GS2</option>
-<option>Gudang3</option>
-<option>Ingredients</option>
-</select>
-<button onclick="addBarang()">Simpan</button>
-</div>`
-
-html+=`<div class="card"><table>
-<tr><th>Kode</th><th>Nama</th><th>UOM</th><th>Gudang</th><th>Stok</th></tr>`
-
-DB.barang.forEach(b=>{
-html+=`<tr>
-<td>${b.kode}</td>
-<td>${b.nama}</td>
-<td>${b.uom}</td>
-<td>${b.gudang}</td>
-<td>${b.stok||0}</td>
-</tr>`
-})
-
-html+="</table></div>"
-app.innerHTML=html
+Nama<input id="nama">
+Kode<input id="kode">
+Unit<input id="unit">
+<button onclick="simpanBarang()">Simpan</button>
+</div>
+<div class="card">
+<div id="listBarang"></div>
+</div>`;
+loadMaster();
 }
 
-function addBarang(){
-DB.barang.push({
-kode:kode.value,
+function simpanBarang(){
+db.ref("barang").push({
 nama:nama.value,
-uom:uom.value,
-gudang:gudang.value,
+kode:kode.value,
+unit:unit.value,
 stok:0
-})
-save()
-master()
+});
+master();
+}
+
+function loadMaster(){
+db.ref("barang").on("value",s=>{
+let html="<table><tr><th>Nama</th><th>Kode</th><th>Unit</th></tr>";
+s.forEach(c=>{
+let b=c.val();
+html+=`<tr><td>${b.nama}</td><td>${b.kode}</td><td>${b.unit}</td></tr>`;
+});
+html+="</table>";
+listBarang.innerHTML=html;
+});
 }
 
 function masuk(){
-let html=`<div class="card">
+app.innerHTML=`
+<div class="card">
 <h3>Barang Masuk</h3>
-Barang <select id="bsel"></select>
-Qty <input id="qty" type="number">
+Petugas<input id="petugas">
+Barang<select id="bsel"></select>
+Qty<input id="qty" type="number">
 <button onclick="trxMasuk()">Simpan</button>
-</div>`
-
-app.innerHTML=html
-isiBarang()
+</div>`;
+loadBarang();
 }
 
 function keluar(){
-let html=`<div class="card">
+app.innerHTML=`
+<div class="card">
 <h3>Barang Keluar</h3>
-Barang <select id="bsel"></select>
-Qty <input id="qty" type="number">
+Petugas<input id="petugas">
+Barang<select id="bsel"></select>
+Qty<input id="qty" type="number">
 <button onclick="trxKeluar()">Simpan</button>
-</div>`
-
-app.innerHTML=html
-isiBarang()
+</div>`;
+loadBarang();
 }
 
-function isiBarang(){
-let s=document.getElementById("bsel")
-DB.barang.forEach(b=>{
-let o=document.createElement("option")
-o.value=b.kode
-o.text=b.nama
-s.appendChild(o)
-})
+function loadBarang(){
+db.ref("barang").once("value",s=>{
+bsel.innerHTML="";
+s.forEach(c=>{
+bsel.innerHTML+=`<option value="${c.key}">${c.val().nama}</option>`;
+});
+});
 }
 
 function trxMasuk(){
-let b=DB.barang.find(x=>x.kode==bsel.value)
-b.stok+=parseInt(qty.value)
-
-DB.transaksi.push({tipe:"Masuk",barang:b.nama,qty:qty.value,tanggal:new Date()})
-save()
-alert("Disimpan")
+let ref=db.ref("barang/"+bsel.value);
+ref.once("value",s=>{
+let b=s.val();
+let stok=(b.stok||0)+parseInt(qty.value);
+ref.update({stok:stok});
+db.ref("transaksi").push({
+tipe:"Masuk",
+barang:b.nama,
+qty:qty.value,
+petugas:petugas.value,
+tanggal:Date.now()
+});
+alert("Tersimpan");
+});
 }
 
 function trxKeluar(){
-let b=DB.barang.find(x=>x.kode==bsel.value)
-b.stok-=parseInt(qty.value)
-
-DB.transaksi.push({tipe:"Keluar",barang:b.nama,qty:qty.value,tanggal:new Date()})
-save()
-alert("Disimpan")
+let ref=db.ref("barang/"+bsel.value);
+ref.once("value",s=>{
+let b=s.val();
+let stok=(b.stok||0)-parseInt(qty.value);
+ref.update({stok:stok});
+db.ref("transaksi").push({
+tipe:"Keluar",
+barang:b.nama,
+qty:qty.value,
+petugas:petugas.value,
+tanggal:Date.now()
+});
+alert("Tersimpan");
+});
 }
 
 function stok(){
-let html=`<div class="card"><h3>Stok Barang</h3><table>
-<tr><th>Nama</th><th>Gudang</th><th>Stok</th></tr>`
-DB.barang.forEach(b=>{
-html+=`<tr><td>${b.nama}</td><td>${b.gudang}</td><td>${b.stok}</td></tr>`
-})
-html+="</table></div>"
-app.innerHTML=html
+db.ref("barang").on("value",s=>{
+let html="<div class='card'><h3>Stok Barang</h3><table>";
+html+="<tr><th>Barang</th><th>Stok</th></tr>";
+s.forEach(c=>{
+html+=`<tr><td>${c.val().nama}</td><td>${c.val().stok}</td></tr>`;
+});
+html+="</table></div>";
+app.innerHTML=html;
+});
 }
 
-function log(){
-let html=`<div class="card"><h3>Riwayat</h3><table>
-<tr><th>Tanggal</th><th>Tipe</th><th>Barang</th><th>Qty</th></tr>`
-DB.transaksi.forEach(t=>{
+function riwayat(){
+db.ref("transaksi").on("value",s=>{
+let html="<div class='card'><h3>Riwayat</h3><table>";
+html+="<tr><th>Tanggal</th><th>Tipe</th><th>Barang</th><th>Qty</th><th>Petugas</th></tr>";
+s.forEach(c=>{
+let d=c.val();
 html+=`<tr>
-<td>${new Date(t.tanggal).toLocaleString()}</td>
-<td>${t.tipe}</td>
-<td>${t.barang}</td>
-<td>${t.qty}</td>
-</tr>`
-})
-html+="</table></div>"
-app.innerHTML=html
+<td>${new Date(d.tanggal).toLocaleString()}</td>
+<td>${d.tipe}</td>
+<td>${d.barang}</td>
+<td>${d.qty}</td>
+<td>${d.petugas}</td>
+</tr>`;
+});
+html+="</table></div>";
+app.innerHTML=html;
+});
 }
 
 function prs(){
-let no="PRS"+String(DB.prs.length+1).padStart(4,"0")
-let html=`<div class="card">
-<h3>Buat PRS</h3>
-Nomor: ${no}<br>
-Divisi <input id="div"><br>
-<button onclick="savePRS('${no}')">Simpan PRS</button>
-</div>`
-app.innerHTML=html
+let nomor="PRS-"+new Date().getFullYear()+"-"+Date.now().toString().slice(-4);
+app.innerHTML=`
+<div class="card">
+<h3>PRS</h3>
+No PRS: <b>${nomor}</b><br>
+User<input>
+Keterangan<input>
+<button onclick="window.print()">Print</button>
+</div>`;
 }
 
-function savePRS(no){
-DB.prs.push({nomor:no,divisi:div.value})
-save()
-alert("PRS dibuat")
-}
+dashboard();
 </script>
-
 </body>
 </html>
